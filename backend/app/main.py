@@ -1,18 +1,18 @@
-from fastapi import FastAPI, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import text
-from app.core.database import AsyncSessionLocal
+from fastapi import FastAPI
+
+from app.api.v1.routes.auth import router as auth_router
+
 
 app = FastAPI()
 
-async def get_db():
-    async with AsyncSessionLocal() as session:
-        yield session
 
-@app.get("/db-check")
-async def db_check(db: AsyncSession = Depends(get_db)):
-    try:
-        result = await db.execute(text("SELECT 1"))
-        return {"db_status": result.scalar()}
-    except Exception as e:
-        return {"db_status": "error", "detail": str(e)}
+app.include_router(
+    auth_router,
+    prefix="/api/v1/auth",
+    tags=["Authentication"]
+)
+
+
+@app.get("/")
+def root():
+    return {"message": "DOCSY API RUNNING"}
