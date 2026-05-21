@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: docsy_postgres
+
+    environment:
+      POSTGRES_USER: docsy_user
+      POSTGRES_PASSWORD: docsy123
+      POSTGRES_DB: docsy_db
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
