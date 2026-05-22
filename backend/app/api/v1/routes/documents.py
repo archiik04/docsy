@@ -18,6 +18,8 @@ from app.models.document_chunk import DocumentChunk
 from app.models.user import User
 from app.models.document import Document
 from app.services.text_chunker import chunk_text
+from app.models.document_chunk import DocumentChunk
+from app.services.embedding_service import generate_embedding
 
 
 router = APIRouter()
@@ -63,10 +65,6 @@ async def upload_document(
     print(f"TOTAL CHUNKS: {len(chunks)}")
     if chunks:
         print(f"FIRST CHUNK: {chunks[0]}")
-    
-    embedding = generate_embedding(chunks[0])
-    print(len(embedding))
-
 
     # SAVE DOCUMENT METADATA TO POSTGRESQL
     new_document = Document(
@@ -87,12 +85,17 @@ async def upload_document(
     await db.refresh(new_document)
 
     for index, chunk in enumerate(chunks):
+
+        embedding = generate_embedding(chunk)
+
         new_chunk = DocumentChunk(
-            document_id=new_document.id,
-            chunk_index=index,
-            chunk_text=chunk
-        )
-        db.add(new_chunk)
+        document_id=new_document.id,
+        chunk_index=index,
+        chunk_text=chunk,
+        embedding=embedding
+    )
+
+    db.add(new_chunk)
 
     await db.commit()
 

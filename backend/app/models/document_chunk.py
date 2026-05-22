@@ -4,13 +4,14 @@ from datetime import datetime
 
 from sqlalchemy import ForeignKey
 from sqlalchemy import Integer
-from sqlalchemy import Text
 from sqlalchemy import DateTime
-
-from sqlalchemy.dialects.postgresql import UUID
 
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
+
+from sqlalchemy.dialects.postgresql import UUID
+
+from pgvector.sqlalchemy import Vector
 
 from app.core.database import Base
 
@@ -34,8 +35,10 @@ class DocumentChunk(Base):
         Integer
     )
 
-    chunk_text: Mapped[str] = mapped_column(
-        Text
+    chunk_text: Mapped[str]
+
+    embedding: Mapped[list] = mapped_column(
+        Vector(384)
     )
 
     created_at: Mapped[datetime] = mapped_column(
