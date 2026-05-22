@@ -50,13 +50,6 @@ async def upload_document(
 
     # STORE ALL TEXT
     extracted_text = ""
-    chunks = chunk_text(extracted_text)
-    print(f"TOTAL CHUNKS: {len(chunks)}")
-    if len(chunks) > 0:
-        print(f"TOTAL CHUNKS: {len(chunks)}")
-        print(chunks[0])
-    else:
-        print("NO CHUNKS GENERATED")
 
     # LOOP THROUGH PAGES
     for page in pdf_document:
@@ -64,6 +57,13 @@ async def upload_document(
 
     # CLOSE PDF
     pdf_document.close()
+
+    # CHUNK THE EXTRACTED TEXT
+    chunks = chunk_text(extracted_text)
+    print(f"TOTAL CHUNKS: {len(chunks)}")
+    if chunks:
+        print(f"FIRST CHUNK: {chunks[0]}")
+
 
     # SAVE DOCUMENT METADATA TO POSTGRESQL
     new_document = Document(
