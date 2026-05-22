@@ -12,7 +12,7 @@ from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
-
+from app.services.embedding_service import generate_embedding
 from app.core.database import get_db
 from app.models.document_chunk import DocumentChunk
 from app.models.user import User
@@ -63,6 +63,9 @@ async def upload_document(
     print(f"TOTAL CHUNKS: {len(chunks)}")
     if chunks:
         print(f"FIRST CHUNK: {chunks[0]}")
+    
+    embedding = generate_embedding(chunks[0])
+    print(len(embedding))
 
 
     # SAVE DOCUMENT METADATA TO POSTGRESQL
