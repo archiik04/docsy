@@ -32,3 +32,6 @@ build/
 
 # Database
 *.db
+
+# Uploaded files
+uploads/
