@@ -1,13 +1,15 @@
 import uuid
 
+from datetime import datetime
+
 from sqlalchemy import String
 from sqlalchemy import ForeignKey
 from sqlalchemy import DateTime
 
+from sqlalchemy.dialects.postgresql import UUID
+
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
-
-from datetime import datetime
 
 from app.core.database import Base
 
@@ -17,6 +19,7 @@ class Document(Base):
     __tablename__ = "documents"
 
     id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
         primary_key=True,
         default=uuid.uuid4
     )
@@ -28,6 +31,7 @@ class Document(Base):
     content_type: Mapped[str] = mapped_column(String)
 
     owner_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
         ForeignKey("users.id")
     )
 
