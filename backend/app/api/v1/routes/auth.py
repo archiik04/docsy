@@ -15,7 +15,7 @@ from app.schemas.auth import TokenResponse
 
 from app.core.security import verify_password
 from app.core.security import create_access_token
-
+from app.api.deps import get_current_user
 
 router = APIRouter()
 
@@ -102,4 +102,15 @@ async def login_user(
     return {
         "access_token": access_token,
         "token_type": "bearer"
+    }
+
+@router.get("/me")
+async def get_me(
+    current_user: User = Depends(get_current_user)
+):
+
+    return {
+        "id": str(current_user.id),
+        "email": current_user.email,
+        "full_name": current_user.full_name
     }
