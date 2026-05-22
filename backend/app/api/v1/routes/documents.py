@@ -14,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.deps import get_current_user
 
 from app.core.database import get_db
-
+from app.models.document_chunk import DocumentChunk
 from app.models.user import User
 from app.models.document import Document
 from app.services.text_chunker import chunk_text
@@ -82,6 +82,16 @@ async def upload_document(
     await db.commit()
 
     await db.refresh(new_document)
+
+    for index, chunk in enumerate(chunks):
+        new_chunk = DocumentChunk(
+            document_id=new_document.id,
+            chunk_index=index,
+            chunk_text=chunk
+        )
+        db.add(new_chunk)
+
+    await db.commit()
 
     return {
         "document_id": str(new_document.id),
