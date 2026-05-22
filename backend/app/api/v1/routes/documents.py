@@ -17,6 +17,7 @@ from app.core.database import get_db
 
 from app.models.user import User
 from app.models.document import Document
+from app.services.text_chunker import chunk_text
 
 
 router = APIRouter()
@@ -49,6 +50,13 @@ async def upload_document(
 
     # STORE ALL TEXT
     extracted_text = ""
+    chunks = chunk_text(extracted_text)
+    print(f"TOTAL CHUNKS: {len(chunks)}")
+    if len(chunks) > 0:
+        print(f"TOTAL CHUNKS: {len(chunks)}")
+        print(chunks[0])
+    else:
+        print("NO CHUNKS GENERATED")
 
     # LOOP THROUGH PAGES
     for page in pdf_document:
