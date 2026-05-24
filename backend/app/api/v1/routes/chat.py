@@ -5,8 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
 
-from app.services.retrieval_service import (
-    retrieve_similar_chunks
+from app.services.chat_service import (
+    generate_chat_response
 )
 
 
@@ -19,14 +19,12 @@ async def ask_question(
     db: AsyncSession = Depends(get_db)
 ):
 
-    results = await retrieve_similar_chunks(
+    answer = await generate_chat_response(
         question,
         db
     )
 
     return {
         "question": question,
-        "matches": [
-            row[0] for row in results
-        ]
+        "answer": answer
     }

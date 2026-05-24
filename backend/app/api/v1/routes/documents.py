@@ -89,13 +89,13 @@ async def upload_document(
         embedding = generate_embedding(chunk)
 
         new_chunk = DocumentChunk(
-        document_id=new_document.id,
-        chunk_index=index,
-        chunk_text=chunk,
-        embedding=embedding
-    )
+            document_id=new_document.id,
+            chunk_index=index,
+            chunk_text=chunk,
+            embedding=embedding
+        )
 
-    db.add(new_chunk)
+        db.add(new_chunk)
 
     await db.commit()
 

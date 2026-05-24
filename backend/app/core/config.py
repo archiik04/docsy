@@ -10,6 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent.parent
 class Settings(BaseSettings):
 
     DATABASE_URL: str
+    OPENROUTER_API_KEY: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env"
