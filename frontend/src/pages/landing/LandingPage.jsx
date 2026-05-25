@@ -1,15 +1,15 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  FileText, 
-  MessageSquare, 
-  Plus, 
-  UploadCloud, 
-  LogOut, 
-  Menu, 
-  Send, 
-  Info, 
-  Award 
+import {
+  FileText,
+  MessageSquare,
+  Plus,
+  UploadCloud,
+  LogOut,
+  Menu,
+  Send,
+  Info,
+  Award
 } from 'lucide-react';
 import { Logo } from '../../components/ui/Logo';
 import { AmbientBackground } from '../../components/ui/AmbientBackground';
@@ -20,7 +20,7 @@ export function LandingPage() {
   return (
     <div className="landing-container">
       <AmbientBackground />
-      
+
       {/* Thin, Premium Navbar */}
       <nav className="navbar">
         <Logo onClick={() => navigate('/')} />
@@ -42,8 +42,11 @@ export function LandingPage() {
             Search beyond <br />
             <span className="title-serif">Keywords</span>
           </h1>
-          
-          <div className="hero-ctas animate-fade-in" style={{ animationDelay: '0.1s', marginBottom: '28px' }}>
+          <p className="hero-subtitle animate-fade-in" style={{ animationDelay: '0.05s', fontSize: '16px', color: 'rgba(255,255,255,0.45)', marginBottom: '28px', lineHeight: '1.6', maxWidth: '380px' }}>
+            Upload your pdf. Ask questions. Get answers grounded in your documents with source citations.
+          </p>
+
+          <div className="hero-ctas animate-fade-in" style={{ animationDelay: '0.1s', marginBottom: '20px' }}>
             <button
               className="pill-button-glow"
               onClick={() => navigate('/signup')}
@@ -53,12 +56,7 @@ export function LandingPage() {
           </div>
 
           {/* Intentionally arranged pills - margin adjusted to prevent overlap */}
-          <div className="hero-pills-row animate-fade-in" style={{ animationDelay: '0.2s', marginTop: '28px' }}>
-            <span className="hero-pill"><span className="dot" /> Isolated Memory</span>
-            <span className="hero-pill"><span className="dot" /> Scoped Retrieval</span>
-            <span className="hero-pill"><span className="dot" /> Cited Grounding</span>
-            <span className="hero-pill"><span className="dot" /> Instant Indexing</span>
-          </div>
+
         </div>
 
         {/* Right Side: Floating Perspective Product Mockup */}
@@ -66,10 +64,13 @@ export function LandingPage() {
           <div className="workspace-preview-container">
             {/* Floating Tags anchored directly inside the mockup boundary */}
             <div className="floating-tag-orbit floating-tag-top-left">
-              <span>Starlight Space</span>
+              <span>PDF Mirroring</span>
             </div>
             <div className="floating-tag-orbit floating-tag-bottom-right">
-              <span>Infinite Archive</span>
+              <span>Information retrieval</span>
+            </div>
+            <div className="floating-tag-orbit floating-tag-top-right">
+              <span>Biodata Extraction</span>
             </div>
 
             <div className="mockup-workspace">
@@ -110,7 +111,7 @@ export function LandingPage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="sidebar-footer">
                   <div className="user-profile">
                     <div className="user-avatar">R</div>
@@ -121,7 +122,7 @@ export function LandingPage() {
                   <LogOut size={10} style={{ opacity: 0.6 }} />
                 </div>
               </aside>
-              
+
               {/* Mini Chat Workspace */}
               <div className="chat-workspace">
                 <header className="workspace-header">
@@ -189,6 +190,8 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      
 
       {/* Footer */}
       <footer className="landing-footer">
