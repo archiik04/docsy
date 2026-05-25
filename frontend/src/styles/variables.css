@@ -1,0 +1,24 @@
+:root {
+  /* Fonts */
+  --font-sans: 'DM Sans', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, monospace;
+
+  /* Color System (Premium Bottom Input Redesign) */
+  --bg-deep:         #060f1a;
+  --bg-panel:        rgba(10, 22, 38, 0.82);
+  --border-subtle:   rgba(255, 255, 255, 0.10);
+  --border-active:   rgba(57, 160, 175, 0.45);
+  --accent-teal:     #2d8fa0;
+  --accent-teal-2:   #1a6878;
+  --accent-glow:     rgba(57, 160, 175, 0.07);
+  --text-primary:    rgba(255, 255, 255, 0.80);
+  --text-secondary:  rgba(255, 255, 255, 0.55);
+  --text-muted:      rgba(255, 255, 255, 0.25);
+  --text-hint:       rgba(255, 255, 255, 0.15);
+
+  /* Easing curves */
+  --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-slow: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}

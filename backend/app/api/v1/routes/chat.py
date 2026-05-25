@@ -19,7 +19,7 @@ async def ask_question(
     db: AsyncSession = Depends(get_db)
 ):
 
-    answer = await generate_chat_response(
+    answer, chunks = await generate_chat_response(
         question=request_data.question,
         document_id=request_data.document_id,
         db=db
@@ -27,5 +27,13 @@ async def ask_question(
 
     return {
         "question": request_data.question,
-        "answer": answer
+        "answer": answer,
+        "citations": [
+            {
+                "chunk_text": chunk[0],
+                "filename": chunk[1],
+                "distance": float(chunk[2]) if chunk[2] is not None else 0.0
+            }
+            for chunk in chunks
+        ]
     }
