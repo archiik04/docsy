@@ -27,24 +27,28 @@ async def generate_chat_response(
 
     context_parts = []
     for row in results:
-        chunk_text, filename, distance = row
-        context_parts.append(f"--- Document: {filename} ---\n{chunk_text}")
+        chunk_text, page_number, filename, distance = row
+        context_parts.append(
+            f"--- Document: {filename} | Page: {page_number} ---\n{chunk_text}"
+        )
 
     context = "\n\n".join(context_parts)
 
     prompt = f"""
-You are Docsy, an AI document research assistant.
+You are a document research assistant.
 
 Answer ONLY using the provided context.
 
 Rules:
-- Never hallucinate
-- Never use outside knowledge
-- If answer is unavailable, say so
-- Cite relevant information
-- Be concise and grounded
+- If the answer exists in the context, answer clearly and accurately.
+- If the answer is NOT present in the context, explicitly say:
+  "The uploaded document does not contain enough information to answer this question."
+- Do NOT hallucinate.
+- Do NOT invent facts.
+- Prefer concise answers.
+- Use bullet points if appropriate.
 
-Retrieved Context:
+Context:
 {context}
 
 Question:

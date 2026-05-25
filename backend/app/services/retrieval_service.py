@@ -23,6 +23,7 @@ async def retrieve_similar_chunks(
         """
         SELECT
             dc.chunk_text,
+            dc.page_number,
             d.original_filename,
             dc.embedding <=> CAST(:embedding AS vector) AS distance
         FROM document_chunks dc
@@ -34,7 +35,7 @@ async def retrieve_similar_chunks(
         """
     )
 
-    # Retrieve extra rows for deduplication
+    # Retrieve more rows initially
     db_limit = limit * 20
 
     result = await db.execute(
@@ -56,21 +57,46 @@ async def retrieve_similar_chunks(
 
     for row in rows:
 
-        print(f"FILE: {row[1]}")
-        print(f"DISTANCE: {row[2]}")
+        print(f"FILE: {row[2]}")
+        print(f"PAGE: {row[1]}")
+        print(f"DISTANCE: {row[3]}")
         print(row[0][:400])
 
         print("\n-----------------\n")
 
-    # TEMPORARY:
-    # keep all rows until we tune thresholding properly
-    filtered_rows = rows
+    # FILTER GOOD MATCHES
+    filtered_rows = []
+
+    query_words = query.lower().split()
+
+    for row in rows:
+
+        chunk_text = row[0]
+        distance = row[3]
+
+        # Keyword overlap bonus
+        keyword_matches = sum(
+            1 for word in query_words
+            if word in chunk_text.lower()
+        )
+
+        # Lower score = better
+        score = distance - (keyword_matches * 0.05)
+
+        # Threshold filtering
+        if score < 0.55:
+            filtered_rows.append((row, score))
+
+    # Sort by improved score
+    filtered_rows.sort(
+        key=lambda x: x[1]
+    )
 
     # Remove duplicate chunks
     seen_texts = set()
     unique_rows = []
 
-    for row in filtered_rows:
+    for row, score in filtered_rows:
 
         chunk_text = row[0]
         normalized = chunk_text.strip()
@@ -83,6 +109,8 @@ async def retrieve_similar_chunks(
             if len(unique_rows) == limit:
                 break
 
-    print(f"\nFINAL UNIQUE CHUNKS RETURNED: {len(unique_rows)}\n")
+    print(
+        f"\nFINAL UNIQUE CHUNKS RETURNED: {len(unique_rows)}\n"
+    )
 
     return unique_rows
