@@ -22,7 +22,7 @@ from app.models.document_chunk import DocumentChunk
 
 from app.services.text_chunker import chunk_text
 from app.services.embedding_service import generate_embedding
-
+from app.services.text_cleaner import clean_text
 
 router = APIRouter()
 
@@ -60,7 +60,9 @@ async def upload_document(
     # Process page-by-page
     for page in pdf_document:
 
-        page_text = page.get_text()
+        page_text = clean_text(
+            page.get_text()
+        )
 
         # Skip empty pages
         if not page_text.strip():

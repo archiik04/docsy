@@ -19,8 +19,8 @@ def clean_text(text: str) -> str:
 
 def chunk_text(
     text: str,
-    chunk_size: int = 1000,
-    overlap: int = 200,
+    chunk_size: int = 500,
+    overlap: int = 80,
     separators: List[str] = None
 ) -> List[str]:
     """
