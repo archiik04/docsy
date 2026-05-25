@@ -277,7 +277,7 @@ export function ChatWorkspace({ onMenuToggle }) {
         {!activeDocumentId ? (
           <div className="welcome-screen-premium">
             <p className="welcome-subtitle-premium" style={{ opacity: 0.6 }}>
-              Select a PDF manuscript from the sidebar to begin
+              Select a PDF to upload
             </p>
           </div>
         ) : messages.length === 0 ? (

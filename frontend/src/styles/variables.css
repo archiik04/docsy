@@ -6,6 +6,7 @@
 
   /* Color System (Premium Bottom Input Redesign) */
   --bg-deep:         #060f1a;
+  --bg-darker:       #040c16;
   --bg-panel:        rgba(10, 22, 38, 0.82);
   --border-subtle:   rgba(255, 255, 255, 0.10);
   --border-active:   rgba(57, 160, 175, 0.45);

@@ -44,14 +44,6 @@ export function LoginPage() {
       </nav>
 
       <div className="auth-card-wrapper" style={{ position: 'relative', width: '100%', maxWidth: '420px', marginTop: '60px' }}>
-        {/* Floating Tags anchored directly inside the auth card boundary */}
-        <div className="floating-tag-orbit floating-tag-top-left" style={{ top: '-20px', left: '-24px' }}>
-          <span>Secure Ingestion</span>
-        </div>
-        <div className="floating-tag-orbit floating-tag-bottom-right" style={{ bottom: '-20px', right: '-24px' }}>
-          <span>Isolated Space</span>
-        </div>
-
         <div className="auth-card glass-panel animate-fade-in">
           <div className="auth-header">
             <h2 className="auth-title">
@@ -72,7 +64,7 @@ export function LoginPage() {
               <label className="form-label">Email Address</label>
               <input
                 type="email"
-                className="form-input"
+                className="form-input form-input-premium-focus"
                 placeholder="name@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -84,7 +76,7 @@ export function LoginPage() {
               <label className="form-label">Password</label>
               <input
                 type="password"
-                className="form-input"
+                className="form-input form-input-premium-focus"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

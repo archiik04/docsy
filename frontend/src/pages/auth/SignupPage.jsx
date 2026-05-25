@@ -46,14 +46,6 @@ export function SignupPage() {
       </nav>
 
       <div className="auth-card-wrapper" style={{ position: 'relative', width: '100%', maxWidth: '420px', marginTop: '60px' }}>
-        {/* Floating Tags anchored directly inside the auth card boundary */}
-        <div className="floating-tag-orbit floating-tag-top-left" style={{ top: '-20px', left: '-24px' }}>
-          <span>Infinite Archive</span>
-        </div>
-        <div className="floating-tag-orbit floating-tag-bottom-right" style={{ bottom: '-20px', right: '-24px' }}>
-          <span>Cited Grounding</span>
-        </div>
-
         <div className="auth-card glass-panel animate-fade-in">
           <div className="auth-header">
             <h2 className="auth-title">
@@ -74,7 +66,7 @@ export function SignupPage() {
               <label className="form-label">Full Name</label>
               <input
                 type="text"
-                className="form-input"
+                className="form-input form-input-premium-focus"
                 placeholder="Isaac Newton"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -86,7 +78,7 @@ export function SignupPage() {
               <label className="form-label">Email Address</label>
               <input
                 type="email"
-                className="form-input"
+                className="form-input form-input-premium-focus"
                 placeholder="isaac@principia.org"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -98,7 +90,7 @@ export function SignupPage() {
               <label className="form-label">Password</label>
               <input
                 type="password"
-                className="form-input"
+                className="form-input form-input-premium-focus"
                 placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
