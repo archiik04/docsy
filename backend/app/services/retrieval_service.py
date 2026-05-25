@@ -8,7 +8,7 @@ async def retrieve_similar_chunks(
     query: str,
     document_id: str,
     db: AsyncSession,
-    limit: int = 8
+    limit: int = 4
 ):
 
     # Prevent empty document queries
