@@ -33,21 +33,23 @@ async def generate_chat_response(
     context = "\n\n".join(context_parts)
 
     prompt = f"""
-    You are an AI assistant.
+You are Docsy, an AI document research assistant.
 
-    Use the provided context to answer the question.
+Answer ONLY using the provided context.
 
-    If the answer is partially available,
-    make the best reasonable inference.
+Rules:
+- Never hallucinate
+- Never use outside knowledge
+- If answer is unavailable, say so
+- Cite relevant information
+- Be concise and grounded
 
-    Be concise and accurate.
+Retrieved Context:
+{context}
 
-    Context:
-    {context}
-
-    Question:
-    {question}
-    """
+Question:
+{question}
+"""
 
     response = await client.chat.completions.create(
 

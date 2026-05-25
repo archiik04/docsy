@@ -1,4 +1,21 @@
+import re
 from typing import List
+
+def clean_text(text: str) -> str:
+
+    # remove excessive newlines
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    # remove multiple spaces
+    text = re.sub(r"[ \t]+", " ", text)
+
+    # remove weird unicode artifacts
+    text = text.replace("\x00", " ")
+
+    # fix broken sentence spacing
+    text = re.sub(r"\s+\.", ".", text)
+
+    return text.strip()
 
 def chunk_text(
     text: str,
@@ -13,6 +30,7 @@ def chunk_text(
     """
     if not text or not text.strip():
         return []
+    text = clean_text(text)
 
     if separators is None:
         separators = ["\n\n", "\n", ". ", " ", ""]
@@ -97,7 +115,7 @@ def chunk_text(
     processed_chunks = []
     for chunk in raw_chunks:
         stripped = chunk.strip()
-        if stripped:
+        if stripped and len(stripped) > 80:
             processed_chunks.append(stripped)
             
-    return processed_chunks
+    return processed_chunks

@@ -2,7 +2,7 @@ import uuid
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey
+from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer
 from sqlalchemy import DateTime
 
@@ -45,3 +45,4 @@ class DocumentChunk(Base):
         DateTime,
         default=datetime.utcnow
     )
+    page_number = Column(Integer)

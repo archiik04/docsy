@@ -69,9 +69,6 @@ export function LandingPage() {
             <div className="floating-tag-orbit floating-tag-bottom-right">
               <span>Information retrieval</span>
             </div>
-            <div className="floating-tag-orbit floating-tag-top-right">
-              <span>Biodata Extraction</span>
-            </div>
 
             <div className="mockup-workspace">
               {/* Mini Sidebar */}
