@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Menu, Send, Sparkles, MessageSquare, Info, Upload, Loader2, Plus, FileText, PlusCircle, Mic } from 'lucide-react';
+import { Menu, Send, Sparkles, MessageSquare, Info, Upload, Loader2, Plus, FileText, PlusCircle, Mic, BookOpen, Cpu } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -352,9 +352,8 @@ export function ChatWorkspace({ onMenuToggle }) {
       </header>
 
       {/* Main Observatory/Chat Panel */}
-      {hasMessages ? (
-        /* Dialogue stream view */
-        <div className="conversation-scroll-premium custom-scroll">
+      <div className="conversation-scroll-premium custom-scroll">
+        {messages.length > 0 ? (
           <div className="message-stream">
             {messages.map((msg, index) => (
               <motion.div 
@@ -410,241 +409,107 @@ export function ChatWorkspace({ onMenuToggle }) {
               </motion.div>
             ))}
           </div>
+        ) : null}
 
-          {isTyping && (
-            <motion.div 
-              className="message-wrapper-premium assistant typing"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-            >
-              <div className="message-sender-tag">Docsy</div>
-              <div className="message-bubble-glass typing-bubble">
-                <div className="typing-loader">
-                  <span className="loader-dot" />
-                  <span className="loader-dot" />
-                  <span className="loader-dot" />
-                </div>
+        {isTyping && (
+          <motion.div 
+            className="message-wrapper-premium assistant typing"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            <div className="message-sender-tag">Docsy</div>
+            <div className="message-bubble-glass typing-bubble">
+              <div className="typing-loader">
+                <span className="loader-dot" />
+                <span className="loader-dot" />
+                <span className="loader-dot" />
               </div>
-            </motion.div>
-          )}
-          <div ref={messagesEndRef} />
-        </div>
-      ) : (
-        /* Centered input onboarding view */
-        <div className="observatory-onboarding-container">
+            </div>
+          </motion.div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
 
-          <div className="centered-query-bar-wrapper" ref={pickerRef}>
-            <div className="floating-glass-query-input">
+      {/* Chat bottom panel */}
+      <div className="chat-bottom-panel-premium">
+        {/* BOTTOM FADE OVERLAY */}
+        <div className="bottom-fade-overlay" />
+
+        {/* z-index: 1 CONTENT WRAPPER */}
+        <div className="bottom-content-wrapper">
+          <form className="chat-input-container-premium" onSubmit={handleSend}>
+            {/* PlusCircle left icon */}
+            <button 
+              type="button" 
+              className="input-attach-plus-btn" 
+              onClick={handleUploadClick}
+              disabled={isUploading}
+              title="Upload PDF manuscript"
+            >
+              {isUploading ? (
+                <Loader2 size={17} className="animate-spin text-cyan" />
+              ) : (
+                <PlusCircle size={17} />
+              )}
+            </button>
+            <input 
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf"
+              style={{ display: 'none' }}
+              onChange={handleFileInputChange}
+            />
+
+            <textarea
+              ref={textInputRef}
+              rows={1}
+              className="chat-textarea-premium custom-scroll"
+              placeholder={activeDoc ? `Ask about "${activeDoc.name}"...` : "Select a document from the sidebar to query..."}
+              value={chatInput}
+              onChange={(e) => {
+                setChatInput(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
+              }}
+              onKeyDown={handleKeyDown}
+              disabled={isTyping || !activeDocumentId}
+            />
+
+            {/* Right actions */}
+            <div className="input-right-actions-row">
               <button 
-                type="button"
-                className="query-upload-btn"
-                onClick={handleUploadClick}
-                disabled={isUploading}
-                title="Upload PDF Manuscript"
+                type="button" 
+                className="input-voice-btn-premium"
+                title="Voice input"
+                disabled={!activeDocumentId}
               >
-                {isUploading ? <Loader2 size={16} className="animate-spin text-cyan" /> : <Plus size={16} />}
+                <Mic size={14} />
               </button>
               
-              <input 
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf"
-                style={{ display: 'none' }}
-                onChange={handleFileInputChange}
-              />
-
-              <input 
-                type="text"
-                placeholder={activeDoc ? `Ask about "${activeDoc.name}"...` : "Select a document or type to search..."}
-                className="chat-textarea-premium"
-                style={{ padding: '4px 0', border: 'none', background: 'none', outline: 'none', color: '#fff', flex: 1 }}
-                value={chatInput}
-                onChange={(e) => {
-                  setChatInput(e.target.value);
-                  setShowDocPicker(true);
-                }}
-                onFocus={() => setShowDocPicker(true)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (activeDocumentId) {
-                      handleSend();
-                    } else {
-                      // Try to pick the first matching document automatically
-                      const matches = documents.filter(d => d.name.toLowerCase().includes(chatInput.toLowerCase()));
-                      if (matches.length > 0) {
-                        selectDocument(matches[0].id);
-                        setTimeout(() => sendMessage(chatInput), 50);
-                      } else {
-                        alert("Please select or upload a document first.");
-                      }
-                    }
-                  }
-                }}
-              />
-
-              <span className="keyboard-shortcut-hint">Enter</span>
-
               {isTyping ? (
                 <div className="input-processing-dots-premium">
-                  <span className="dot-teal-pulse" /><span className="dot-teal-pulse" /><span className="dot-teal-pulse" />
+                  <span className="dot-teal-pulse" />
+                  <span className="dot-teal-pulse" />
+                  <span className="dot-teal-pulse" />
                 </div>
               ) : (
                 <button 
-                  type="button" 
+                  type="submit" 
                   className="chat-send-btn-circle-premium" 
-                  onClick={() => {
-                    if (activeDocumentId) {
-                      handleSend();
-                    } else {
-                      setShowDocPicker(true);
-                    }
-                  }}
-                  disabled={!chatInput.trim()}
+                  disabled={!chatInput.trim() || !activeDocumentId}
+                  title="Query the archive"
                 >
                   <Send size={14} />
                 </button>
               )}
             </div>
+          </form>
 
-            {/* Document selection Dropdown */}
-            <AnimatePresence>
-              {showDocPicker && !activeDocumentId && documents.length > 0 && (
-                <motion.div 
-                  className="query-doc-picker-dropdown custom-scroll"
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: 10 }}
-                >
-                  <div style={{ padding: '6px 12px', fontSize: '10px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>
-                    Select a document to query
-                  </div>
-                  {documents
-                    .filter(d => d.name.toLowerCase().includes(chatInput.toLowerCase()))
-                    .map(doc => (
-                      <button
-                        key={doc.id}
-                        type="button"
-                        className="query-doc-picker-item"
-                        onClick={() => {
-                          selectDocument(doc.id);
-                          setShowDocPicker(false);
-                          // Auto trigger message if input exists
-                          if (chatInput.trim()) {
-                            setTimeout(() => sendMessage(chatInput), 50);
-                          }
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <FileText size={13} className="text-cyan" />
-                          <span style={{ fontSize: '12.5px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '280px' }}>
-                            {doc.name}
-                          </span>
-                        </div>
-                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{doc.size}</span>
-                      </button>
-                    ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Onboarding Suggestion Chips */}
-          <div className="suggestion-chips-row" style={{ marginTop: '24px', maxWidth: '550px' }}>
-            <div className="suggestion-chip-pill" onClick={() => handleSuggestionClick('Summarize key concepts')}>
-              Summarize key concepts
-            </div>
-            <div className="suggestion-chip-pill" onClick={() => handleSuggestionClick('What are the core findings?')}>
-              What are the core findings?
-            </div>
-            <div className="suggestion-chip-pill" onClick={() => handleSuggestionClick('Extract methodology')}>
-              Extract methodology
-            </div>
+          <div className="chat-disclaimer-text">
+            Docsy may occasionally misinterpret documents — verify critical information.
           </div>
         </div>
-      )}
-
-      {/* Chat bottom panel (only rendered when there is active chat dialogue) */}
-      {hasMessages && (
-        <div className="chat-bottom-panel-premium">
-          {/* BOTTOM FADE OVERLAY */}
-          <div className="bottom-fade-overlay" />
-
-          {/* z-index: 1 CONTENT WRAPPER */}
-          <div className="bottom-content-wrapper">
-            <form className="chat-input-container-premium" onSubmit={handleSend}>
-              {/* PlusCircle left icon */}
-              <button 
-                type="button" 
-                className="input-attach-plus-btn" 
-                onClick={handleUploadClick}
-                disabled={isUploading}
-                title="Upload PDF manuscript"
-              >
-                {isUploading ? (
-                  <Loader2 size={17} className="animate-spin text-cyan" />
-                ) : (
-                  <PlusCircle size={17} />
-                )}
-              </button>
-              <input 
-                ref={fileInputRef}
-                type="file"
-                accept=".pdf"
-                style={{ display: 'none' }}
-                onChange={handleFileInputChange}
-              />
-
-              <textarea
-                ref={textInputRef}
-                rows={1}
-                className="chat-textarea-premium custom-scroll"
-                placeholder="Conversing with memory systems..."
-                value={chatInput}
-                onChange={(e) => {
-                  setChatInput(e.target.value);
-                  e.target.style.height = 'auto';
-                  e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
-                }}
-                onKeyDown={handleKeyDown}
-                disabled={isTyping}
-              />
-
-              {/* Right actions */}
-              <div className="input-right-actions-row">
-                <button 
-                  type="button" 
-                  className="input-voice-btn-premium"
-                  title="Voice input"
-                >
-                  <Mic size={14} />
-                </button>
-                
-                {isTyping ? (
-                  <div className="input-processing-dots-premium">
-                    <span className="dot-teal-pulse" />
-                    <span className="dot-teal-pulse" />
-                    <span className="dot-teal-pulse" />
-                  </div>
-                ) : (
-                  <button 
-                    type="submit" 
-                    className="chat-send-btn-circle-premium" 
-                    disabled={!chatInput.trim()}
-                    title="Query the archive"
-                  >
-                    <Send size={14} />
-                  </button>
-                )}
-              </div>
-            </form>
-
-            <div className="chat-disclaimer-text">
-              Docsy may occasionally misinterpret documents — verify critical information.
-            </div>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }

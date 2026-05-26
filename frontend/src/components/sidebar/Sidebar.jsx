@@ -192,7 +192,9 @@ export function Sidebar() {
                     title={doc.name}
                   >
                     <div className="doc-item-left">
-                      <FileText size={14} className="doc-icon" />
+                      <div className="doc-icon-wrapper">
+                        <FileText size={13} className="doc-icon" />
+                      </div>
                       {!isCollapsed && (
                         <div className="doc-info">
                           <span className="doc-name">{doc.name}</span>
@@ -248,7 +250,9 @@ export function Sidebar() {
                       title={conv.title}
                     >
                       <div className="doc-item-left">
-                        <MessageSquare size={13} className="chat-icon" />
+                        <div className="doc-icon-wrapper">
+                          <MessageSquare size={12} className="chat-icon" />
+                        </div>
                         {!isCollapsed && <span className="doc-name">{conv.title}</span>}
                       </div>
                     </div>

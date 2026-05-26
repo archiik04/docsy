@@ -13,16 +13,16 @@
   --accent-teal:     #2d8fa0;
   --accent-teal-2:   #1a6878;
   --accent-glow:     rgba(255, 255, 255, 0.03);
-  --text-primary:    rgba(255, 255, 255, 0.90);
-  --text-secondary:  rgba(255, 255, 255, 0.60);
-  --text-muted:      rgba(255, 255, 255, 0.35);
-  --text-hint:       rgba(255, 255, 255, 0.20);
+  --text-primary:    rgba(255, 255, 255, 0.95);
+  --text-secondary:  rgba(255, 255, 255, 0.75);
+  --text-muted:      rgba(255, 255, 255, 0.45);
+  --text-hint:       rgba(255, 255, 255, 0.25);
 
-  /* White Glassmorphism System */
-  --glass-bg:        rgba(255, 255, 255, 0.08);
-  --glass-border:    rgba(255, 255, 255, 0.16);
-  --glass-blur:      blur(24px);
-  --glass-shadow:    0 8px 32px rgba(0, 0, 0, 0.25);
+  /* Premium Dark Glassmorphism System */
+  --glass-bg:        rgba(10, 16, 28, 0.72);
+  --glass-border:    rgba(255, 255, 255, 0.08);
+  --glass-blur:      blur(16px);
+  --glass-shadow:    0 8px 32px rgba(0, 0, 0, 0.4);
 
   /* Easing curves */
   --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
