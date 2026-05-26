@@ -26,32 +26,21 @@ async def retrieve_similar_chunks(
         dc.page_number,
         dc.section_title,
         d.original_filename,
-
-        (
-            dc.embedding <=> CAST(:embedding AS vector)
-        ) AS semantic_distance,
-
+        dc.embedding <=> CAST(:embedding AS vector) AS distance,
         ts_rank(
             dc.fts,
-            plainto_tsquery(:query)
+            plainto_tsquery('english', :query)
         ) AS keyword_rank
-
     FROM document_chunks dc
-
     JOIN documents d
         ON dc.document_id = d.id
-
-    WHERE
-        dc.document_id = CAST(:document_id AS uuid)
-
+    WHERE dc.document_id = CAST(:document_id AS uuid)
     ORDER BY
-        keyword_rank DESC,
-        semantic_distance ASC
-
-        LIMIT :db_limit
-        """
+        keyword_rank DESC NULLS LAST,
+        distance ASC
+    LIMIT :db_limit
+    """
     )
-   
 
     # Retrieve more rows initially
     db_limit = limit * 20
@@ -67,6 +56,8 @@ async def retrieve_similar_chunks(
     )
 
     rows = result.fetchall()
+
+
 
     # DEBUG LOGS
     print("\n===== HYBRID RETRIEVAL DEBUG =====\n")
