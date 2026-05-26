@@ -24,6 +24,7 @@ async def retrieve_similar_chunks(
     SELECT
         dc.chunk_text,
         dc.page_number,
+        dc.section_title,
         d.original_filename,
 
         (
@@ -75,10 +76,11 @@ async def retrieve_similar_chunks(
 
     for row in rows:
 
-        print(f"FILE: {row[2]}")
+        print(f"FILE: {row[3]}")
         print(f"PAGE: {row[1]}")
-        print(f"SEMANTIC DISTANCE: {row[3]}")
-        print(f"KEYWORD RANK: {row[4]}")
+        print(f"SECTION: {row[2]}")
+        print(f"SEMANTIC DISTANCE: {row[4]}")
+        print(f"KEYWORD RANK: {row[5]}")
         print(row[0][:400])
 
         print("\n-----------------\n")
@@ -91,7 +93,7 @@ async def retrieve_similar_chunks(
     for row in rows:
 
         chunk_text = row[0]
-        distance = row[3]
+        distance = row[4]
 
         # Keyword overlap bonus
         keyword_matches = sum(

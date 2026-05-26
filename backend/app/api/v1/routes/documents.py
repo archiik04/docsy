@@ -26,7 +26,6 @@ from app.services.text_cleaner import clean_text
 
 router = APIRouter()
 
-
 UPLOAD_DIR = Path("uploads")
 UPLOAD_DIR.mkdir(exist_ok=True)
 
@@ -51,10 +50,8 @@ async def upload_document(
     # Open PDF
     pdf_document = fitz.open(file_path)
 
-    # Store full extracted text
     extracted_text = ""
 
-    # Store all page-aware chunks
     all_chunks = []
 
     # Process page-by-page
@@ -68,28 +65,49 @@ async def upload_document(
         if not page_text.strip():
             continue
 
-        # Add to full document text
         extracted_text += page_text + "\n"
+
+        lines = page_text.split("\n")
+
+        current_heading = "General"
+
+        # Detect probable section heading
+        for line in lines:
+
+            stripped = line.strip()
+
+            if not stripped:
+                continue
+
+            # probable heading
+            if (
+                len(stripped) < 100
+                and len(stripped.split()) <= 10
+                and not stripped.endswith(".")
+            ):
+
+                current_heading = stripped
+
+                break
 
         # Chunk THIS page
         page_chunks = chunk_text(page_text)
 
         for chunk in page_chunks:
 
+            embedding = generate_embedding(chunk)
+
             all_chunks.append({
                 "page_number": page.number + 1,
-                "chunk_text": chunk
+                "chunk_text": chunk,
+                "section_title": current_heading,
+                "embedding": embedding
             })
 
     # Close PDF
     pdf_document.close()
 
     print(f"\nTOTAL CHUNKS: {len(all_chunks)}\n")
-
-    if all_chunks:
-        print("\n===== FIRST CHUNK =====\n")
-        print(all_chunks[0]["chunk_text"][:500])
-        print("\n=======================\n")
 
     # Save document metadata
     new_document = Document(
@@ -109,19 +127,16 @@ async def upload_document(
 
     await db.refresh(new_document)
 
-    # Save chunks + embeddings
+    # Save chunks
     for index, chunk_data in enumerate(all_chunks):
-
-        embedding = generate_embedding(
-            chunk_data["chunk_text"]
-        )
 
         new_chunk = DocumentChunk(
             document_id=new_document.id,
             chunk_index=index,
             chunk_text=chunk_data["chunk_text"],
-            embedding=embedding,
-            page_number=chunk_data["page_number"]
+            embedding=chunk_data["embedding"],
+            page_number=chunk_data["page_number"],
+            section_title=chunk_data["section_title"]
         )
 
         db.add(new_chunk)
@@ -161,7 +176,6 @@ async def list_documents(
             "file_size": doc.file_size,
             "created_at": doc.created_at.isoformat(),
             "processing_status": doc.processing_status,
-            "extracted_text": doc.extracted_text,
         }
         for doc in documents
     ]
@@ -174,7 +188,6 @@ async def delete_document(
     db: AsyncSession = Depends(get_db),
 ):
 
-    # Verify ownership
     query = select(Document).where(
         Document.id == document_id,
         Document.owner_id == current_user.id

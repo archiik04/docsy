@@ -2,7 +2,7 @@ import uuid
 
 from datetime import datetime
 
-from sqlalchemy import Column, ForeignKey
+from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy import Integer
 from sqlalchemy import DateTime
 
@@ -46,3 +46,4 @@ class DocumentChunk(Base):
         default=datetime.utcnow
     )
     page_number = Column(Integer)
+    section_title = Column(String, nullable=True)

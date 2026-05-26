@@ -310,7 +310,7 @@ export function ChatWorkspace({ onMenuToggle }) {
                           key={cIdx} 
                           className="citation-badge-premium"
                           onClick={() => setHighlightedCitation(cite)}
-                          title={`Score: ${cite.distance?.toFixed(4) || 'N/A'}`}
+                          title={`Section: ${cite.section_title || 'General'} | Page: ${cite.page_number} (Score: ${cite.distance?.toFixed(4) || 'N/A'})`}
                         >
                           <Info size={10} className="info-icon" />
                           <span>Source [{cIdx + 1}]</span>

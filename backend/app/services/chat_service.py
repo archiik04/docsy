@@ -33,12 +33,14 @@ async def generate_chat_response(
     for row in results:
         chunk_text = row[0]
         page_number = row[1]
-        filename = row[2]
-        distance = row[3]
-        keyword_rank = row[4]
+        section_title = row[2]
+        filename = row[3]
+        distance = row[4]
+        keyword_rank = row[5]
 
         print(f"""
               FILE: {filename}
+              SECTION: {section_title}
               PAGE: {page_number}
               SEMANTIC DISTANCE: {distance}
               KEYWORD RANK: {keyword_rank}
@@ -47,6 +49,7 @@ async def generate_chat_response(
         context_parts.append(
             f"""
             Document: {filename}
+            Section: {section_title}
             Page: {page_number}
             
             Content:

@@ -100,6 +100,11 @@ export function DocumentPreviewPanel({ document }) {
                   <Award size={13} className="award-icon" />
                   <span>ACTIVE CITED SEGMENT (Match: {getSimilarityPercentage(highlightedCitation.distance)})</span>
                 </div>
+                {highlightedCitation.page_number && (
+                  <div className="chunk-meta-row" style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px', marginBottom: '8px', color: '#06b6d4', fontWeight: 500 }}>
+                    Section: {highlightedCitation.section_title || 'General'} | Page: {highlightedCitation.page_number}
+                  </div>
+                )}
                 <p className="chunk-content-text">
                   "{highlightedCitation.chunk_text}"
                 </p>
