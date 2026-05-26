@@ -9,14 +9,20 @@
   --bg-darker:       #040c16;
   --bg-panel:        rgba(10, 22, 38, 0.82);
   --border-subtle:   rgba(255, 255, 255, 0.10);
-  --border-active:   rgba(57, 160, 175, 0.45);
+  --border-active:   rgba(255, 255, 255, 0.22);
   --accent-teal:     #2d8fa0;
   --accent-teal-2:   #1a6878;
-  --accent-glow:     rgba(57, 160, 175, 0.07);
-  --text-primary:    rgba(255, 255, 255, 0.80);
-  --text-secondary:  rgba(255, 255, 255, 0.55);
-  --text-muted:      rgba(255, 255, 255, 0.25);
-  --text-hint:       rgba(255, 255, 255, 0.15);
+  --accent-glow:     rgba(255, 255, 255, 0.03);
+  --text-primary:    rgba(255, 255, 255, 0.90);
+  --text-secondary:  rgba(255, 255, 255, 0.60);
+  --text-muted:      rgba(255, 255, 255, 0.35);
+  --text-hint:       rgba(255, 255, 255, 0.20);
+
+  /* White Glassmorphism System */
+  --glass-bg:        rgba(255, 255, 255, 0.08);
+  --glass-border:    rgba(255, 255, 255, 0.16);
+  --glass-blur:      blur(24px);
+  --glass-shadow:    0 8px 32px rgba(0, 0, 0, 0.25);
 
   /* Easing curves */
   --transition-smooth: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);

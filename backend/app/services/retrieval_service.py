@@ -1,6 +1,7 @@
+from imap_tools import query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from app.services.rerank_service import rerank_chunks
 from app.services.embedding_service import generate_embedding
 
 
@@ -8,7 +9,7 @@ async def retrieve_similar_chunks(
     query: str,
     document_id: str,
     db: AsyncSession,
-    limit: int = 4
+    limit: int = 20
 ):
 
     # Prevent empty document queries
@@ -125,4 +126,22 @@ async def retrieve_similar_chunks(
         f"\nFINAL UNIQUE CHUNKS RETURNED: {len(unique_rows)}\n"
     )
 
-    return unique_rows
+    # Rerank retrieved chunks
+    reranked_rows = rerank_chunks(
+        query=query,
+        rows=unique_rows
+    )
+    
+    # only top reranked chunks
+    final_rows = reranked_rows[:5]
+    print("\n===== RERANKED RESULTS =====\n")
+    
+    for row in final_rows:
+        
+        print(f"""
+        FILE: {row[3]}
+        PAGE: {row[1]}
+        RERANKED CHUNK:
+        {row[0][:300]}
+        """)
+    return final_rows

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Menu, Send, Sparkles, MessageSquare, Info, Upload, Loader2, Plus, FileText, PlusCircle, Mic } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
+import { useAuthStore } from '../../stores/authStore';
 
 function MessageContentStream({ text, renderMessageContent }) {
   const [displayedText, setDisplayedText] = useState('');
@@ -28,6 +29,7 @@ function MessageContentStream({ text, renderMessageContent }) {
 }
 
 export function ChatWorkspace({ onMenuToggle }) {
+  const { user } = useAuthStore();
   const {
     documents,
     activeDocumentId,
@@ -363,7 +365,7 @@ export function ChatWorkspace({ onMenuToggle }) {
                 transition={{ duration: 0.4, ease: 'easeOut' }}
               >
                 <div className="message-sender-tag">
-                  {msg.sender === 'user' ? 'Researcher' : 'Archive Memory'}
+                  {msg.sender === 'user' ? (user?.name || 'User') : 'Docsy'}
                 </div>
                 <div className="message-bubble-glass">
                   <div className="message-content">
@@ -415,7 +417,7 @@ export function ChatWorkspace({ onMenuToggle }) {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
             >
-              <div className="message-sender-tag">Archive Memory</div>
+              <div className="message-sender-tag">Docsy</div>
               <div className="message-bubble-glass typing-bubble">
                 <div className="typing-loader">
                   <span className="loader-dot" />
@@ -430,18 +432,6 @@ export function ChatWorkspace({ onMenuToggle }) {
       ) : (
         /* Centered input onboarding view */
         <div className="observatory-onboarding-container">
-          <motion.div 
-            className="welcome-logo-badge-premium"
-            animate={{ scale: [1, 1.03, 1] }}
-            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-          >
-            <Sparkles size={32} className="logo-badge-icon text-cyan" style={{ filter: 'drop-shadow(0 0 12px rgba(77, 184, 200, 0.4))' }} />
-          </motion.div>
-          
-          <h1 className="observatory-title">Docsy Research Observatory</h1>
-          <p className="observatory-subtitle">
-            Query your documents with hybrid semantic intelligence. Ingest a PDF manuscript or select an archive file to explore.
-          </p>
 
           <div className="centered-query-bar-wrapper" ref={pickerRef}>
             <div className="floating-glass-query-input">

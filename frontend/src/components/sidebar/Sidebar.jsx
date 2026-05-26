@@ -70,7 +70,7 @@ export function Sidebar() {
   return (
     <motion.aside 
       className={`sidebar-premium ${isCollapsed ? 'collapsed' : ''}`}
-      animate={{ width: isCollapsed ? 76 : 280 }}
+      animate={{ width: isCollapsed ? 68 : 250 }}
       transition={{ type: 'spring', stiffness: 220, damping: 26 }}
     >
       {/* Header / Logo */}

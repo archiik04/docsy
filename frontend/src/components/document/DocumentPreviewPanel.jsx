@@ -102,7 +102,7 @@ export function DocumentPreviewPanel({ document }) {
                 </div>
                 {highlightedCitation.page_number && (
                   <div className="chunk-meta-row" style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px', marginBottom: '8px', color: '#06b6d4', fontWeight: 500 }}>
-                    Section: {highlightedCitation.section_title || 'General'} | Page: {highlightedCitation.page_number}
+                    Section: {highlightedCitation.section_title || 'General'} | Page: {highlightedCitation.page_number} {highlightedCitation.filename && `| File: ${highlightedCitation.filename}`}
                   </div>
                 )}
                 <p className="chunk-content-text">
