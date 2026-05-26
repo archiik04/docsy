@@ -28,18 +28,22 @@ async def ask_question(
             db=db
         )
 
+        citations = []
+
+        for chunk in chunks:
+
+            citations.append({
+                "chunk_text": chunk[0],
+                "page_number": chunk[1],
+                "filename": chunk[2],
+                "distance": float(chunk[3]) if chunk[3] is not None else None,
+                "keyword_rank": float(chunk[4]) if chunk[4] is not None else None
+            })
+
         return {
             "question": request_data.question,
             "answer": answer,
-            "citations": [
-                {
-                    "chunk_text": chunk[0],
-                    "page_number": chunk[1],
-                    "filename": chunk[2],
-                    "distance": float(chunk[3]) if chunk[3] is not None else 0.0
-                }
-                for chunk in chunks
-            ]
+            "citations": citations
         }
 
     except Exception as e:

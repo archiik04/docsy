@@ -21,19 +21,36 @@ async def retrieve_similar_chunks(
     # PGVector similarity search
     sql_query = text(
         """
-        SELECT
-            dc.chunk_text,
-            dc.page_number,
-            d.original_filename,
-            dc.embedding <=> CAST(:embedding AS vector) AS distance
-        FROM document_chunks dc
-        JOIN documents d
-            ON dc.document_id = d.id
-        WHERE dc.document_id = CAST(:document_id AS uuid)
-        ORDER BY distance ASC
+    SELECT
+        dc.chunk_text,
+        dc.page_number,
+        d.original_filename,
+
+        (
+            dc.embedding <=> CAST(:embedding AS vector)
+        ) AS semantic_distance,
+
+        ts_rank(
+            dc.fts,
+            plainto_tsquery(:query)
+        ) AS keyword_rank
+
+    FROM document_chunks dc
+
+    JOIN documents d
+        ON dc.document_id = d.id
+
+    WHERE
+        dc.document_id = CAST(:document_id AS uuid)
+
+    ORDER BY
+        keyword_rank DESC,
+        semantic_distance ASC
+
         LIMIT :db_limit
         """
     )
+   
 
     # Retrieve more rows initially
     db_limit = limit * 20
@@ -43,14 +60,15 @@ async def retrieve_similar_chunks(
         {
             "embedding": str(query_embedding),
             "document_id": str(document_id),
-            "db_limit": db_limit
+            "db_limit": db_limit,
+            "query": query
         }
     )
 
     rows = result.fetchall()
 
     # DEBUG LOGS
-    print("\n===== RETRIEVAL DEBUG =====\n")
+    print("\n===== HYBRID RETRIEVAL DEBUG =====\n")
 
     if not rows:
         print("NO ROWS RETURNED FROM VECTOR SEARCH")
@@ -59,7 +77,8 @@ async def retrieve_similar_chunks(
 
         print(f"FILE: {row[2]}")
         print(f"PAGE: {row[1]}")
-        print(f"DISTANCE: {row[3]}")
+        print(f"SEMANTIC DISTANCE: {row[3]}")
+        print(f"KEYWORD RANK: {row[4]}")
         print(row[0][:400])
 
         print("\n-----------------\n")

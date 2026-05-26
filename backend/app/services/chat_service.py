@@ -5,6 +5,7 @@ from app.core.config import settings
 from app.services.retrieval_service import (
     retrieve_similar_chunks
 )
+from app.services.reranker_service import rerank_chunks
 
 
 client = AsyncOpenAI(
@@ -25,11 +26,32 @@ async def generate_chat_response(
         db=db
     )
 
+    results = rerank_chunks(question, results)
+    results = results[:4]
+
     context_parts = []
     for row in results:
-        chunk_text, page_number, filename, distance = row
+        chunk_text = row[0]
+        page_number = row[1]
+        filename = row[2]
+        distance = row[3]
+        keyword_rank = row[4]
+
+        print(f"""
+              FILE: {filename}
+              PAGE: {page_number}
+              SEMANTIC DISTANCE: {distance}
+              KEYWORD RANK: {keyword_rank}
+        """)
+        
         context_parts.append(
-            f"--- Document: {filename} | Page: {page_number} ---\n{chunk_text}"
+            f"""
+            Document: {filename}
+            Page: {page_number}
+            
+            Content:
+            {chunk_text}
+            """
         )
 
     context = "\n\n".join(context_parts)

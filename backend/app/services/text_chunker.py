@@ -19,7 +19,7 @@ def clean_text(text: str) -> str:
 
 def chunk_text(
     text: str,
-    chunk_size: int = 500,
+    chunk_size: int = 450,
     overlap: int = 80,
     separators: List[str] = None
 ) -> List[str]:
@@ -33,7 +33,19 @@ def chunk_text(
     text = clean_text(text)
 
     if separators is None:
-        separators = ["\n\n", "\n", ". ", " ", ""]
+        separators = [
+            "\n# ",
+            "\n## ",
+            "\n\n",
+            "\n",
+            ". ",
+            "? ",
+            "! ",
+            "; ",
+            ", ",
+            " ",
+            ""
+            ]
 
     def _split_text(text_to_split: str, current_separators: List[str]) -> List[str]:
         if len(text_to_split) <= chunk_size:
