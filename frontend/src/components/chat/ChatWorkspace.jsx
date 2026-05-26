@@ -3,6 +3,30 @@ import { Menu, Send, Sparkles, MessageSquare, Info, Upload, Loader2, Plus, FileT
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 
+function MessageContentStream({ text, renderMessageContent }) {
+  const [displayedText, setDisplayedText] = useState('');
+  
+  useEffect(() => {
+    const words = text.split(' ');
+    let currentText = '';
+    let i = 0;
+    
+    const interval = setInterval(() => {
+      if (i < words.length) {
+        currentText += (i > 0 ? ' ' : '') + words[i];
+        setDisplayedText(currentText);
+        i++;
+      } else {
+        clearInterval(interval);
+      }
+    }, 15); // Fast, premium word-by-word streaming
+    
+    return () => clearInterval(interval);
+  }, [text]);
+  
+  return <>{renderMessageContent(displayedText)}</>;
+}
+
 export function ChatWorkspace({ onMenuToggle }) {
   const {
     documents,
@@ -16,6 +40,7 @@ export function ChatWorkspace({ onMenuToggle }) {
     setChatInput,
     sendMessage,
     uploadDocument,
+    selectDocument,
     setHighlightedCitation,
     togglePreview,
     newConversation
@@ -24,17 +49,34 @@ export function ChatWorkspace({ onMenuToggle }) {
   const messagesEndRef = useRef(null);
   const textInputRef = useRef(null);
   const fileInputRef = useRef(null);
+  const pickerRef = useRef(null);
 
-
+  const [isDragging, setIsDragging] = useState(false);
+  const [showDocPicker, setShowDocPicker] = useState(false);
+  const [streamedMessageIds, setStreamedMessageIds] = useState(new Set());
 
   const activeDoc = documents.find(d => d.id === activeDocumentId);
   const activeConvs = activeDocumentId ? (conversationsByDoc[activeDocumentId] || []) : [];
   const currentConv = activeConvs.find(c => c.id === activeConversationId);
   const messages = currentConv ? currentConv.messages : [];
+  const hasMessages = activeDocumentId && messages.length > 0;
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
+
+  // Click outside listener to close document picker
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
+        setShowDocPicker(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleSend = (e) => {
     if (e) e.preventDefault();
@@ -43,6 +85,7 @@ export function ChatWorkspace({ onMenuToggle }) {
     if (textInputRef.current) {
       textInputRef.current.style.height = 'auto';
     }
+    setShowDocPicker(false);
   };
 
   const handleKeyDown = (e) => {
@@ -70,6 +113,25 @@ export function ChatWorkspace({ onMenuToggle }) {
   const handleFileInputChange = (e) => {
     const file = e.target.files?.[0];
     if (file) {
+      uploadDocument(file);
+    }
+  };
+
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type === 'application/pdf') {
       uploadDocument(file);
     }
   };
@@ -218,22 +280,38 @@ export function ChatWorkspace({ onMenuToggle }) {
   };
 
   return (
-    <div className="chat-workspace-premium">
-      {/* Workspace Header */}
-      <header className="workspace-header-premium">
+    <div 
+      className="chat-workspace-premium"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag & Drop Fullscreen Overlay */}
+      <AnimatePresence>
+        {isDragging && (
+          <motion.div 
+            className="drag-drop-overlay-fullscreen"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Upload size={48} className="mb-4 animate-bounce text-cyan" />
+            <h3 className="text-xl font-medium text-white mb-2">Drop PDF Manuscript Here</h3>
+            <p className="text-sm text-cyan/70">Docsy will ingest and index the document instantly.</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Header */}
+      <header className="workspace-header-premium" style={{ background: hasMessages ? undefined : 'transparent', borderBottom: hasMessages ? undefined : 'none' }}>
         <div className="header-left">
           <button className="menu-toggle-btn" onClick={onMenuToggle} title="Toggle navigation">
             <Menu size={16} />
           </button>
-          {activeDoc ? (
+          {hasMessages && activeDoc && (
             <div className="doc-pill-glow">
               <span className="dot-glow" />
               <span className="doc-name-text">{activeDoc.name}</span>
-            </div>
-          ) : (
-            <div className="doc-pill-glow inactive">
-              <span className="dot-glow" />
-              <span>Idle observatory</span>
             </div>
           )}
         </div>
@@ -268,23 +346,13 @@ export function ChatWorkspace({ onMenuToggle }) {
               </button>
             </>
           )}
-          <span className="observatory-status" style={{ marginLeft: '6px' }}>MEM INDEX READY</span>
         </div>
       </header>
 
-      {/* Messages Scroll Area */}
-      <div className="conversation-scroll-premium custom-scroll">
-        {!activeDocumentId ? (
-          <div className="welcome-screen-premium">
-            <p className="welcome-subtitle-premium" style={{ opacity: 0.6 }}>
-              Select a PDF to upload
-            </p>
-          </div>
-        ) : messages.length === 0 ? (
-          <div className="welcome-screen-premium">
-            <div className="empty-state-glow-focus" />
-          </div>
-        ) : (
+      {/* Main Observatory/Chat Panel */}
+      {hasMessages ? (
+        /* Dialogue stream view */
+        <div className="conversation-scroll-premium custom-scroll">
           <div className="message-stream">
             {messages.map((msg, index) => (
               <motion.div 
@@ -299,7 +367,25 @@ export function ChatWorkspace({ onMenuToggle }) {
                 </div>
                 <div className="message-bubble-glass">
                   <div className="message-content">
-                    {renderMessageContent(msg.text)}
+                    {msg.sender === 'assistant' && index === messages.length - 1 && !streamedMessageIds.has(msg.id) ? (
+                      <MessageContentStream
+                        text={msg.text}
+                        renderMessageContent={(txt) => {
+                          if (txt === msg.text) {
+                            setTimeout(() => {
+                              setStreamedMessageIds(prev => {
+                                const next = new Set(prev);
+                                next.add(msg.id);
+                                return next;
+                              });
+                            }, 50);
+                          }
+                          return renderMessageContent(txt);
+                        }}
+                      />
+                    ) : (
+                      renderMessageContent(msg.text)
+                    )}
                   </div>
                   
                   {/* Clickable Grounded Citation Badges */}
@@ -322,64 +408,180 @@ export function ChatWorkspace({ onMenuToggle }) {
               </motion.div>
             ))}
           </div>
-        )}
 
-        {isTyping && (
-          <motion.div 
-            className="message-wrapper-premium assistant typing"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="message-sender-tag">Archive Memory</div>
-            <div className="message-bubble-glass typing-bubble">
-              <div className="typing-loader">
-                <span className="loader-dot" />
-                <span className="loader-dot" />
-                <span className="loader-dot" />
+          {isTyping && (
+            <motion.div 
+              className="message-wrapper-premium assistant typing"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="message-sender-tag">Archive Memory</div>
+              <div className="message-bubble-glass typing-bubble">
+                <div className="typing-loader">
+                  <span className="loader-dot" />
+                  <span className="loader-dot" />
+                  <span className="loader-dot" />
+                </div>
               </div>
-            </div>
+            </motion.div>
+          )}
+          <div ref={messagesEndRef} />
+        </div>
+      ) : (
+        /* Centered input onboarding view */
+        <div className="observatory-onboarding-container">
+          <motion.div 
+            className="welcome-logo-badge-premium"
+            animate={{ scale: [1, 1.03, 1] }}
+            transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <Sparkles size={32} className="logo-badge-icon text-cyan" style={{ filter: 'drop-shadow(0 0 12px rgba(77, 184, 200, 0.4))' }} />
           </motion.div>
-        )}
-        <div ref={messagesEndRef} />
-      </div>
+          
+          <h1 className="observatory-title">Docsy Research Observatory</h1>
+          <p className="observatory-subtitle">
+            Query your documents with hybrid semantic intelligence. Ingest a PDF manuscript or select an archive file to explore.
+          </p>
 
-      {/* Redesigned Bottom Panel with Fade Overlay, Horizontal Chips, Centered Input Bar & Disclaimer */}
-      {activeDocumentId && (
+          <div className="centered-query-bar-wrapper" ref={pickerRef}>
+            <div className="floating-glass-query-input">
+              <button 
+                type="button"
+                className="query-upload-btn"
+                onClick={handleUploadClick}
+                disabled={isUploading}
+                title="Upload PDF Manuscript"
+              >
+                {isUploading ? <Loader2 size={16} className="animate-spin text-cyan" /> : <Plus size={16} />}
+              </button>
+              
+              <input 
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                style={{ display: 'none' }}
+                onChange={handleFileInputChange}
+              />
+
+              <input 
+                type="text"
+                placeholder={activeDoc ? `Ask about "${activeDoc.name}"...` : "Select a document or type to search..."}
+                className="chat-textarea-premium"
+                style={{ padding: '4px 0', border: 'none', background: 'none', outline: 'none', color: '#fff', flex: 1 }}
+                value={chatInput}
+                onChange={(e) => {
+                  setChatInput(e.target.value);
+                  setShowDocPicker(true);
+                }}
+                onFocus={() => setShowDocPicker(true)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (activeDocumentId) {
+                      handleSend();
+                    } else {
+                      // Try to pick the first matching document automatically
+                      const matches = documents.filter(d => d.name.toLowerCase().includes(chatInput.toLowerCase()));
+                      if (matches.length > 0) {
+                        selectDocument(matches[0].id);
+                        setTimeout(() => sendMessage(chatInput), 50);
+                      } else {
+                        alert("Please select or upload a document first.");
+                      }
+                    }
+                  }
+                }}
+              />
+
+              <span className="keyboard-shortcut-hint">Enter</span>
+
+              {isTyping ? (
+                <div className="input-processing-dots-premium">
+                  <span className="dot-teal-pulse" /><span className="dot-teal-pulse" /><span className="dot-teal-pulse" />
+                </div>
+              ) : (
+                <button 
+                  type="button" 
+                  className="chat-send-btn-circle-premium" 
+                  onClick={() => {
+                    if (activeDocumentId) {
+                      handleSend();
+                    } else {
+                      setShowDocPicker(true);
+                    }
+                  }}
+                  disabled={!chatInput.trim()}
+                >
+                  <Send size={14} />
+                </button>
+              )}
+            </div>
+
+            {/* Document selection Dropdown */}
+            <AnimatePresence>
+              {showDocPicker && !activeDocumentId && documents.length > 0 && (
+                <motion.div 
+                  className="query-doc-picker-dropdown custom-scroll"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                >
+                  <div style={{ padding: '6px 12px', fontSize: '10px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.3)', letterSpacing: '0.1em' }}>
+                    Select a document to query
+                  </div>
+                  {documents
+                    .filter(d => d.name.toLowerCase().includes(chatInput.toLowerCase()))
+                    .map(doc => (
+                      <button
+                        key={doc.id}
+                        type="button"
+                        className="query-doc-picker-item"
+                        onClick={() => {
+                          selectDocument(doc.id);
+                          setShowDocPicker(false);
+                          // Auto trigger message if input exists
+                          if (chatInput.trim()) {
+                            setTimeout(() => sendMessage(chatInput), 50);
+                          }
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <FileText size={13} className="text-cyan" />
+                          <span style={{ fontSize: '12.5px', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap', maxWidth: '280px' }}>
+                            {doc.name}
+                          </span>
+                        </div>
+                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{doc.size}</span>
+                      </button>
+                    ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Onboarding Suggestion Chips */}
+          <div className="suggestion-chips-row" style={{ marginTop: '24px', maxWidth: '550px' }}>
+            <div className="suggestion-chip-pill" onClick={() => handleSuggestionClick('Summarize key concepts')}>
+              Summarize key concepts
+            </div>
+            <div className="suggestion-chip-pill" onClick={() => handleSuggestionClick('What are the core findings?')}>
+              What are the core findings?
+            </div>
+            <div className="suggestion-chip-pill" onClick={() => handleSuggestionClick('Extract methodology')}>
+              Extract methodology
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat bottom panel (only rendered when there is active chat dialogue) */}
+      {hasMessages && (
         <div className="chat-bottom-panel-premium">
           {/* BOTTOM FADE OVERLAY */}
           <div className="bottom-fade-overlay" />
 
           {/* z-index: 1 CONTENT WRAPPER */}
           <div className="bottom-content-wrapper">
-            {messages.length === 0 && (
-              <div className="suggestion-chips-row">
-                <div 
-                  className="suggestion-chip-pill" 
-                  onClick={() => handleSuggestionClick('Summarize key concepts')}
-                >
-                  Summarize key concepts
-                </div>
-                <div 
-                  className="suggestion-chip-pill" 
-                  onClick={() => handleSuggestionClick('What are the core findings?')}
-                >
-                  What are the core findings?
-                </div>
-                <div 
-                  className="suggestion-chip-pill" 
-                  onClick={() => handleSuggestionClick('Extract methodology')}
-                >
-                  Extract methodology
-                </div>
-                <div 
-                  className="suggestion-chip-pill" 
-                  onClick={() => handleSuggestionClick('List all references')}
-                >
-                  List all references
-                </div>
-              </div>
-            )}
-
             <form className="chat-input-container-premium" onSubmit={handleSend}>
               {/* PlusCircle left icon */}
               <button 

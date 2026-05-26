@@ -94,6 +94,8 @@ export const useWorkspaceStore = create((set, get) => ({
     }
   },
 
+  selectConversation: (convId) => set({ activeConversationId: convId, highlightedCitation: null }),
+
   newConversation: (docId = null) => {
     const targetDocId = docId || get().activeDocumentId;
     if (!targetDocId) return;
