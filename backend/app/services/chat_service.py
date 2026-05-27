@@ -72,7 +72,10 @@ async def generate_chat_response(
 
     for row in results:
 
-        chunk_text = row["chunk_text"]
+        chunk_text = row.get(
+            "expanded_chunk_text",
+            row["chunk_text"]
+        )
         page_number = row["page_number"]
         section_title = row["section_title"]
         filename = row["filename"]

@@ -4,6 +4,44 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.services.embedding_service import generate_embedding
 from app.services.reranker_service import rerank_chunks
 
+# NEIGHBOR CHUNK FETCHER
+
+async def fetch_neighbor_chunks(
+    document_id,
+    chunk_index,
+    db
+):
+
+    sql_query = text(
+        """
+        SELECT
+            chunk_text,
+            chunk_index
+
+        FROM document_chunks
+
+        WHERE document_id = CAST(:document_id AS uuid)
+
+        AND chunk_index BETWEEN :start_idx AND :end_idx
+
+        ORDER BY chunk_index ASC
+        """
+    )
+
+    result = await db.execute(
+        sql_query,
+        {
+            "document_id": str(document_id),
+            "start_idx": chunk_index - 1,
+            "end_idx": chunk_index + 1
+        }
+    )
+
+    rows = result.fetchall()
+
+    return rows
+
+# MAIN RETRIEVAL FUNCTION
 
 async def retrieve_similar_chunks(
     query: str,
@@ -11,9 +49,12 @@ async def retrieve_similar_chunks(
     db: AsyncSession,
     limit: int = 20
 ):
-    
+
+    # Prevent empty queries
     if not document_ids:
         return []
+
+    # QUERY EXPANSION
 
     expanded_query = query
 
@@ -47,6 +88,8 @@ EXPANDED QUERY:
 =========================
     """)
 
+    # GENERATE QUERY EMBEDDING
+
     query_embedding = generate_embedding(
         expanded_query
     )
@@ -56,6 +99,8 @@ EXPANDED QUERY:
     sql_query = text(
         """
         SELECT
+            dc.document_id,
+            dc.chunk_index,
             dc.chunk_text,
             dc.page_number,
             dc.section_title,
@@ -112,20 +157,28 @@ EXPANDED QUERY:
     for row in rows:
 
         formatted_rows.append({
-            "chunk_text": row[0],
-            "page_number": row[1],
-            "section_title": row[2],
-            "filename": row[3],
+
+            "document_id": row[0],
+
+            "chunk_index": row[1],
+
+            "chunk_text": row[2],
+
+            "page_number": row[3],
+
+            "section_title": row[4],
+
+            "filename": row[5],
 
             "distance": (
-                float(row[4])
-                if row[4] is not None
+                float(row[6])
+                if row[6] is not None
                 else None
             ),
 
             "keyword_rank": (
-                float(row[5])
-                if row[5] is not None
+                float(row[7])
+                if row[7] is not None
                 else 0.0
             )
         })
@@ -230,6 +283,29 @@ FINAL UNIQUE CHUNKS:
 
     final_rows = reranked_rows[:5]
 
+    # NEIGHBOR CHUNK EXPANSION
+
+    expanded_rows = []
+
+    for row in final_rows:
+
+        neighbor_rows = await fetch_neighbor_chunks(
+            document_id=row["document_id"],
+            chunk_index=row["chunk_index"],
+            db=db
+        )
+
+        merged_text = "\n\n".join(
+            neighbor[0]
+            for neighbor in neighbor_rows
+        )
+
+        row["expanded_chunk_text"] = merged_text
+
+        expanded_rows.append(row)
+
+    final_rows = expanded_rows
+
     print("\n===== RERANKED RESULTS =====\n")
 
     for row in final_rows:
@@ -246,6 +322,10 @@ TOP CHUNK:
 {row['chunk_text'][:300]}
         """)
 
-        print("\n=========================\n")
+        print("\n===== EXPANDED CHUNK =====\n")
+
+        print(row["expanded_chunk_text"][:1000])
+
+        print("\n==========================\n")
 
     return final_rows
