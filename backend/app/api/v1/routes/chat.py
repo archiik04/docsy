@@ -24,7 +24,7 @@ async def ask_question(
 
         answer, chunks = await generate_chat_response(
             question=request_data.question,
-            document_id=request_data.document_id,
+            document_ids=request_data.document_ids,
             db=db
         )
 

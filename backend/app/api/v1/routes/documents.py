@@ -176,6 +176,7 @@ async def list_documents(
             "file_size": doc.file_size,
             "created_at": doc.created_at.isoformat(),
             "processing_status": doc.processing_status,
+            "extracted_text": doc.extracted_text,
         }
         for doc in documents
     ]

@@ -8,26 +8,27 @@ import { AmbientBackground } from '../../components/ui/AmbientBackground';
 
 export function WorkspacePage() {
   const { fetchDocuments, activeDocumentId, documents, showPreview } = useWorkspaceStore();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Fetch documents for the user on mount
   useEffect(() => {
     fetchDocuments();
   }, [fetchDocuments]);
 
-  // Find the selected document object
+  // Find the selected document object for preview
   const selectedDoc = documents.find((doc) => doc.id === activeDocumentId) || null;
 
   return (
     <div className="dashboard-container-premium">
       <AmbientBackground />
       <Sidebar 
-        isOpen={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+        isCollapsed={isSidebarCollapsed} 
+        setIsCollapsed={setIsSidebarCollapsed} 
       />
       
       <ChatWorkspace 
-        onMenuToggle={() => setSidebarOpen((prev) => !prev)} 
+        onMenuToggle={() => setIsSidebarCollapsed((prev) => !prev)} 
+        isSidebarCollapsed={isSidebarCollapsed}
       />
       
       <AnimatePresence>

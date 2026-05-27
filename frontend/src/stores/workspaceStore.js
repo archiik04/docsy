@@ -3,8 +3,9 @@ import { api } from '../lib/api';
 
 export const useWorkspaceStore = create((set, get) => ({
   documents: [],
-  activeDocumentId: null,
-  conversationsByDoc: {}, // { [docId]: [ { id, title, messages: [] } ] }
+  selectedDocumentIds: [], // Multiple selected PDFs for querying
+  activeDocumentId: null, // Single active PDF for visual previewing
+  conversations: [], // Flat list of conversations: [ { id, title, messages: [] } ]
   activeConversationId: null,
   chatInput: '',
   isTyping: false,
@@ -15,20 +16,32 @@ export const useWorkspaceStore = create((set, get) => ({
   error: null,
 
   setChatInput: (chatInput) => set({ chatInput }),
+  
   setHighlightedCitation: (highlightedCitation) => {
     set({ highlightedCitation });
     if (highlightedCitation) {
-      set({ showPreview: true });
+      // Find the document corresponding to the citation's filename
+      const state = get();
+      const targetDoc = state.documents.find(
+        (d) => d.filename === highlightedCitation.filename || d.name === highlightedCitation.filename
+      );
+      if (targetDoc) {
+        set({ activeDocumentId: targetDoc.id, showPreview: true });
+      } else {
+        set({ showPreview: true });
+      }
     }
   },
+  
   togglePreview: () => set((state) => ({ showPreview: !state.showPreview })),
   setShowPreview: (showPreview) => set({ showPreview }),
 
   resetStore: () => {
     set({
       documents: [],
+      selectedDocumentIds: [],
       activeDocumentId: null,
-      conversationsByDoc: {},
+      conversations: [],
       activeConversationId: null,
       chatInput: '',
       isTyping: false,
@@ -49,6 +62,7 @@ export const useWorkspaceStore = create((set, get) => ({
       const mappedDocs = docs.map(doc => ({
         id: doc.id,
         name: doc.original_filename,
+        filename: doc.filename, // Unique backend filename for citation mapping
         size: doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : 'Unknown',
         uploadedAt: doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'Just now',
         extracted_text: doc.extracted_text || '',
@@ -72,54 +86,68 @@ export const useWorkspaceStore = create((set, get) => ({
       }));
 
       set({ documents: mappedDocs });
+
+      // Automatically select all documents for querying on first load if nothing was selected
+      set((state) => {
+        if (state.selectedDocumentIds.length === 0 && mappedDocs.length > 0) {
+          return { selectedDocumentIds: mappedDocs.map(d => d.id) };
+        }
+        return {};
+      });
+
+      // Ensure at least one conversation exists
+      if (get().conversations.length === 0) {
+        get().newConversation();
+      }
+
     } catch (err) {
       console.error('Failed to fetch documents:', err);
       set({ error: 'Failed to load documents' });
     }
   },
 
+  toggleDocumentSelection: (docId) => {
+    set((state) => {
+      const isSelected = state.selectedDocumentIds.includes(docId);
+      const nextSelected = isSelected
+        ? state.selectedDocumentIds.filter((id) => id !== docId)
+        : [...state.selectedDocumentIds, docId];
+      return { selectedDocumentIds: nextSelected };
+    });
+  },
+
+  selectAllDocuments: () => {
+    const state = get();
+    set({ selectedDocumentIds: state.documents.map((d) => d.id) });
+  },
+
+  clearAllSelection: () => {
+    set({ selectedDocumentIds: [] });
+  },
+
   selectDocument: (docId) => {
     const state = get();
     const doc = state.documents.find(d => d.id === docId);
     if (!doc) return;
-
-    set({ activeDocumentId: docId, highlightedCitation: null });
-
-    // Initialize or select conversation for this document
-    const docConvs = state.conversationsByDoc[docId] || [];
-    if (docConvs.length > 0) {
-      set({ activeConversationId: docConvs[0].id });
-    } else {
-      get().newConversation(docId);
-    }
+    set({ activeDocumentId: docId, highlightedCitation: null, showPreview: true });
   },
 
   selectConversation: (convId) => set({ activeConversationId: convId, highlightedCitation: null }),
 
-  newConversation: (docId = null) => {
-    const targetDocId = docId || get().activeDocumentId;
-    if (!targetDocId) return;
-
-    const doc = get().documents.find(d => d.id === targetDocId);
-    const docName = doc ? doc.name : 'Manuscript';
-
+  newConversation: () => {
+    const nextIndex = get().conversations.length + 1;
     const newConv = {
       id: `conv-${Date.now()}`,
-      title: `Discussion: ${docName}`,
-      docId: targetDocId,
+      title: `Discussion Thread ${nextIndex}`,
       messages: [],
     };
 
-    set((state) => {
-      const updatedConvs = { ...state.conversationsByDoc };
-      updatedConvs[targetDocId] = [newConv, ...(updatedConvs[targetDocId] || [])];
-      return {
-        conversationsByDoc: updatedConvs,
-        activeConversationId: newConv.id,
-        chatInput: '',
-        highlightedCitation: null,
-      };
-    });
+    set((state) => ({
+      conversations: [newConv, ...state.conversations],
+      activeConversationId: newConv.id,
+      chatInput: '',
+      highlightedCitation: null,
+    }));
   },
 
   deleteDocument: async (docId) => {
@@ -127,82 +155,83 @@ export const useWorkspaceStore = create((set, get) => ({
       await api.delete(`/api/v1/documents/${docId}`);
       
       set((state) => {
-        const updatedConvs = { ...state.conversationsByDoc };
-        delete updatedConvs[docId];
-
         const nextDocs = state.documents.filter(d => d.id !== docId);
+        const nextSelected = state.selectedDocumentIds.filter(id => id !== docId);
+        
         let nextActiveId = state.activeDocumentId;
-        let nextActiveConvId = state.activeConversationId;
-
         if (state.activeDocumentId === docId) {
-          if (nextDocs.length > 0) {
-            nextActiveId = nextDocs[0].id;
-            const docConvs = updatedConvs[nextActiveId] || [];
-            nextActiveConvId = docConvs.length > 0 ? docConvs[0].id : null;
-          } else {
-            nextActiveId = null;
-            nextActiveConvId = null;
-          }
+          nextActiveId = nextDocs.length > 0 ? nextDocs[0].id : null;
         }
 
         return {
           documents: nextDocs,
+          selectedDocumentIds: nextSelected,
           activeDocumentId: nextActiveId,
-          activeConversationId: nextActiveConvId,
-          conversationsByDoc: updatedConvs,
           highlightedCitation: null,
         };
       });
-
-      // If there's a new active doc without conversations, initialize one
-      const activeId = get().activeDocumentId;
-      if (activeId && (!get().conversationsByDoc[activeId] || get().conversationsByDoc[activeId].length === 0)) {
-        get().newConversation(activeId);
-      }
     } catch (err) {
       console.error('Failed to delete document:', err);
     }
   },
 
-  uploadDocument: async (file) => {
+  uploadDocuments: async (files) => {
+    if (!files || files.length === 0) return;
+    
     set({ isUploading: true, uploadProgress: 0 });
+    const totalFiles = files.length;
+    let completedCount = 0;
 
-    // Progress simulation
-    const interval = setInterval(() => {
-      set((state) => {
-        if (state.uploadProgress >= 90) {
-          clearInterval(interval);
-          return {};
-        }
-        return { uploadProgress: state.uploadProgress + 15 };
-      });
-    }, 100);
+    const uploadedDocIds = [];
 
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const result = await api.post('/api/v1/documents/upload', formData);
-      clearInterval(interval);
-      set({ uploadProgress: 100 });
-
-      // Refresh doc list
-      await get().fetchDocuments();
-
-      // Select new document
-      const newDocId = result.document_id;
-      if (newDocId) {
-        get().selectDocument(newDocId);
+    for (const file of Array.from(files)) {
+      // Prevent duplicate uploads if a file with same name and size is already uploaded
+      const isDuplicate = get().documents.some(
+        (d) => d.name === file.name && d.size === `${(file.size / 1024).toFixed(1)} KB`
+      );
+      if (isDuplicate) {
+        console.log(`Skipping duplicate file: ${file.name}`);
+        completedCount++;
+        set({ uploadProgress: Math.round((completedCount / totalFiles) * 100) });
+        continue;
       }
 
+      try {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const result = await api.post('/api/v1/documents/upload', formData);
+        if (result.document_id) {
+          uploadedDocIds.push(result.document_id);
+        }
+      } catch (err) {
+        console.error(`Upload failed for ${file.name}:`, err);
+      } finally {
+        completedCount++;
+        set({ uploadProgress: Math.round((completedCount / totalFiles) * 100) });
+      }
+    }
+
+    try {
+      // Refresh document registry
+      await get().fetchDocuments();
+
+      if (uploadedDocIds.length > 0) {
+        // Auto-select the newly uploaded documents
+        set((state) => {
+          const nextSelected = [...new Set([...state.selectedDocumentIds, ...uploadedDocIds])];
+          return {
+            selectedDocumentIds: nextSelected,
+            activeDocumentId: uploadedDocIds[uploadedDocIds.length - 1], // Open preview of last uploaded doc
+          };
+        });
+      }
+    } catch (err) {
+      console.error('Failed updating workspace after upload:', err);
+    } finally {
       setTimeout(() => {
         set({ isUploading: false, uploadProgress: 0 });
       }, 500);
-    } catch (err) {
-      clearInterval(interval);
-      set({ isUploading: false, uploadProgress: 0 });
-      console.error('Upload failed:', err);
-      alert('Upload failed: ' + (err.message || 'Check connection'));
     }
   },
 
@@ -210,9 +239,24 @@ export const useWorkspaceStore = create((set, get) => ({
     const input = text || get().chatInput;
     if (!input.trim()) return;
 
-    const activeDocId = get().activeDocumentId;
-    const activeConvId = get().activeConversationId;
-    if (!activeDocId || !activeConvId) return;
+    let activeConvId = get().activeConversationId;
+    
+    // Auto-create conversation if none active
+    if (!activeConvId) {
+      const nextIndex = get().conversations.length + 1;
+      activeConvId = `conv-${Date.now()}`;
+      const newConv = {
+        id: activeConvId,
+        title: input.slice(0, 30) + (input.length > 30 ? '...' : ''),
+        messages: [],
+      };
+      set((state) => ({
+        conversations: [newConv, ...state.conversations],
+        activeConversationId: activeConvId,
+      }));
+    }
+
+    const selectedDocumentIds = get().selectedDocumentIds;
 
     const userMessage = {
       id: `msg-${Date.now()}-user`,
@@ -220,21 +264,18 @@ export const useWorkspaceStore = create((set, get) => ({
       text: input,
     };
 
-    // Add user message to state
+    // Append user message
     set((state) => {
-      const docConvs = state.conversationsByDoc[activeDocId] || [];
-      const updatedConvs = docConvs.map((c) => {
+      const updatedConvs = state.conversations.map((c) => {
         if (c.id === activeConvId) {
-          return { ...c, messages: [...c.messages, userMessage] };
+          const updatedTitle = c.messages.length === 0 ? (input.slice(0, 30) + (input.length > 30 ? '...' : '')) : c.title;
+          return { ...c, title: updatedTitle, messages: [...c.messages, userMessage] };
         }
         return c;
       });
 
       return {
-        conversationsByDoc: {
-          ...state.conversationsByDoc,
-          [activeDocId]: updatedConvs,
-        },
+        conversations: updatedConvs,
         chatInput: '',
         isTyping: true,
       };
@@ -243,7 +284,7 @@ export const useWorkspaceStore = create((set, get) => ({
     try {
       const response = await api.post('/api/v1/chat/ask', {
         question: input,
-        document_id: activeDocId,
+        document_ids: selectedDocumentIds,
       });
 
       const botMessage = {
@@ -254,8 +295,7 @@ export const useWorkspaceStore = create((set, get) => ({
       };
 
       set((state) => {
-        const docConvs = state.conversationsByDoc[activeDocId] || [];
-        const updatedConvs = docConvs.map((c) => {
+        const updatedConvs = state.conversations.map((c) => {
           if (c.id === activeConvId) {
             return { ...c, messages: [...c.messages, botMessage] };
           }
@@ -263,10 +303,7 @@ export const useWorkspaceStore = create((set, get) => ({
         });
 
         return {
-          conversationsByDoc: {
-            ...state.conversationsByDoc,
-            [activeDocId]: updatedConvs,
-          },
+          conversations: updatedConvs,
           isTyping: false,
         };
       });
@@ -280,8 +317,7 @@ export const useWorkspaceStore = create((set, get) => ({
       };
 
       set((state) => {
-        const docConvs = state.conversationsByDoc[activeDocId] || [];
-        const updatedConvs = docConvs.map((c) => {
+        const updatedConvs = state.conversations.map((c) => {
           if (c.id === activeConvId) {
             return { ...c, messages: [...c.messages, errorMessage] };
           }
@@ -289,10 +325,7 @@ export const useWorkspaceStore = create((set, get) => ({
         });
 
         return {
-          conversationsByDoc: {
-            ...state.conversationsByDoc,
-            [activeDocId]: updatedConvs,
-          },
+          conversations: updatedConvs,
           isTyping: false,
         };
       });

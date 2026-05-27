@@ -15,14 +15,14 @@ client = AsyncOpenAI(
 
 async def generate_chat_response(
     question: str,
-    document_id: str,
+    document_ids: list[str],
     db
 ):
 
     # RETRIEVE CHUNKS
     results = await retrieve_similar_chunks(
         query=question,
-        document_id=document_id,
+        document_ids=document_ids,
         db=db
     )
 

@@ -32,8 +32,9 @@ export function ChatWorkspace({ onMenuToggle }) {
   const { user } = useAuthStore();
   const {
     documents,
+    selectedDocumentIds,
     activeDocumentId,
-    conversationsByDoc,
+    conversations,
     activeConversationId,
     chatInput,
     isTyping,
@@ -41,8 +42,9 @@ export function ChatWorkspace({ onMenuToggle }) {
     showPreview,
     setChatInput,
     sendMessage,
-    uploadDocument,
+    uploadDocuments,
     selectDocument,
+    toggleDocumentSelection,
     setHighlightedCitation,
     togglePreview,
     newConversation
@@ -51,43 +53,26 @@ export function ChatWorkspace({ onMenuToggle }) {
   const messagesEndRef = useRef(null);
   const textInputRef = useRef(null);
   const fileInputRef = useRef(null);
-  const pickerRef = useRef(null);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [showDocPicker, setShowDocPicker] = useState(false);
   const [streamedMessageIds, setStreamedMessageIds] = useState(new Set());
 
-  const activeDoc = documents.find(d => d.id === activeDocumentId);
-  const activeConvs = activeDocumentId ? (conversationsByDoc[activeDocumentId] || []) : [];
-  const currentConv = activeConvs.find(c => c.id === activeConversationId);
+  const currentConv = conversations.find(c => c.id === activeConversationId);
   const messages = currentConv ? currentConv.messages : [];
-  const hasMessages = activeDocumentId && messages.length > 0;
+  const hasMessages = messages.length > 0;
+  const selectedDocs = documents.filter(d => selectedDocumentIds.includes(d.id));
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages, isTyping]);
 
-  // Click outside listener to close document picker
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (pickerRef.current && !pickerRef.current.contains(event.target)) {
-        setShowDocPicker(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
   const handleSend = (e) => {
     if (e) e.preventDefault();
-    if (!chatInput.trim()) return;
+    if (!chatInput.trim() || selectedDocumentIds.length === 0) return;
     sendMessage(chatInput);
     if (textInputRef.current) {
       textInputRef.current.style.height = 'auto';
     }
-    setShowDocPicker(false);
   };
 
   const handleKeyDown = (e) => {
@@ -97,25 +82,14 @@ export function ChatWorkspace({ onMenuToggle }) {
     }
   };
 
-  const handleSuggestionClick = (promptText) => {
-    setChatInput(promptText);
-    setTimeout(() => {
-      if (textInputRef.current) {
-        textInputRef.current.focus();
-        textInputRef.current.style.height = 'auto';
-        textInputRef.current.style.height = `${Math.min(textInputRef.current.scrollHeight, 160)}px`;
-      }
-    }, 50);
-  };
-
   const handleUploadClick = () => {
     fileInputRef.current?.click();
   };
 
   const handleFileInputChange = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadDocument(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      uploadDocuments(files);
     }
   };
 
@@ -132,9 +106,12 @@ export function ChatWorkspace({ onMenuToggle }) {
   const handleDrop = (e) => {
     e.preventDefault();
     setIsDragging(false);
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type === 'application/pdf') {
-      uploadDocument(file);
+    const files = e.dataTransfer.files;
+    if (files && files.length > 0) {
+      const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
+      if (pdfFiles.length > 0) {
+        uploadDocuments(pdfFiles);
+      }
     }
   };
 
@@ -201,14 +178,12 @@ export function ChatWorkspace({ onMenuToggle }) {
   };
 
   const formatInlineStyles = (line) => {
-    // Basic regex replace for bold (**bold**) and code (`code`)
     const boldRegex = /\*\*(.*?)\*\*/g;
     const codeRegex = /`(.*?)`/g;
     
     let parts = [{ text: line, isStyled: false }];
     
     // Parse bold
-    let boldMatch;
     let newParts = [];
     for (const part of parts) {
       if (part.isStyled) {
@@ -298,55 +273,129 @@ export function ChatWorkspace({ onMenuToggle }) {
             exit={{ opacity: 0 }}
           >
             <Upload size={48} className="mb-4 animate-bounce text-cyan" />
-            <h3 className="text-xl font-medium text-white mb-2">Drop PDF Manuscript Here</h3>
-            <p className="text-sm text-cyan/70">Docsy will ingest and index the document instantly.</p>
+            <h3 className="text-xl font-medium text-white mb-2">Drop PDF Manuscripts Here</h3>
+            <p className="text-sm text-cyan/70">Docsy will ingest and index all files simultaneously.</p>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Header */}
       <header className="workspace-header-premium" style={{ background: hasMessages ? undefined : 'transparent', borderBottom: hasMessages ? undefined : 'none' }}>
-        <div className="header-left">
+        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', minWidth: 0 }}>
           <button className="menu-toggle-btn" onClick={onMenuToggle} title="Toggle navigation">
             <Menu size={16} />
           </button>
-          {hasMessages && activeDoc && (
-            <div className="doc-pill-glow">
-              <span className="dot-glow" />
-              <span className="doc-name-text">{activeDoc.name}</span>
-            </div>
-          )}
-        </div>
-        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          {activeDocumentId && (
-            <>
-              <button 
-                type="button"
-                className="pill-button-glow-sm" 
-                onClick={() => newConversation()}
-                title="Start a new chat thread for this document"
-              >
-                <Plus size={12} />
-                <span>New Chat</span>
-              </button>
-              
-              <button 
-                type="button"
-                className={`pill-button ${showPreview ? 'active' : ''}`}
+          
+          {/* Selected Document Chips */}
+          <div className="selected-docs-header-tray" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', minWidth: 0 }}>
+            {selectedDocs.map((doc) => (
+              <div 
+                key={doc.id} 
+                className="doc-pill-glow" 
                 style={{ 
-                  padding: '6px 14px', 
-                  fontSize: '11px', 
-                  height: '28px',
-                  background: showPreview ? 'rgba(255,255,255,0.1)' : 'rgba(10, 11, 16, 0.45)',
-                  borderColor: showPreview ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.22)'
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '6px', 
+                  padding: '4px 10px', 
+                  borderRadius: '16px',
+                  background: 'rgba(77, 184, 200, 0.08)',
+                  border: '1px solid rgba(77, 184, 200, 0.22)',
+                  fontSize: '11px',
+                  maxHeight: '26px'
                 }}
-                onClick={togglePreview}
-                title={showPreview ? "Hide PDF preview panel" : "Show PDF preview panel"}
               >
-                <FileText size={11} />
-                <span>{showPreview ? 'Hide PDF' : 'Show PDF'}</span>
-              </button>
-            </>
+                <span className="dot-glow" style={{ background: '#7dd4e0', boxShadow: '0 0 8px rgba(125, 212, 224, 0.6)' }} />
+                <span 
+                  className="doc-name-text" 
+                  style={{ 
+                    maxWidth: '120px', 
+                    overflow: 'hidden', 
+                    textOverflow: 'ellipsis', 
+                    whiteSpace: 'nowrap',
+                    cursor: 'pointer' 
+                  }}
+                  onClick={() => selectDocument(doc.id)}
+                  title={`Click to preview ${doc.name}`}
+                >
+                  {doc.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => toggleDocumentSelection(doc.id)}
+                  style={{
+                    background: 'transparent',
+                    border: 'none',
+                    color: 'rgba(255, 255, 255, 0.4)',
+                    cursor: 'pointer',
+                    fontSize: '11px',
+                    lineHeight: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0 2px',
+                    marginLeft: '2px',
+                    fontWeight: 600
+                  }}
+                  className="hover:text-white"
+                  title="Remove from query selection"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+            
+            {selectedDocs.length === 0 && (
+              <div 
+                style={{ 
+                  fontSize: '11px', 
+                  color: 'rgba(239, 68, 68, 0.85)', 
+                  fontWeight: 500, 
+                  background: 'rgba(239, 68, 68, 0.05)', 
+                  border: '1px solid rgba(239, 68, 68, 0.15)',
+                  padding: '4px 10px',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                <span className="dot-glow" style={{ background: '#ef4444', boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)' }} />
+                <span>No documents selected to query</span>
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          {conversations.length > 0 && (
+            <button 
+              type="button"
+              className="pill-button-glow-sm" 
+              onClick={() => newConversation()}
+              title="Start a new chat thread"
+            >
+              <Plus size={12} />
+              <span>New Chat</span>
+            </button>
+          )}
+          
+          {activeDocumentId && (
+            <button 
+              type="button"
+              className={`pill-button ${showPreview ? 'active' : ''}`}
+              style={{ 
+                padding: '6px 14px', 
+                fontSize: '11px', 
+                height: '28px',
+                background: showPreview ? 'rgba(255,255,255,0.1)' : 'rgba(10, 11, 16, 0.45)',
+                borderColor: showPreview ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.22)'
+              }}
+              onClick={togglePreview}
+              title={showPreview ? "Hide PDF preview panel" : "Show PDF preview panel"}
+            >
+              <FileText size={11} />
+              <span>{showPreview ? 'Hide PDF' : 'Show PDF'}</span>
+            </button>
           )}
         </div>
       </header>
@@ -389,20 +438,100 @@ export function ChatWorkspace({ onMenuToggle }) {
                     )}
                   </div>
                   
-                  {/* Clickable Grounded Citation Badges */}
+                  {/* Rich citation cards section */}
                   {msg.citations && msg.citations.length > 0 && (
-                    <div className="citations-tray">
-                      {msg.citations.map((cite, cIdx) => (
-                        <div 
-                          key={cIdx} 
-                          className="citation-badge-premium"
-                          onClick={() => setHighlightedCitation(cite)}
-                          title={`Section: ${cite.section_title || 'General'} | Page: ${cite.page_number} (Score: ${cite.distance?.toFixed(4) || 'N/A'})`}
-                        >
-                          <Info size={10} className="info-icon" />
-                          <span>Source [{cIdx + 1}]</span>
-                        </div>
-                      ))}
+                    <div className="citations-block-container" style={{ marginTop: '12px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '10px' }}>
+                      <div className="citations-section-title" style={{ fontSize: '10px', fontWeight: 600, color: 'rgba(255, 255, 255, 0.3)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                        <BookOpen size={11} />
+                        <span>SOURCES RETRIEVED ({msg.citations.length})</span>
+                      </div>
+                      
+                      <div 
+                        className="citations-scroll-row custom-scroll" 
+                        style={{ 
+                          display: 'flex', 
+                          gap: '10px', 
+                          overflowX: 'auto', 
+                          paddingBottom: '8px',
+                          width: '100%',
+                          scrollbarWidth: 'thin'
+                        }}
+                      >
+                        {msg.citations.map((cite, citeIdx) => {
+                          const matchDoc = documents.find(d => d.filename === cite.filename || d.name === cite.filename);
+                          const docDisplayName = matchDoc ? matchDoc.name : (cite.filename || 'Source Document');
+                          
+                          return (
+                            <div 
+                              key={citeIdx} 
+                              className="citation-preview-card"
+                              onClick={() => setHighlightedCitation(cite)}
+                              style={{
+                                flexShrink: 0,
+                                width: '220px',
+                                background: 'rgba(255, 255, 255, 0.02)',
+                                border: '1px solid rgba(255, 255, 255, 0.06)',
+                                borderRadius: '10px',
+                                padding: '8px 10px',
+                                cursor: 'pointer',
+                                transition: 'all 0.2s ease',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '4px',
+                                textAlign: 'left'
+                              }}
+                              title="Click to locate cited passage in PDF preview"
+                              onMouseEnter={(e) => {
+                                e.currentTarget.style.background = 'rgba(77, 184, 200, 0.04)';
+                                e.currentTarget.style.borderColor = 'rgba(77, 184, 200, 0.25)';
+                              }}
+                              onMouseLeave={(e) => {
+                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.02)';
+                                e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.06)';
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '10.5px' }}>
+                                <span 
+                                  style={{ 
+                                    fontWeight: 600, 
+                                    color: '#7dd4e0', 
+                                    overflow: 'hidden', 
+                                    textOverflow: 'ellipsis', 
+                                    whiteSpace: 'nowrap',
+                                    maxWidth: '130px'
+                                  }}
+                                >
+                                  {docDisplayName}
+                                </span>
+                                <span style={{ color: 'rgba(255, 255, 255, 0.4)', fontSize: '9px', fontWeight: 500 }}>
+                                  Page {cite.page_number}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '9.5px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                Section: {cite.section_title || 'General'}
+                              </div>
+                              {cite.chunk_text && (
+                                <p 
+                                  style={{ 
+                                    fontSize: '11px', 
+                                    color: 'rgba(255, 255, 255, 0.7)', 
+                                    lineHeight: '1.4',
+                                    margin: '2px 0 0 0',
+                                    display: '-webkit-box',
+                                    WebkitLineClamp: 2,
+                                    WebkitBoxOrient: 'vertical',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'normal'
+                                  }}
+                                >
+                                  "{cite.chunk_text}"
+                                </p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -432,19 +561,16 @@ export function ChatWorkspace({ onMenuToggle }) {
 
       {/* Chat bottom panel */}
       <div className="chat-bottom-panel-premium">
-        {/* BOTTOM FADE OVERLAY */}
         <div className="bottom-fade-overlay" />
 
-        {/* z-index: 1 CONTENT WRAPPER */}
         <div className="bottom-content-wrapper">
           <form className="chat-input-container-premium" onSubmit={handleSend}>
-            {/* PlusCircle left icon */}
             <button 
               type="button" 
               className="input-attach-plus-btn" 
               onClick={handleUploadClick}
               disabled={isUploading}
-              title="Upload PDF manuscript"
+              title="Upload PDF manuscripts"
             >
               {isUploading ? (
                 <Loader2 size={17} className="animate-spin text-cyan" />
@@ -455,6 +581,7 @@ export function ChatWorkspace({ onMenuToggle }) {
             <input 
               ref={fileInputRef}
               type="file"
+              multiple
               accept=".pdf"
               style={{ display: 'none' }}
               onChange={handleFileInputChange}
@@ -464,7 +591,7 @@ export function ChatWorkspace({ onMenuToggle }) {
               ref={textInputRef}
               rows={1}
               className="chat-textarea-premium custom-scroll"
-              placeholder={activeDoc ? `Ask about "${activeDoc.name}"...` : "Select a document from the sidebar to query..."}
+              placeholder={selectedDocumentIds.length > 0 ? `Ask about ${selectedDocumentIds.length} selected document(s)...` : "Select documents from the sidebar to query..."}
               value={chatInput}
               onChange={(e) => {
                 setChatInput(e.target.value);
@@ -472,7 +599,7 @@ export function ChatWorkspace({ onMenuToggle }) {
                 e.target.style.height = `${Math.min(e.target.scrollHeight, 160)}px`;
               }}
               onKeyDown={handleKeyDown}
-              disabled={isTyping || !activeDocumentId}
+              disabled={isTyping || selectedDocumentIds.length === 0}
             />
 
             {/* Right actions */}
@@ -481,7 +608,7 @@ export function ChatWorkspace({ onMenuToggle }) {
                 type="button" 
                 className="input-voice-btn-premium"
                 title="Voice input"
-                disabled={!activeDocumentId}
+                disabled={selectedDocumentIds.length === 0}
               >
                 <Mic size={14} />
               </button>
@@ -496,8 +623,8 @@ export function ChatWorkspace({ onMenuToggle }) {
                 <button 
                   type="submit" 
                   className="chat-send-btn-circle-premium" 
-                  disabled={!chatInput.trim() || !activeDocumentId}
-                  title="Query the archive"
+                  disabled={!chatInput.trim() || selectedDocumentIds.length === 0}
+                  title="Query the workspace"
                 >
                   <Send size={14} />
                 </button>

@@ -7,16 +7,13 @@ from app.services.reranker_service import rerank_chunks
 
 async def retrieve_similar_chunks(
     query: str,
-    document_id: str,
+    document_ids: list[str],
     db: AsyncSession,
     limit: int = 20
 ):
-
-    # Prevent empty queries
-    if not document_id:
-        return []
     
-    # QUERY EXPANSION
+    if not document_ids:
+        return []
 
     expanded_query = query
 
@@ -50,7 +47,6 @@ EXPANDED QUERY:
 =========================
     """)
 
-    # Generate embedding
     query_embedding = generate_embedding(
         expanded_query
     )
@@ -78,7 +74,7 @@ EXPANDED QUERY:
         JOIN documents d
             ON dc.document_id = d.id
 
-        WHERE dc.document_id = CAST(:document_id AS uuid)
+        WHERE dc.document_id = ANY(:document_ids)
 
         ORDER BY
             keyword_rank DESC NULLS LAST,
@@ -88,22 +84,28 @@ EXPANDED QUERY:
         """
     )
 
-    # Retrieve more candidates
+    # Retrieve more candidates initially
     db_limit = limit * 20
 
     result = await db.execute(
         sql_query,
         {
             "embedding": str(query_embedding),
-            "document_id": str(document_id),
+
+            "document_ids": [
+                str(doc_id)
+                for doc_id in document_ids
+            ],
+
             "query": expanded_query,
+
             "db_limit": db_limit
         }
     )
 
     rows = result.fetchall()
 
-    # TUPLES -> DICTS
+    # CONVERT TUPLES → DICTS
 
     formatted_rows = []
 
@@ -168,14 +170,14 @@ CHUNK:
 
         distance = row["distance"]
 
-        # Keyword overlap
+        # Keyword overlap bonus
         keyword_matches = sum(
             1
             for word in query_words
             if word in chunk_text.lower()
         )
 
-        # Hybrid score
+        # Lower score is better
         score = distance - (
             keyword_matches * 0.05
         )
@@ -187,12 +189,11 @@ CHUNK:
 
             filtered_rows.append(row)
 
-    # Sort by score
+    # SORT HYBRID SCORE
+
     filtered_rows.sort(
         key=lambda x: x["hybrid_score"]
     )
-
-    # REMOVE DUPLICATES
 
     seen_texts = set()
 
@@ -227,7 +228,6 @@ FINAL UNIQUE CHUNKS:
         chunks=unique_rows
     )
 
-    # Final top chunks
     final_rows = reranked_rows[:5]
 
     print("\n===== RERANKED RESULTS =====\n")

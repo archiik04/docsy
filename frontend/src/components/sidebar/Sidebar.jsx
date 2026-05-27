@@ -15,35 +15,40 @@ import {
   Bookmark, 
   Settings, 
   Loader2, 
-  User 
+  User,
+  Square,
+  CheckSquare
 } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useAuthStore } from '../../stores/authStore';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 
-export function Sidebar() {
+export function Sidebar({ isCollapsed, setIsCollapsed }) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const {
     documents,
+    selectedDocumentIds,
     activeDocumentId,
-    conversationsByDoc,
+    conversations,
     activeConversationId,
     isUploading,
     uploadProgress,
     selectDocument,
     deleteDocument,
-    uploadDocument,
+    uploadDocuments,
     selectConversation,
     newConversation,
+    toggleDocumentSelection,
+    selectAllDocuments,
+    clearAllSelection,
     resetStore
   } = useWorkspaceStore();
 
-  const [isCollapsed, setIsCollapsed] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('workspace'); // workspace, insights, settings
 
-  const activeConvs = activeDocumentId ? (conversationsByDoc[activeDocumentId] || []) : [];
+  const activeConvs = conversations || [];
 
   // Filter documents and chats based on query
   const filteredDocs = documents.filter(doc => 
@@ -55,9 +60,9 @@ export function Sidebar() {
   );
 
   const handleFileUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      uploadDocument(file);
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      uploadDocuments(files);
     }
   };
 
@@ -160,12 +165,13 @@ export function Sidebar() {
                 <UploadCloud size={18} className="upload-icon" />
                 {!isCollapsed && (
                   <div className="upload-info">
-                    <span className="upload-title">Ingest PDF</span>
-                    <span className="upload-subtitle">Max 10MB</span>
+                    <span className="upload-title">Ingest PDFs</span>
+                    <span className="upload-subtitle">Max 10MB each</span>
                   </div>
                 )}
                 <input
                   type="file"
+                  multiple
                   accept=".pdf"
                   style={{ display: 'none' }}
                   onChange={handleFileUpload}
@@ -182,41 +188,135 @@ export function Sidebar() {
                 </div>
               )}
 
+              {/* Bulk actions toolbar */}
+              {!isCollapsed && documents.length > 0 && (
+                <div className="bulk-selection-toolbar" style={{ display: 'flex', gap: '8px', padding: '0 6px', marginTop: '2px', marginBottom: '4px', fontSize: '10.5px' }}>
+                  <button 
+                    type="button" 
+                    onClick={selectAllDocuments}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#64d2e1',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      padding: '2px 0',
+                      transition: 'opacity 0.2s',
+                    }}
+                    className="hover:opacity-80"
+                  >
+                    Select All
+                  </button>
+                  <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
+                  <button 
+                    type="button" 
+                    onClick={clearAllSelection}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'rgba(255,255,255,0.4)',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      padding: '2px 0',
+                      transition: 'color 0.2s',
+                    }}
+                    className="hover:text-white"
+                  >
+                    Clear All
+                  </button>
+                </div>
+              )}
+
               {/* Document List */}
               <div className="doc-list-container">
-                {filteredDocs.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className={`doc-list-item-glow ${activeDocumentId === doc.id ? 'active' : ''}`}
-                    onClick={() => selectDocument(doc.id)}
-                    title={doc.name}
-                  >
-                    <div className="doc-item-left">
-                      <div className="doc-icon-wrapper">
-                        <FileText size={13} className="doc-icon" />
+                {filteredDocs.map((doc) => {
+                  const isSelected = selectedDocumentIds.includes(doc.id);
+                  const isActivePreview = activeDocumentId === doc.id;
+                  
+                  return (
+                    <div
+                      key={doc.id}
+                      className={`doc-list-item-glow ${isActivePreview ? 'active' : ''} ${isSelected ? 'selected-query' : ''}`}
+                      style={{
+                        borderColor: isSelected ? 'rgba(77, 184, 200, 0.25)' : undefined,
+                        background: isSelected ? 'rgba(77, 184, 200, 0.03)' : undefined,
+                      }}
+                      title={doc.name}
+                    >
+                      <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', overflow: 'hidden' }}>
+                        {/* Custom Checkbox Toggle for Querying */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleDocumentSelection(doc.id);
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '2px',
+                            color: isSelected ? '#64d2e1' : 'rgba(255, 255, 255, 0.25)',
+                            transition: 'color 0.2s ease',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexShrink: 0,
+                          }}
+                          title={isSelected ? "Deselect from querying" : "Select for querying"}
+                        >
+                          {isSelected ? (
+                            <CheckSquare size={15} />
+                          ) : (
+                            <Square size={15} />
+                          )}
+                        </button>
+
+                        {/* Interactive Area to Open Preview Panel */}
+                        <div 
+                          className="doc-info-clickable-area"
+                          onClick={() => selectDocument(doc.id)}
+                          style={{ 
+                            flex: 1, 
+                            display: 'flex', 
+                            gap: '6px', 
+                            alignItems: 'center', 
+                            minWidth: 0, 
+                            cursor: 'pointer',
+                            height: '100%' 
+                          }}
+                          title="Click to preview content"
+                        >
+                          <div className="doc-icon-wrapper" style={{ flexShrink: 0 }}>
+                            <FileText size={13} className="doc-icon" />
+                          </div>
+                          {!isCollapsed && (
+                            <div className="doc-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
+                              <span className="doc-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: isSelected ? 500 : 400 }}>
+                                {doc.name}
+                              </span>
+                              <span className="doc-size">{doc.size}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {!isCollapsed && (
-                        <div className="doc-info">
-                          <span className="doc-name">{doc.name}</span>
-                          <span className="doc-size">{doc.size}</span>
-                        </div>
+                        <button
+                          className="doc-delete-btn"
+                          style={{ flexShrink: 0, marginLeft: '4px' }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Remove ${doc.name} from your archive?`)) {
+                              deleteDocument(doc.id);
+                            }
+                          }}
+                        >
+                          <Trash2 size={12} />
+                        </button>
                       )}
                     </div>
-                    {!isCollapsed && (
-                      <button
-                        className="doc-delete-btn"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (confirm(`Remove ${doc.name} from your archive?`)) {
-                            deleteDocument(doc.id);
-                          }
-                        }}
-                      >
-                        <Trash2 size={12} />
-                      </button>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
                 {filteredDocs.length === 0 && !isCollapsed && (
                   <div className="empty-section-text">No manuscripts</div>
                 )}
@@ -224,45 +324,43 @@ export function Sidebar() {
             </div>
 
             {/* Discussions Section */}
-            {activeDocumentId && (
-              <div className="sidebar-section">
-                <div className="section-header-row">
-                  <label className="sidebar-section-title">
-                    {!isCollapsed ? "Discussions" : "Chats"}
-                  </label>
-                  {!isCollapsed && (
-                    <button 
-                      className="new-chat-btn"
-                      onClick={() => newConversation(activeDocumentId)}
-                      title="New discussion thread"
-                    >
-                      <Plus size={13} />
-                    </button>
-                  )}
-                </div>
-
-                <div className="chat-list-container">
-                  {filteredConvs.map((conv) => (
-                    <div
-                      key={conv.id}
-                      className={`chat-list-item-glow ${activeConversationId === conv.id ? 'active' : ''}`}
-                      onClick={() => selectConversation(conv.id)}
-                      title={conv.title}
-                    >
-                      <div className="doc-item-left">
-                        <div className="doc-icon-wrapper">
-                          <MessageSquare size={12} className="chat-icon" />
-                        </div>
-                        {!isCollapsed && <span className="doc-name">{conv.title}</span>}
-                      </div>
-                    </div>
-                  ))}
-                  {filteredConvs.length === 0 && !isCollapsed && (
-                    <div className="empty-section-text">No active threads</div>
-                  )}
-                </div>
+            <div className="sidebar-section">
+              <div className="section-header-row">
+                <label className="sidebar-section-title">
+                  {!isCollapsed ? "Discussions" : "Chats"}
+                </label>
+                {!isCollapsed && (
+                  <button 
+                    className="new-chat-btn"
+                    onClick={() => newConversation()}
+                    title="New discussion thread"
+                  >
+                    <Plus size={13} />
+                  </button>
+                )}
               </div>
-            )}
+
+              <div className="chat-list-container">
+                {filteredConvs.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={`chat-list-item-glow ${activeConversationId === conv.id ? 'active' : ''}`}
+                    onClick={() => selectConversation(conv.id)}
+                    title={conv.title}
+                  >
+                    <div className="doc-item-left">
+                      <div className="doc-icon-wrapper">
+                        <MessageSquare size={12} className="chat-icon" />
+                      </div>
+                      {!isCollapsed && <span className="doc-name">{conv.title}</span>}
+                    </div>
+                  </div>
+                ))}
+                {filteredConvs.length === 0 && !isCollapsed && (
+                  <div className="empty-section-text">No active threads</div>
+                )}
+              </div>
+            </div>
           </>
         )}
       </div>
