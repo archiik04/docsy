@@ -45,12 +45,24 @@ async def generate_chat_response(
 
     print(f"\nQUESTION WORD MATCHES: {matches}\n")
 
-    if matches < 2:
-
-        return (
-            "The uploaded document does not contain enough information to answer this question.",
-            results
+    broad_query_words = [
+    "examples",
+    "summary",
+    "summarize",
+    "workflow",
+    "discussed",
+    "topics"
+    ]
+    
+    is_broad_query = any(
+        word in question.lower()
+        for word in broad_query_words
         )
+    if matches < 2 and not is_broad_query:
+        return (
+        "The uploaded document does not contain enough information to answer this question.",
+        results
+    )
 
     # LIMIT FINAL CONTEXT
     results = results[:4]

@@ -15,11 +15,48 @@ async def retrieve_similar_chunks(
     # Prevent empty queries
     if not document_id:
         return []
+    
+    # QUERY EXPANSION
 
-    # Generate embedding for user query
-    query_embedding = generate_embedding(query)
+    expanded_query = query
 
-    # Hybrid Retrieval SQL
+    if "examples" in query.lower():
+        expanded_query += (
+            " EXAMPLE example sample illustration"
+        )
+
+    if "workflow" in query.lower():
+        expanded_query += (
+            " steps process algorithm iterations"
+        )
+
+    if "limitations" in query.lower():
+        expanded_query += (
+            " drawbacks disadvantages problems"
+        )
+
+    if "definition" in query.lower():
+        expanded_query += (
+            " meaning explanation"
+        )
+
+    print(f"""
+=========================
+ORIGINAL QUERY:
+{query}
+
+EXPANDED QUERY:
+{expanded_query}
+=========================
+    """)
+
+    # Generate embedding
+    query_embedding = generate_embedding(
+        expanded_query
+    )
+
+    # HYBRID SQL RETRIEVAL
+
     sql_query = text(
         """
         SELECT
@@ -27,7 +64,10 @@ async def retrieve_similar_chunks(
             dc.page_number,
             dc.section_title,
             d.original_filename,
-            dc.embedding <=> CAST(:embedding AS vector) AS distance,
+
+            dc.embedding <=> CAST(:embedding AS vector)
+                AS distance,
+
             ts_rank(
                 dc.fts,
                 plainto_tsquery('english', :query)
@@ -48,7 +88,7 @@ async def retrieve_similar_chunks(
         """
     )
 
-    # Fetch more candidates initially
+    # Retrieve more candidates
     db_limit = limit * 20
 
     result = await db.execute(
@@ -56,14 +96,15 @@ async def retrieve_similar_chunks(
         {
             "embedding": str(query_embedding),
             "document_id": str(document_id),
-            "query": query,
+            "query": expanded_query,
             "db_limit": db_limit
         }
     )
 
     rows = result.fetchall()
 
-    # Convert tuples -> dictionaries
+    # TUPLES -> DICTS
+
     formatted_rows = []
 
     for row in rows:
@@ -73,13 +114,24 @@ async def retrieve_similar_chunks(
             "page_number": row[1],
             "section_title": row[2],
             "filename": row[3],
-            "distance": float(row[4]) if row[4] is not None else None,
-            "keyword_rank": float(row[5]) if row[5] is not None else 0.0
+
+            "distance": (
+                float(row[4])
+                if row[4] is not None
+                else None
+            ),
+
+            "keyword_rank": (
+                float(row[5])
+                if row[5] is not None
+                else 0.0
+            )
         })
 
     rows = formatted_rows
 
-    # DEBUG LOGS
+    # DEBUG LOGGING
+
     print("\n===== HYBRID RETRIEVAL DEBUG =====\n")
 
     if not rows:
@@ -91,8 +143,12 @@ async def retrieve_similar_chunks(
 FILE: {row['filename']}
 PAGE: {row['page_number']}
 SECTION: {row['section_title']}
-SEMANTIC DISTANCE: {row['distance']}
-KEYWORD RANK: {row['keyword_rank']}
+
+SEMANTIC DISTANCE:
+{row['distance']}
+
+KEYWORD RANK:
+{row['keyword_rank']}
 
 CHUNK:
 {row['chunk_text'][:400]}
@@ -100,56 +156,72 @@ CHUNK:
 
         print("\n-------------------------\n")
 
-    # FILTERING
+    # HYBRID FILTERING
+
     filtered_rows = []
 
-    query_words = query.lower().split()
+    query_words = expanded_query.lower().split()
 
     for row in rows:
 
         chunk_text = row["chunk_text"]
+
         distance = row["distance"]
 
-        # Keyword overlap bonus
+        # Keyword overlap
         keyword_matches = sum(
             1
             for word in query_words
             if word in chunk_text.lower()
         )
 
-        # Lower score is better
-        score = distance - (keyword_matches * 0.05)
+        # Hybrid score
+        score = distance - (
+            keyword_matches * 0.05
+        )
 
-        # Filtering threshold
-        if score < 0.60:
+        # Broader threshold
+        if score < 0.75:
 
             row["hybrid_score"] = score
+
             filtered_rows.append(row)
 
-    # Sort by improved hybrid score
+    # Sort by score
     filtered_rows.sort(
         key=lambda x: x["hybrid_score"]
     )
 
-    # Remove duplicate chunks
+    # REMOVE DUPLICATES
+
     seen_texts = set()
+
     unique_rows = []
 
     for row in filtered_rows:
 
-        normalized = row["chunk_text"].strip()
+        normalized = (
+            row["chunk_text"]
+            .strip()
+            .lower()
+        )
 
         if normalized not in seen_texts:
 
             seen_texts.add(normalized)
+
             unique_rows.append(row)
 
         if len(unique_rows) >= limit:
             break
 
-    print(f"\nFINAL UNIQUE CHUNKS: {len(unique_rows)}\n")
+    print(f"""
+FINAL UNIQUE CHUNKS:
+{len(unique_rows)}
+    """)
 
     # RERANKING
+
     reranked_rows = rerank_chunks(
         query=query,
         chunks=unique_rows
@@ -165,7 +237,10 @@ CHUNK:
         print(f"""
 FILE: {row['filename']}
 PAGE: {row['page_number']}
-RERANK SCORE: {row['rerank_score']}
+SECTION: {row['section_title']}
+
+RERANK SCORE:
+{row['rerank_score']}
 
 TOP CHUNK:
 {row['chunk_text'][:300]}
