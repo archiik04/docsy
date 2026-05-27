@@ -33,12 +33,13 @@ async def ask_question(
         for chunk in chunks:
 
             citations.append({
-                "chunk_text": chunk[0],
-                "page_number": chunk[1],
-                "section_title": chunk[2],
-                "filename": chunk[3],
-                "distance": float(chunk[4]) if chunk[4] is not None else None,
-                "keyword_rank": float(chunk[5]) if chunk[5] is not None else None
+                "chunk_text": chunk.get("chunk_text"),
+                "page_number": chunk.get("page_number"),
+                "section_title": chunk.get("section_title"),
+                "filename": chunk.get("filename"),
+                "distance": float(chunk["distance"]) if chunk.get("distance") is not None else None,
+                "keyword_rank": float(chunk["keyword_rank"]) if chunk.get("keyword_rank") is not None else None,
+                "rerank_score": float(chunk["rerank_score"]) if chunk.get("rerank_score") is not None else None
             })
 
         return {

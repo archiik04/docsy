@@ -9,7 +9,7 @@ from sqlalchemy import DateTime
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import TSVECTOR, UUID
 
 from pgvector.sqlalchemy import Vector
 
@@ -41,9 +41,21 @@ class DocumentChunk(Base):
         Vector(384)
     )
 
+    fts = mapped_column(
+        TSVECTOR
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime,
         default=datetime.utcnow
     )
-    page_number = Column(Integer)
-    section_title = Column(String, nullable=True)
+    page_number: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True
+    )
+
+    section_title: Mapped[str | None] = mapped_column(
+        String,
+        nullable=True,
+        default="General"
+    )

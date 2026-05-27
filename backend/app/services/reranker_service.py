@@ -4,29 +4,24 @@ reranker = CrossEncoder(
     "cross-encoder/ms-marco-MiniLM-L-6-v2"
 )
 
+def rerank_chunks(query, chunks):
 
-def rerank_chunks(query, rows):
-
-    if not rows:
+    if not chunks:
         return []
 
-    pairs = []
-
-    for row in rows:
-
-        chunk_text = row[0]
-
-        pairs.append(
-            [query, chunk_text]
-        )
+    pairs = [
+        (query, chunk["chunk_text"])
+        for chunk in chunks
+    ]
 
     scores = reranker.predict(pairs)
 
-    ranked = list(zip(rows, scores))
+    for i, score in enumerate(scores):
+        chunks[i]["rerank_score"] = float(score)
 
-    ranked.sort(
-        key=lambda x: x[1],
+    chunks.sort(
+        key=lambda x: x["rerank_score"],
         reverse=True
     )
 
-    return [item[0] for item in ranked]
+    return chunks[:5]
