@@ -258,6 +258,17 @@ export const useWorkspaceStore = create((set, get) => ({
 
     const selectedDocumentIds = get().selectedDocumentIds;
 
+    // Construct previous conversation history for context-awareness (excluding the current user question)
+    const conversationsList = get().conversations || [];
+    const targetConv = conversationsList.find((c) => c.id === activeConvId);
+    const prevMessages = targetConv ? targetConv.messages : [];
+    const history = prevMessages
+      .map((m) => ({
+        role: m.sender === 'user' ? 'user' : 'assistant',
+        content: m.text,
+      }))
+      .slice(-6); // Only send last ~6 messages (excluding current query)
+
     const userMessage = {
       id: `msg-${Date.now()}-user`,
       sender: 'user',
@@ -285,6 +296,7 @@ export const useWorkspaceStore = create((set, get) => ({
       const response = await api.post('/api/v1/chat/ask', {
         question: input,
         document_ids: selectedDocumentIds,
+        history: history,
       });
 
       const botMessage = {

@@ -16,7 +16,8 @@ client = AsyncOpenAI(
 async def generate_chat_response(
     question: str,
     document_ids: list[str],
-    db
+    history: list = [],
+    db=None
 ):
 
     # RETRIEVE CHUNKS
@@ -46,19 +47,30 @@ async def generate_chat_response(
     print(f"\nQUESTION WORD MATCHES: {matches}\n")
 
     broad_query_words = [
+
     "examples",
     "summary",
     "summarize",
     "workflow",
     "discussed",
-    "topics"
+    "topics",
+
+    "explain",
+    "describe",
+    "what is",
+    "compare",
+    "difference",
+    "differences",
+    "limitations",
+    "advantages",
+    "disadvantages"
     ]
     
     is_broad_query = any(
         word in question.lower()
         for word in broad_query_words
         )
-    if matches < 2 and not is_broad_query:
+    if matches < 1 and not is_broad_query:
         return (
         "The uploaded document does not contain enough information to answer this question.",
         results
@@ -105,6 +117,15 @@ Content:
 
     context = "\n\n".join(context_parts)
 
+    conversation_history = ""
+    for message in history[-6:]:
+        role = message.get("role", "user")
+        content = message.get("content", "")
+        conversation_history += f"""
+    {role.upper()}:
+    {content}
+  """
+
     # STRICT GROUNDED PROMPT
     prompt = f"""
 You are Docsy, a document-grounded AI assistant.
@@ -125,6 +146,9 @@ STRICT RULES:
 
 CONTEXT:
 {context}
+
+CONVERSATION HISTORY:
+{conversation_history}
 
 QUESTION:
 {question}
