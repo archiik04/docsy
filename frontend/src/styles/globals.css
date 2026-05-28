@@ -2480,17 +2480,21 @@ body {
 
 /* 5. Immersive Spaced Chat Viewport */
 .chat-workspace-premium {
-  flex-grow: 1;
+  display: flex;
+  flex-direction: row; /* Horizontal split screen layout */
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
   background: transparent;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
-  border: none;
+  position: relative;
+}
+
+.chat-main-column {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100%;
   overflow: hidden;
-  box-shadow: none;
-  position: relative;
+  min-width: 0;
 }
 
 .workspace-header-premium {
@@ -3100,25 +3104,32 @@ body {
 
 /* 7. Resizable PDF Preview Context (Floating card style) */
 .preview-panel-premium {
+  width: 460px;
+  min-width: 460px;
+  max-width: 460px;
+  flex-shrink: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   background: rgba(10, 16, 28, 0.72);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-left: 1px solid rgba(0, 255, 255, 0.15); /* Subtle cyan glow on left border */
+  box-shadow: -4px 0 20px rgba(0, 255, 255, 0.03), 0 8px 32px rgba(0, 0, 0, 0.4);
   z-index: 9;
-  transition: var(--transition-smooth);
+  box-sizing: border-box;
 }
 
 .preview-panel-premium.empty {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 420px;
+  width: 460px;
+  min-width: 460px;
+  max-width: 460px;
+  flex-shrink: 0;
+  border-left: 1px solid rgba(0, 255, 255, 0.15);
 }
 
 .empty-panel-state-premium {
@@ -3207,9 +3218,72 @@ body {
 
 /* PDF viewer area (Newsreader accents) */
 .preview-content-premium {
-  flex-grow: 1;
-  padding: 24px;
+  flex: 1;
+  padding: 18px;
   overflow-y: auto;
+}
+
+/* Premium Citation Card Styles */
+.citation-preview-card {
+  flex-shrink: 0;
+  width: 220px;
+  cursor: pointer;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+}
+
+.citation-preview-card:hover {
+  background: rgba(77, 184, 200, 0.08);
+  border-color: rgba(77, 184, 200, 0.4);
+  box-shadow: 0 0 15px rgba(77, 184, 200, 0.15);
+  transform: translateY(-2px);
+}
+
+.citation-preview-card.active {
+  background: rgba(77, 184, 200, 0.12);
+  border-color: rgba(77, 184, 200, 0.6);
+  box-shadow: 0 0 20px rgba(77, 184, 200, 0.25);
+}
+
+.citation-preview-card .citation-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #7dd4e0;
+}
+
+.citation-preview-card .citation-filename {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
+}
+
+.citation-preview-card .citation-page {
+  background: rgba(77, 184, 200, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #7dd4e0;
+}
+
+.citation-preview-card p {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.7);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
 .pdf-mock-premium {

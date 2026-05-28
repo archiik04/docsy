@@ -104,7 +104,7 @@ EXPANDED QUERY:
             dc.chunk_text,
             dc.page_number,
             dc.section_title,
-            d.original_filename,
+            d.file_path,
 
             dc.embedding <=> CAST(:embedding AS vector)
                 AS distance,
@@ -151,37 +151,34 @@ EXPANDED QUERY:
     rows = result.fetchall()
 
     # CONVERT TUPLES → DICTS
-
     formatted_rows = []
-
+    
     for row in rows:
-
+        
+        pdf_path = row[5].replace("\\", "/")
+        
         formatted_rows.append({
-
+            
             "document_id": row[0],
-
+            
             "chunk_index": row[1],
-
+            
             "chunk_text": row[2],
-
+            
             "page_number": row[3],
-
+            
             "section_title": row[4],
-
-            "filename": row[5],
-
-            "distance": (
-                float(row[6])
-                if row[6] is not None
-                else None
-            ),
-
-            "keyword_rank": (
-                float(row[7])
-                if row[7] is not None
-                else 0.0
-            )
-        })
+            
+            "file_path": row[5],
+            
+            "filename":row[5].split("/")[-1].split("\\")[-1],
+            
+            "pdf_url":f"http://127.0.0.1:8000/{pdf_path}",
+            
+            "distance":float(row[6]) if row[6] is not None else None,
+            
+            "keyword_rank":float(row[7]) if row[7] is not None else 0.0
+    })
 
     rows = formatted_rows
 

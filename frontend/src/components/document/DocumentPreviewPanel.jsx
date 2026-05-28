@@ -1,142 +1,187 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { FileText, HelpCircle, Award, Maximize2, Minimize2 } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { motion } from 'framer-motion';
+import { FileText, HelpCircle } from 'lucide-react';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
+import { API_BASE_URL } from '../../constants/api';
 
 export function DocumentPreviewPanel({ document }) {
-  const { highlightedCitation, setHighlightedCitation } = useWorkspaceStore();
-  const highlightRef = useRef(null);
-  
-  const [isFocusMode, setIsFocusMode] = useState(false);
+  const {
+    highlightedCitation,
+    setHighlightedCitation
+  } = useWorkspaceStore();
 
-  // Auto scroll to highlighted citation when it changes
+  const highlightRef = useRef(null);
+
+  // Auto scroll when citation changes
   useEffect(() => {
     if (highlightedCitation && highlightRef.current) {
-      highlightRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      highlightRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
     }
   }, [highlightedCitation]);
 
+  // Empty state
   if (!document) {
     return (
       <aside className="preview-panel-premium empty">
         <div className="empty-panel-state-premium">
-          <HelpCircle size={26} className="empty-icon animate-pulse" />
-          <span>Manuscript viewer is inactive. Please select a document to inspect.</span>
+          <HelpCircle
+            size={26}
+            className="empty-icon animate-pulse"
+          />
+          <span>
+            Manuscript viewer is inactive.
+            Please select a document to inspect.
+          </span>
         </div>
       </aside>
     );
   }
 
-  // Get cosine similarity percentage from vector distance
-  const getSimilarityPercentage = (distance) => {
-    if (distance === undefined || distance === null) return 'N/A';
-    const similarity = 1 - distance;
-    return `${(similarity * 100).toFixed(1)}%`;
-  };
+  // Calculate PDF URL: prioritize highlighted citation, then current active document
+  const pdfUrl =
+    highlightedCitation?.pdf_url ||
+    (document?.filename
+      ? `${API_BASE_URL}/uploads/${document.filename}`
+      : null);
+
+  // Active page
+  const activePage = highlightedCitation?.page_number || 1;
 
   return (
-    <motion.aside 
-      className={`preview-panel-premium ${isFocusMode ? 'focus-mode' : ''}`}
-      initial={{ width: 0, opacity: 0 }}
-      animate={{ width: isFocusMode ? '75%' : 420, opacity: 1 }}
-      exit={{ width: 0, opacity: 0 }}
-      transition={{ type: 'spring', stiffness: 220, damping: 28 }}
+    <motion.aside
+      className="preview-panel-premium"
+      initial={{
+        opacity: 0,
+        x: 50
+      }}
+      animate={{
+        opacity: 1,
+        x: 0
+      }}
+      exit={{
+        opacity: 0,
+        x: 50
+      }}
+      transition={{
+        duration: 0.25,
+        ease: 'easeOut'
+      }}
     >
-      {/* Header */}
+      {/* HEADER */}
       <div className="preview-header-premium">
         <div className="header-meta-left">
-          <FileText size={14} className="doc-icon" />
-          <span className="doc-title-text" title={document.name}>
+          <FileText
+            size={14}
+            className="doc-icon"
+          />
+          <span
+            className="doc-title-text"
+            title={document.name}
+          >
             {document.name}
           </span>
         </div>
-        
+
         <div className="header-meta-right">
           {highlightedCitation && (
-            <button 
-              className="clear-focus-btn" 
+            <button
+              className="clear-focus-btn"
               onClick={() => setHighlightedCitation(null)}
               title="Clear highlighted segment focus"
             >
               Clear focus
             </button>
           )}
-          <button 
-            className="focus-toggle-btn"
-            onClick={() => setIsFocusMode(!isFocusMode)}
-            title={isFocusMode ? "Leave focus mode" : "Enter focus mode"}
-          >
-            {isFocusMode ? <Minimize2 size={13} /> : <Maximize2 size={13} />}
-          </button>
         </div>
       </div>
 
-      {/* Preview Content */}
+      {/* CONTENT */}
       <div className="preview-content-premium custom-scroll">
         <div className="pdf-mock-premium">
-          <div className="pdf-title-container">
-            <h1 className="pdf-heading">
-              {document.previewText.heading}
-            </h1>
-            <p className="pdf-subheading">
-              {document.previewText.subheading}
-            </p>
-          </div>
-
-          <div className="pdf-divider-glow" />
-
-          {/* Interactive highlighted fragment focus */}
-          <AnimatePresence mode="wait">
-            {highlightedCitation ? (
-              <motion.div 
-                ref={highlightRef}
-                className="chunk-card-premium highlighted animate-glow-pulse"
-                key="citation"
-                initial={{ opacity: 0, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
+          {/* ACTIVE CITATION CARD */}
+          {highlightedCitation && (
+            <div
+              ref={highlightRef}
+              style={{
+                marginBottom: '18px',
+                padding: '14px',
+                borderRadius: '16px',
+                border: '1px solid rgba(0, 255, 255, 0.25)',
+                background: 'rgba(10, 16, 28, 0.65)',
+                backdropFilter: 'blur(12px)',
+                boxShadow: '0 0 20px rgba(0, 255, 255, 0.12)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  letterSpacing: '0.08em',
+                  color: 'rgba(0, 255, 255, 0.75)',
+                  marginBottom: '8px',
+                  textTransform: 'uppercase'
+                }}
               >
-                <div className="chunk-badge-row">
-                  <Award size={13} className="award-icon" />
-                  <span>ACTIVE CITED SEGMENT (Match: {getSimilarityPercentage(highlightedCitation.distance)})</span>
-                </div>
-                {highlightedCitation.page_number && (
-                  <div className="chunk-meta-row" style={{ fontSize: '11px', opacity: 0.8, marginTop: '4px', marginBottom: '8px', color: '#06b6d4', fontWeight: 500 }}>
-                    Section: {highlightedCitation.section_title || 'General'} | Page: {highlightedCitation.page_number} {highlightedCitation.filename && `| File: ${highlightedCitation.filename}`}
-                  </div>
-                )}
-                <p className="chunk-content-text">
-                  "{highlightedCitation.chunk_text}"
-                </p>
-              </motion.div>
-            ) : (
-              <motion.div 
-                className="pdf-sections-list"
-                key="outline"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
+                ACTIVE CITED SEGMENT
+              </div>
+              
+              <div
+                style={{
+                  fontSize: '12.5px',
+                  fontWeight: 500,
+                  color: '#ffffff',
+                  marginBottom: '10px'
+                }}
               >
-                {document.previewText.sections.map((section, idx) => (
-                  <div key={idx} className="chunk-card-premium">
-                    <div className="chunk-header-title">
-                      {section.title}
-                    </div>
-                    <p className="chunk-content-text">
-                      {section.content}
-                    </p>
-                  </div>
-                ))}
-                
-                {document.extracted_text && document.extracted_text.length > 1500 && (
-                  <div className="outline-truncated-hint">
-                    Manuscript is fully indexed. Remaining chunks will display dynamically when cited.
-                  </div>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
+                Section: <span style={{ color: '#6ee7ff' }}>{highlightedCitation.section_title || 'General'}</span> | Page: <span style={{ color: '#6ee7ff' }}>{highlightedCitation.page_number}</span>
+              </div>
+              
+              <div
+                style={{
+                  lineHeight: 1.6,
+                  fontSize: '13px',
+                  color: 'rgba(255, 255, 255, 0.9)'
+                }}
+              >
+                "{highlightedCitation.chunk_text}"
+              </div>
+            </div>
+          )}
 
-          <div className="pdf-divider-glow end" />
+          {/* PDF IFRAME */}
+          {pdfUrl ? (
+            <div
+              style={{
+                width: '100%',
+                height: '76vh',
+                borderRadius: '18px',
+                overflow: 'hidden',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                background: '#0a0f1d'
+              }}
+            >
+              <iframe
+                key={pdfUrl} // re-mount iframe only when switching different files
+                src={`${pdfUrl}#page=${activePage}`}
+                title="PDF Viewer"
+                width="100%"
+                height="100%"
+                style={{
+                  border: 'none',
+                  background: '#111'
+                }}
+              />
+            </div>
+          ) : (
+            <div className="empty-panel-state-premium">
+              <HelpCircle size={26} className="empty-icon animate-pulse" />
+              <span>No PDF file found for this document.</span>
+            </div>
+          )}
         </div>
       </div>
     </motion.aside>
