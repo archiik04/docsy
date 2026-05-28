@@ -21,6 +21,7 @@ async def generate_chat_response(
 ):
 
     # RETRIEVE CHUNKS
+
     results = await retrieve_similar_chunks(
         query=question,
         document_ids=document_ids,
@@ -28,58 +29,40 @@ async def generate_chat_response(
     )
 
     # NO RESULTS
+
     if not results:
         return (
             "The uploaded document does not contain enough information to answer this question.",
             []
         )
 
-    # CONFIDENCE FILTERING
-    top_chunk = results[0]["chunk_text"].lower()
+    # RERANK CONFIDENCE FILTER
 
-    question_words = question.lower().split()
-
-    matches = sum(
-        1 for word in question_words
-        if word in top_chunk
+    top_rerank_score = results[0].get(
+        "rerank_score",
+        0
     )
 
-    print(f"\nQUESTION WORD MATCHES: {matches}\n")
+    print(f"""
+TOP RERANK SCORE:
+{top_rerank_score}
+    """)
 
-    broad_query_words = [
+    # Confidence threshold
 
-    "examples",
-    "summary",
-    "summarize",
-    "workflow",
-    "discussed",
-    "topics",
+    if top_rerank_score < 1.0:
 
-    "explain",
-    "describe",
-    "what is",
-    "compare",
-    "difference",
-    "differences",
-    "limitations",
-    "advantages",
-    "disadvantages"
-    ]
-    
-    is_broad_query = any(
-        word in question.lower()
-        for word in broad_query_words
-        )
-    if matches < 1 and not is_broad_query:
         return (
-        "The uploaded document does not contain enough information to answer this question.",
-        results
-    )
+            "The uploaded document does not contain enough information to answer this question.",
+            results
+        )
 
     # LIMIT FINAL CONTEXT
+
     results = results[:4]
 
     # BUILD CONTEXT
+
     context_parts = []
 
     for row in results:
@@ -88,20 +71,32 @@ async def generate_chat_response(
             "expanded_chunk_text",
             row["chunk_text"]
         )
+
         page_number = row["page_number"]
+
         section_title = row["section_title"]
+
         filename = row["filename"]
+
         distance = row["distance"]
+
         keyword_rank = row["keyword_rank"]
+
         rerank_score = row.get("rerank_score")
 
         print(f"""
 FILE: {filename}
 SECTION: {section_title}
 PAGE: {page_number}
-SEMANTIC DISTANCE: {distance}
-KEYWORD RANK: {keyword_rank}
-RERANK SCORE: {rerank_score}
+
+SEMANTIC DISTANCE:
+{distance}
+
+KEYWORD RANK:
+{keyword_rank}
+
+RERANK SCORE:
+{rerank_score}
         """)
 
         context_parts.append(
@@ -117,31 +112,56 @@ Content:
 
     context = "\n\n".join(context_parts)
 
+    # CONVERSATION MEMORY
+
     conversation_history = ""
+
     for message in history[-6:]:
-        role = message.get("role", "user")
-        content = message.get("content", "")
+
+        role = message.get(
+            "role",
+            "user"
+        )
+
+        content = message.get(
+            "content",
+            ""
+        )
+
         conversation_history += f"""
-    {role.upper()}:
-    {content}
-  """
+{role.upper()}:
+{content}
+"""
 
     # STRICT GROUNDED PROMPT
+
     prompt = f"""
 You are Docsy, a document-grounded AI assistant.
 
 STRICT RULES:
+
 1. Answer ONLY using the provided context.
+
 2. You MAY synthesize information across retrieved chunks.
+
 3. You MAY draw conclusions that are directly supported by the retrieved context.
+
 4. NEVER use outside knowledge.
-5. NEVER invent facts not supported by the retrieved text.
-6. If the retrieved context is insufficient, say:
+
+5. NEVER invent unsupported facts.
+You MAY infer comparative limitations when directly supported by retrieved comparisons between methods.
+
+6. If the retrieved context is insufficient, say exactly:
 "The uploaded document does not contain enough information to answer this question."
+
 7. Keep answers concise and grounded.
+
 8. When multiple documents are retrieved, combine their information carefully.
+
 9. NEVER assign properties from one algorithm or document to another unless explicitly stated in the retrieved context.
-10. When comparing multiple methods, clearly distinguish which properties belong to which method based.
+
+10. When comparing multiple methods, clearly distinguish which properties belong to which method.
+
 11. Avoid subjective conclusions unless explicitly supported by the retrieved text.
 
 CONTEXT:
@@ -157,6 +177,7 @@ ANSWER:
 """
 
     # GENERATE RESPONSE
+
     response = await client.chat.completions.create(
 
         model="meta-llama/llama-3-8b-instruct",
@@ -166,7 +187,10 @@ ANSWER:
         messages=[
             {
                 "role": "system",
-                "content": "You answer questions ONLY from retrieved document context."
+                "content": (
+                    "You answer questions ONLY "
+                    "from retrieved document context."
+                )
             },
             {
                 "role": "user",
@@ -175,4 +199,7 @@ ANSWER:
         ]
     )
 
-    return response.choices[0].message.content, results
+    return (
+        response.choices[0].message.content,
+        results
+    )
