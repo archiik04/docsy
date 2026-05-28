@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FileText, 
   MessageSquare, 
   Plus, 
   UploadCloud, 
@@ -15,9 +14,7 @@ import {
   Bookmark, 
   Settings, 
   Loader2, 
-  User,
-  Square,
-  CheckSquare
+  User
 } from 'lucide-react';
 import { Logo } from '../ui/Logo';
 import { useAuthStore } from '../../stores/authStore';
@@ -27,21 +24,14 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const {
-    documents,
-    selectedDocumentIds,
-    activeDocumentId,
     conversations,
     activeConversationId,
     isUploading,
     uploadProgress,
-    selectDocument,
-    deleteDocument,
     uploadDocuments,
     selectConversation,
     newConversation,
-    toggleDocumentSelection,
-    selectAllDocuments,
-    clearAllSelection,
+    deleteConversation,
     resetStore
   } = useWorkspaceStore();
 
@@ -50,11 +40,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
 
   const activeConvs = conversations || [];
 
-  // Filter documents and chats based on query
-  const filteredDocs = documents.filter(doc => 
-    doc.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-  
+  // Filter chats based on query
   const filteredConvs = activeConvs.filter(conv => 
     conv.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -188,139 +174,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
                 </div>
               )}
 
-              {/* Bulk actions toolbar */}
-              {!isCollapsed && documents.length > 0 && (
-                <div className="bulk-selection-toolbar" style={{ display: 'flex', gap: '8px', padding: '0 6px', marginTop: '2px', marginBottom: '4px', fontSize: '10.5px' }}>
-                  <button 
-                    type="button" 
-                    onClick={selectAllDocuments}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: '#64d2e1',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      padding: '2px 0',
-                      transition: 'opacity 0.2s',
-                    }}
-                    className="hover:opacity-80"
-                  >
-                    Select All
-                  </button>
-                  <span style={{ color: 'rgba(255,255,255,0.15)' }}>|</span>
-                  <button 
-                    type="button" 
-                    onClick={clearAllSelection}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'rgba(255,255,255,0.4)',
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      padding: '2px 0',
-                      transition: 'color 0.2s',
-                    }}
-                    className="hover:text-white"
-                  >
-                    Clear All
-                  </button>
-                </div>
-              )}
 
-              {/* Document List */}
-              <div className="doc-list-container">
-                {filteredDocs.map((doc) => {
-                  const isSelected = selectedDocumentIds.includes(doc.id);
-                  const isActivePreview = activeDocumentId === doc.id;
-                  
-                  return (
-                    <div
-                      key={doc.id}
-                      className={`doc-list-item-glow ${isActivePreview ? 'active' : ''} ${isSelected ? 'selected-query' : ''}`}
-                      style={{
-                        borderColor: isSelected ? 'rgba(77, 184, 200, 0.25)' : undefined,
-                        background: isSelected ? 'rgba(77, 184, 200, 0.03)' : undefined,
-                      }}
-                      title={doc.name}
-                    >
-                      <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', overflow: 'hidden' }}>
-                        {/* Custom Checkbox Toggle for Querying */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleDocumentSelection(doc.id);
-                          }}
-                          style={{
-                            background: 'transparent',
-                            border: 'none',
-                            cursor: 'pointer',
-                            padding: '2px',
-                            color: isSelected ? '#64d2e1' : 'rgba(255, 255, 255, 0.25)',
-                            transition: 'color 0.2s ease',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                          }}
-                          title={isSelected ? "Deselect from querying" : "Select for querying"}
-                        >
-                          {isSelected ? (
-                            <CheckSquare size={15} />
-                          ) : (
-                            <Square size={15} />
-                          )}
-                        </button>
 
-                        {/* Interactive Area to Open Preview Panel */}
-                        <div 
-                          className="doc-info-clickable-area"
-                          onClick={() => selectDocument(doc.id)}
-                          style={{ 
-                            flex: 1, 
-                            display: 'flex', 
-                            gap: '6px', 
-                            alignItems: 'center', 
-                            minWidth: 0, 
-                            cursor: 'pointer',
-                            height: '100%' 
-                          }}
-                          title="Click to preview content"
-                        >
-                          <div className="doc-icon-wrapper" style={{ flexShrink: 0 }}>
-                            <FileText size={13} className="doc-icon" />
-                          </div>
-                          {!isCollapsed && (
-                            <div className="doc-info" style={{ minWidth: 0, display: 'flex', flexDirection: 'column', textAlign: 'left' }}>
-                              <span className="doc-name" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: isSelected ? 500 : 400 }}>
-                                {doc.name}
-                              </span>
-                              <span className="doc-size">{doc.size}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      {!isCollapsed && (
-                        <button
-                          className="doc-delete-btn"
-                          style={{ flexShrink: 0, marginLeft: '4px' }}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`Remove ${doc.name} from your archive?`)) {
-                              deleteDocument(doc.id);
-                            }
-                          }}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-                {filteredDocs.length === 0 && !isCollapsed && (
-                  <div className="empty-section-text">No manuscripts</div>
-                )}
-              </div>
             </div>
 
             {/* Discussions Section */}
@@ -348,12 +203,26 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
                     onClick={() => selectConversation(conv.id)}
                     title={conv.title}
                   >
-                    <div className="doc-item-left">
-                      <div className="doc-icon-wrapper">
+                    <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', overflow: 'hidden' }}>
+                      <div className="doc-icon-wrapper" style={{ flexShrink: 0 }}>
                         <MessageSquare size={12} className="chat-icon" />
                       </div>
                       {!isCollapsed && <span className="doc-name">{conv.title}</span>}
                     </div>
+                    {!isCollapsed && (
+                      <button
+                        className="chat-delete-btn"
+                        style={{ flexShrink: 0, marginLeft: '4px' }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Delete the discussion "${conv.title}"?`)) {
+                            deleteConversation(conv.id);
+                          }
+                        }}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    )}
                   </div>
                 ))}
                 {filteredConvs.length === 0 && !isCollapsed && (

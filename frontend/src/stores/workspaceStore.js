@@ -150,6 +150,21 @@ export const useWorkspaceStore = create((set, get) => ({
     }));
   },
 
+  deleteConversation: (convId) => {
+    set((state) => {
+      const nextConvs = state.conversations.filter(c => c.id !== convId);
+      let nextActiveId = state.activeConversationId;
+      if (state.activeConversationId === convId) {
+        nextActiveId = nextConvs.length > 0 ? nextConvs[0].id : null;
+      }
+      return {
+        conversations: nextConvs,
+        activeConversationId: nextActiveId,
+        highlightedCitation: null,
+      };
+    });
+  },
+
   deleteDocument: async (docId) => {
     try {
       await api.delete(`/api/v1/documents/${docId}`);
@@ -243,7 +258,6 @@ export const useWorkspaceStore = create((set, get) => ({
     
     // Auto-create conversation if none active
     if (!activeConvId) {
-      const nextIndex = get().conversations.length + 1;
       activeConvId = `conv-${Date.now()}`;
       const newConv = {
         id: activeConvId,

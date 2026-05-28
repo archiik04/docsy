@@ -2410,7 +2410,7 @@ body {
   margin-top: 2px;
 }
 
-.doc-delete-btn {
+.doc-delete-btn, .chat-delete-btn {
   background: transparent;
   border: none;
   color: var(--text-muted);
@@ -2425,11 +2425,12 @@ body {
   z-index: 10;
 }
 
-.doc-list-item-glow:hover .doc-delete-btn {
+.doc-list-item-glow:hover .doc-delete-btn,
+.chat-list-item-glow:hover .chat-delete-btn {
   opacity: 1;
 }
 
-.doc-delete-btn:hover {
+.doc-delete-btn:hover, .chat-delete-btn:hover {
   color: var(--accent-rose);
   background: rgba(244, 63, 94, 0.1);
 }

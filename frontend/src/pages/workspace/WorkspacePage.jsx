@@ -26,10 +26,7 @@ export function WorkspacePage() {
         setIsCollapsed={setIsSidebarCollapsed} 
       />
       
-      <ChatWorkspace 
-        onMenuToggle={() => setIsSidebarCollapsed((prev) => !prev)} 
-        isSidebarCollapsed={isSidebarCollapsed}
-      />
+      <ChatWorkspace />
       
       <AnimatePresence>
         {showPreview && selectedDoc && (

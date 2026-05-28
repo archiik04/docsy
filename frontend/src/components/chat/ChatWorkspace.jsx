@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Menu, Send, Sparkles, MessageSquare, Info, Upload, Loader2, Plus, FileText, PlusCircle, Mic, BookOpen, Cpu } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Send, Upload, Loader2, Plus, FileText, PlusCircle, Mic, BookOpen } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -28,7 +28,7 @@ function MessageContentStream({ text, renderMessageContent }) {
   return <>{renderMessageContent(displayedText)}</>;
 }
 
-export function ChatWorkspace({ onMenuToggle }) {
+export function ChatWorkspace() {
   const { user } = useAuthStore();
   const {
     documents,
@@ -43,8 +43,6 @@ export function ChatWorkspace({ onMenuToggle }) {
     setChatInput,
     sendMessage,
     uploadDocuments,
-    selectDocument,
-    toggleDocumentSelection,
     setHighlightedCitation,
     togglePreview,
     newConversation
@@ -60,7 +58,6 @@ export function ChatWorkspace({ onMenuToggle }) {
   const currentConv = conversations.find(c => c.id === activeConversationId);
   const messages = currentConv ? currentConv.messages : [];
   const hasMessages = messages.length > 0;
-  const selectedDocs = documents.filter(d => selectedDocumentIds.includes(d.id));
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -178,9 +175,6 @@ export function ChatWorkspace({ onMenuToggle }) {
   };
 
   const formatInlineStyles = (line) => {
-    const boldRegex = /\*\*(.*?)\*\*/g;
-    const codeRegex = /`(.*?)`/g;
-    
     let parts = [{ text: line, isStyled: false }];
     
     // Parse bold
@@ -281,90 +275,7 @@ export function ChatWorkspace({ onMenuToggle }) {
 
       {/* Header */}
       <header className="workspace-header-premium" style={{ background: hasMessages ? undefined : 'transparent', borderBottom: hasMessages ? undefined : 'none' }}>
-        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', minWidth: 0 }}>
-          <button className="menu-toggle-btn" onClick={onMenuToggle} title="Toggle navigation">
-            <Menu size={16} />
-          </button>
-          
-          {/* Selected Document Chips */}
-          <div className="selected-docs-header-tray" style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', minWidth: 0 }}>
-            {selectedDocs.map((doc) => (
-              <div 
-                key={doc.id} 
-                className="doc-pill-glow" 
-                style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '6px', 
-                  padding: '4px 10px', 
-                  borderRadius: '16px',
-                  background: 'rgba(77, 184, 200, 0.08)',
-                  border: '1px solid rgba(77, 184, 200, 0.22)',
-                  fontSize: '11px',
-                  maxHeight: '26px'
-                }}
-              >
-                <span className="dot-glow" style={{ background: '#7dd4e0', boxShadow: '0 0 8px rgba(125, 212, 224, 0.6)' }} />
-                <span 
-                  className="doc-name-text" 
-                  style={{ 
-                    maxWidth: '120px', 
-                    overflow: 'hidden', 
-                    textOverflow: 'ellipsis', 
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer' 
-                  }}
-                  onClick={() => selectDocument(doc.id)}
-                  title={`Click to preview ${doc.name}`}
-                >
-                  {doc.name}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => toggleDocumentSelection(doc.id)}
-                  style={{
-                    background: 'transparent',
-                    border: 'none',
-                    color: 'rgba(255, 255, 255, 0.4)',
-                    cursor: 'pointer',
-                    fontSize: '11px',
-                    lineHeight: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0 2px',
-                    marginLeft: '2px',
-                    fontWeight: 600
-                  }}
-                  className="hover:text-white"
-                  title="Remove from query selection"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-            
-            {selectedDocs.length === 0 && (
-              <div 
-                style={{ 
-                  fontSize: '11px', 
-                  color: 'rgba(239, 68, 68, 0.85)', 
-                  fontWeight: 500, 
-                  background: 'rgba(239, 68, 68, 0.05)', 
-                  border: '1px solid rgba(239, 68, 68, 0.15)',
-                  padding: '4px 10px',
-                  borderRadius: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
-                }}
-              >
-                <span className="dot-glow" style={{ background: '#ef4444', boxShadow: '0 0 8px rgba(239, 68, 68, 0.6)' }} />
-                <span>No documents selected to query</span>
-              </div>
-            )}
-          </div>
-        </div>
+        <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }} />
         
         <div className="header-right" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           {conversations.length > 0 && (
