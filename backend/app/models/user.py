@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import String
+from sqlalchemy import Column, String
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -18,6 +18,11 @@ class User(Base):
         String,
         unique=True,
         index=True
+    )
+
+    role = Column(
+        String,
+        default="user"
     )
 
     full_name: Mapped[str]

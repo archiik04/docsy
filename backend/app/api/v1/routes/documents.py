@@ -23,6 +23,7 @@ from app.models.document_chunk import DocumentChunk
 from app.services.text_chunker import chunk_text
 from app.services.embedding_service import generate_embedding
 from app.services.text_cleaner import clean_text
+from app.api.deps import require_admin
 
 router = APIRouter()
 
@@ -33,7 +34,7 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
 
