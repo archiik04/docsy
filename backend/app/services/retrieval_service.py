@@ -46,13 +46,14 @@ async def fetch_neighbor_chunks(
 async def retrieve_similar_chunks(
     query: str,
     document_ids: list[str],
+    mode: str,
+    user_id: str,
     db: AsyncSession,
     limit: int = 20
 ):
 
-    # Prevent empty queries
-    if not document_ids:
-        return []
+    if mode not in {"WORKSPACE", "KNOWLEDGE_BASE"}:
+        raise ValueError("Invalid retrieval mode")
 
     # QUERY EXPANSION
 
@@ -96,8 +97,37 @@ EXPANDED QUERY:
 
     # HYBRID SQL RETRIEVAL
 
-    sql_query = text(
+    # Retrieve more candidates initially
+    db_limit = limit * 20
+
+    scope_filter = """
+            d.owner_id = CAST(:user_id AS uuid)
+            AND d.scope = 'PERSONAL'
+    """
+
+    sql_params = {
+        "embedding": str(query_embedding),
+        "query": expanded_query,
+        "db_limit": db_limit
+    }
+
+    if mode == "WORKSPACE":
+        sql_params["user_id"] = str(user_id)
+        if document_ids:
+            scope_filter += """
+            AND dc.document_id = ANY(:document_ids)
+            """
+            sql_params["document_ids"] = [
+                str(doc_id)
+                for doc_id in document_ids
+            ]
+    else:
+        scope_filter = """
+            d.scope = 'KNOWLEDGE_BASE'
         """
+
+    sql_query = text(
+        f"""
         SELECT
             dc.document_id,
             dc.chunk_index,
@@ -121,7 +151,7 @@ EXPANDED QUERY:
         JOIN documents d
             ON dc.document_id = d.id
 
-        WHERE dc.document_id = ANY(:document_ids)
+        WHERE {scope_filter}
 
         ORDER BY
             keyword_rank DESC NULLS LAST,
@@ -131,23 +161,9 @@ EXPANDED QUERY:
         """
     )
 
-    # Retrieve more candidates initially
-    db_limit = limit * 20
-
     result = await db.execute(
         sql_query,
-        {
-            "embedding": str(query_embedding),
-
-            "document_ids": [
-                str(doc_id)
-                for doc_id in document_ids
-            ],
-
-            "query": expanded_query,
-
-            "db_limit": db_limit
-        }
+        sql_params
     )
 
     rows = result.fetchall()

@@ -40,6 +40,8 @@ async def generate_title(question: str) -> str:
 async def generate_chat_response(
     question: str,
     document_ids: list[str],
+    mode: str,
+    user_id: str,
     history: list = [],
     db=None
 ):
@@ -49,6 +51,8 @@ async def generate_chat_response(
     results = await retrieve_similar_chunks(
         query=question,
         document_ids=document_ids,
+        mode=mode,
+        user_id=user_id,
         db=db
     )
 
@@ -57,7 +61,7 @@ async def generate_chat_response(
     if not results:
         title = await generate_title(question) if (not history or len(history) == 0) else None
         return (
-            "The uploaded document does not contain enough information to answer this question.",
+            "No relevant information found.",
             [],
             title
         )
@@ -79,7 +83,7 @@ TOP RERANK SCORE:
     if top_rerank_score < 1.0:
         title = await generate_title(question) if (not history or len(history) == 0) else None
         return (
-            "The uploaded document does not contain enough information to answer this question.",
+            "No relevant information found.",
             results,
             title
         )
@@ -163,7 +167,7 @@ Content:
     # STRICT GROUNDED PROMPT
 
     prompt = f"""
-You are Docsy, a document-grounded AI assistant. Your sole purpose is to help users understand their uploaded documents — nothing more.
+You are Docsy, a document-grounded AI assistant. Your sole purpose is to help users understand the retrieved document context.
 
 ## Core Rules
 
@@ -171,7 +175,7 @@ You are Docsy, a document-grounded AI assistant. Your sole purpose is to help us
 - You may synthesize, summarize, and explain information across multiple retrieved chunks.
 - Never invent or infer facts not explicitly present in the context.
 - If the context contains partial information, use it and note the limitation.
-- Only say "The uploaded document does not contain enough information to answer this question." when the context has **nothing** relevant — not just incomplete information.
+- Only say "No relevant information found." when the context has **nothing** relevant — not just incomplete information.
 
 ## Response Style
 

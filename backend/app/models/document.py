@@ -40,6 +40,12 @@ class Document(Base):
         default="uploaded"
     )
 
+    scope: Mapped[str] = mapped_column(
+        String,
+        default="PERSONAL",
+        nullable=False
+    )
+
     owner_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id")

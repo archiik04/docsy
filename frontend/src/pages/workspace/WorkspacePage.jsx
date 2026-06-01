@@ -38,6 +38,7 @@ export function WorkspacePage() {
     uploadProgress,
     highlightedCitation,
     showPreview,
+    error,
     setChatInput,
     sendMessage,
     uploadDocuments,
@@ -46,6 +47,7 @@ export function WorkspacePage() {
     selectConversation,
     deleteConversation,
     toggleDocumentSelection,
+    switchMode,
     resetStore,
     fetchDocuments
   } = useWorkspaceStore();
@@ -90,14 +92,10 @@ export function WorkspacePage() {
 
   const handleModeChange = (newMode) => {
     setMode(newMode);
-    
-    // Find the conversations belonging to the new mode
-    const modeConvs = conversations.filter(c => (c.mode === newMode || (!c.mode && newMode === 'workspace')));
-    
-    if (modeConvs.length > 0) {
-      selectConversation(modeConvs[0].id);
-    } else {
-      newConversation(newMode);
+    switchMode(newMode);
+
+    if (textInputRef.current) {
+      textInputRef.current.style.height = 'auto';
     }
   };
 
@@ -105,26 +103,7 @@ export function WorkspacePage() {
     if (e) e.preventDefault();
     if (!chatInput.trim()) return;
 
-    // In Workspace mode, require at least one attached document context.
-    if (mode === 'workspace' && selectedDocumentIds.length === 0) {
-      alert('Please upload or attach at least one document context chip to analyze in Workspace mode.');
-      return;
-    }
-
-    const previousSelectedIds = [...selectedDocumentIds];
-
-    if (mode === 'knowledge_base') {
-      const allDocIds = documents.map(d => d.id);
-      if (allDocIds.length > 0) {
-        useWorkspaceStore.setState({ selectedDocumentIds: allDocIds });
-      }
-    }
-
     await sendMessage(chatInput, mode);
-
-    if (mode === 'knowledge_base') {
-      useWorkspaceStore.setState({ selectedDocumentIds: previousSelectedIds });
-    }
 
     if (textInputRef.current) {
       textInputRef.current.style.height = 'auto';
@@ -145,8 +124,10 @@ export function WorkspacePage() {
   const handleFileInputChange = (e) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      uploadDocuments(files);
+      const scope = mode === 'knowledge_base' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
+      uploadDocuments(files, scope);
     }
+    e.target.value = '';
   };
 
   const handleSuggestedPrompt = (promptText) => {
@@ -179,7 +160,8 @@ export function WorkspacePage() {
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
       if (mode === 'knowledge_base' && user?.role !== 'admin') return;
-      uploadDocuments(files);
+      const scope = mode === 'knowledge_base' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
+      uploadDocuments(files, scope);
     }
   };
 
@@ -396,16 +378,6 @@ export function WorkspacePage() {
                     e.stopPropagation();
                     if (confirm(`Delete thread "${conv.title}"?`)) {
                       deleteConversation(conv.id);
-                      // Check if there are any conversations left for the current mode after deletion
-                      setTimeout(() => {
-                        const state = useWorkspaceStore.getState();
-                        const remainingSameModeConvs = state.conversations.filter(
-                          c => (c.mode === mode || (!c.mode && mode === 'workspace'))
-                        );
-                        if (remainingSameModeConvs.length === 0) {
-                          newConversation(mode);
-                        }
-                      }, 50);
                     }
                   }}
                   title="Delete thread"
@@ -516,10 +488,10 @@ export function WorkspacePage() {
               </span>
               <span style={{ fontSize: '10px', color: 'rgba(10, 16, 28, 0.5)', fontWeight: 400 }}>
                 {mode === 'workspace' 
-                  ? 'Upload private files, scanned PDFs, handwritten notes, and images for contextual analysis.'
+                  ? 'Searching personal documents'
                   : (user?.role === 'admin' 
-                      ? 'Upload and manage shared knowledge resources.' 
-                      : 'Ask questions against the organization\'s shared knowledge archive.')}
+                      ? 'Searching shared organizational knowledge' 
+                      : 'Searching shared organizational knowledge')}
               </span>
             </div>
           </div>
@@ -771,7 +743,7 @@ export function WorkspacePage() {
           }}
         >
           {/* List attached file chips directly above composer */}
-          {((mode === 'workspace') || (mode === 'knowledge_base' && user?.role === 'admin')) && attachedDocs.length > 0 && (
+          {mode === 'workspace' && attachedDocs.length > 0 && (
             <div className="attached-files-row" style={{ pointerEvents: 'auto', padding: '0 16px' }}>
               {attachedDocs.map((doc) => (
                 <div key={doc.id} className="attached-file-chip">
@@ -789,6 +761,27 @@ export function WorkspacePage() {
                   </button>
                 </div>
               ))}
+            </div>
+          )}
+
+          {/* Upload Progress Loader */}
+          {error && (
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '760px',
+                margin: '0 auto 8px auto',
+                background: 'rgba(255, 245, 245, 0.85)',
+                border: '1px solid rgba(220, 38, 38, 0.22)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '11.5px',
+                color: '#991b1b',
+                pointerEvents: 'auto',
+                boxSizing: 'border-box'
+              }}
+            >
+              {error}
             </div>
           )}
 
@@ -868,7 +861,7 @@ export function WorkspacePage() {
                 ref={textInputRef}
                 rows={1}
                 className="chat-textarea-premium custom-scroll"
-                placeholder={mode === 'workspace' ? "Ask a question about your files..." : "Query shared knowledge archive..."}
+                placeholder={mode === 'workspace' ? "Ask a question about your files..." : "Search the shared knowledge base..."}
                 value={chatInput}
                 onChange={handleTextareaChange}
                 onKeyDown={handleKeyDown}

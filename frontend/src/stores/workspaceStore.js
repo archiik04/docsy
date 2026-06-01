@@ -36,6 +36,34 @@ export const useWorkspaceStore = create((set, get) => ({
   togglePreview: () => set((state) => ({ showPreview: !state.showPreview })),
   setShowPreview: (showPreview) => set({ showPreview }),
 
+  switchMode: (mode) => {
+    const conversations = get().conversations || [];
+    const modeConversations = conversations.filter(
+      (conversation) => conversation.mode === mode || (!conversation.mode && mode === 'workspace')
+    );
+
+    if (modeConversations.length > 0) {
+      set({
+        activeConversationId: modeConversations[0].id,
+        chatInput: '',
+        selectedDocumentIds: [],
+        activeDocumentId: null,
+        highlightedCitation: null,
+        showPreview: false,
+      });
+      return;
+    }
+
+    set({
+      activeConversationId: null,
+      chatInput: '',
+      selectedDocumentIds: [],
+      activeDocumentId: null,
+      highlightedCitation: null,
+      showPreview: false,
+    });
+  },
+
   resetStore: () => {
     set({
       documents: [],
@@ -86,13 +114,6 @@ export const useWorkspaceStore = create((set, get) => ({
       }));
 
       set({ documents: mappedDocs });
-
-
-
-      // Ensure at least one conversation exists
-      if (get().conversations.length === 0) {
-        get().newConversation();
-      }
 
     } catch (err) {
       console.error('Failed to fetch documents:', err);
@@ -194,14 +215,16 @@ export const useWorkspaceStore = create((set, get) => ({
     }
   },
 
-  uploadDocuments: async (files) => {
+  uploadDocuments: async (files, scope = 'PERSONAL') => {
     if (!files || files.length === 0) return;
+    const normalizedScope = scope === 'KNOWLEDGE_BASE' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
     
-    set({ isUploading: true, uploadProgress: 0 });
+    set({ isUploading: true, uploadProgress: 0, error: null });
     const totalFiles = files.length;
     let completedCount = 0;
 
     const uploadedDocIds = [];
+    const failedUploads = [];
 
     for (const file of Array.from(files)) {
       // Prevent duplicate uploads if a file with same name and size is already uploaded
@@ -224,6 +247,7 @@ export const useWorkspaceStore = create((set, get) => ({
       try {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('scope', normalizedScope);
 
         const result = await api.post('/api/v1/documents/upload', formData);
         if (result.document_id) {
@@ -231,6 +255,7 @@ export const useWorkspaceStore = create((set, get) => ({
         }
       } catch (err) {
         console.error(`Upload failed for ${file.name}:`, err);
+        failedUploads.push(`${file.name}: ${err.message}`);
       } finally {
         completedCount++;
         set({ uploadProgress: Math.round((completedCount / totalFiles) * 100) });
@@ -241,7 +266,7 @@ export const useWorkspaceStore = create((set, get) => ({
       // Refresh document registry
       await get().fetchDocuments();
 
-      if (uploadedDocIds.length > 0) {
+      if (uploadedDocIds.length > 0 && normalizedScope === 'PERSONAL') {
         // Auto-select the newly uploaded documents (current selection only)
         set((state) => {
           const nextSelected = [...uploadedDocIds];
@@ -250,9 +275,21 @@ export const useWorkspaceStore = create((set, get) => ({
             activeDocumentId: uploadedDocIds[uploadedDocIds.length - 1], // Open preview of last uploaded doc
           };
         });
+      } else if (normalizedScope === 'KNOWLEDGE_BASE') {
+        set({
+          selectedDocumentIds: [],
+          activeDocumentId: null,
+        });
+      }
+
+      if (failedUploads.length > 0) {
+        set({
+          error: `Upload failed: ${failedUploads.join(', ')}`,
+        });
       }
     } catch (err) {
       console.error('Failed updating workspace after upload:', err);
+      set({ error: `Failed updating workspace after upload: ${err.message}` });
     } finally {
       setTimeout(() => {
         set({ isUploading: false, uploadProgress: 0 });
@@ -263,17 +300,24 @@ export const useWorkspaceStore = create((set, get) => ({
   sendMessage: async (text, mode = 'workspace') => {
     const input = text || get().chatInput;
     if (!input.trim()) return;
+    const normalizedMode = mode === 'knowledge_base' || mode === 'KNOWLEDGE_BASE'
+      ? 'KNOWLEDGE_BASE'
+      : 'WORKSPACE';
+    const conversationMode = normalizedMode === 'KNOWLEDGE_BASE'
+      ? 'knowledge_base'
+      : 'workspace';
 
     let activeConvId = get().activeConversationId;
+    const currentConv = get().conversations.find((c) => c.id === activeConvId);
     
-    // Auto-create conversation if none active
-    if (!activeConvId) {
+    // Auto-create conversation if none active for this mode
+    if (!activeConvId || (currentConv && currentConv.mode !== conversationMode)) {
       activeConvId = `conv-${Date.now()}`;
       const newConv = {
         id: activeConvId,
         title: 'New Chat',
         messages: [],
-        mode: mode,
+        mode: conversationMode,
       };
       set((state) => ({
         conversations: [newConv, ...state.conversations],
@@ -281,7 +325,9 @@ export const useWorkspaceStore = create((set, get) => ({
       }));
     }
 
-    const selectedDocumentIds = get().selectedDocumentIds;
+    const selectedDocumentIds = normalizedMode === 'WORKSPACE'
+      ? get().selectedDocumentIds
+      : [];
 
     // Construct previous conversation history for context-awareness (excluding the current user question)
     const conversationsList = get().conversations || [];
@@ -319,6 +365,7 @@ export const useWorkspaceStore = create((set, get) => ({
     try {
       const response = await api.post('/api/v1/chat/ask', {
         question: input,
+        mode: normalizedMode,
         document_ids: selectedDocumentIds,
         history: history,
       });

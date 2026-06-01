@@ -6,6 +6,7 @@ from pathlib import Path
 from fastapi import APIRouter
 from fastapi import UploadFile
 from fastapi import File
+from fastapi import Form
 from fastapi import Depends
 from fastapi import HTTPException
 
@@ -23,8 +24,6 @@ from app.services.text_chunker import chunk_text
 from app.services.embedding_service import generate_embedding
 from app.services.text_cleaner import clean_text
 
-from app.api.deps import require_admin
-
 from app.services.document_extractors import (
     extract_pdf_text,
     extract_txt_text,
@@ -41,9 +40,23 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    current_user: User = Depends(require_admin),
+    scope: str = Form("PERSONAL"),
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    normalized_scope = scope.upper()
+
+    if normalized_scope not in {"PERSONAL", "KNOWLEDGE_BASE"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid document scope"
+        )
+
+    if normalized_scope == "KNOWLEDGE_BASE" and current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Admin access required"
+        )
 
     ALLOWED_EXTENSIONS = {
         ".pdf",
@@ -144,6 +157,7 @@ async def upload_document(
         content_type=file.content_type,
         file_size=file.size,
         processing_status="uploaded",
+        scope=normalized_scope,
         extracted_text=extracted_text,
         owner_id=current_user.id,
     )
@@ -176,6 +190,7 @@ async def upload_document(
         "document_id": str(new_document.id),
         "filename": new_document.filename,
         "original_filename": new_document.original_filename,
+        "scope": new_document.scope,
         "uploaded_by": current_user.email,
         "total_chunks": len(all_chunks)
     }
@@ -189,7 +204,10 @@ async def list_documents(
 
     query = (
         select(Document)
-        .where(Document.owner_id == current_user.id)
+        .where(
+            Document.owner_id == current_user.id,
+            Document.scope == "PERSONAL"
+        )
         .order_by(Document.created_at.desc())
     )
 
@@ -203,6 +221,7 @@ async def list_documents(
             "filename": doc.filename,
             "original_filename": doc.original_filename,
             "file_size": doc.file_size,
+            "scope": doc.scope,
             "created_at": doc.created_at.isoformat(),
             "processing_status": doc.processing_status,
             "extracted_text": doc.extracted_text,
