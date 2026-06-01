@@ -128,12 +128,12 @@ export const useWorkspaceStore = create((set, get) => ({
 
   selectConversation: (convId) => set({ activeConversationId: convId, highlightedCitation: null }),
 
-  newConversation: () => {
-    const nextIndex = get().conversations.length + 1;
+  newConversation: (mode = 'workspace') => {
     const newConv = {
       id: `conv-${Date.now()}`,
-      title: `Discussion Thread ${nextIndex}`,
+      title: 'New Chat',
       messages: [],
+      mode: mode,
     };
 
     set((state) => ({
@@ -147,11 +147,20 @@ export const useWorkspaceStore = create((set, get) => ({
 
   deleteConversation: (convId) => {
     set((state) => {
+      const deletedConv = state.conversations.find(c => c.id === convId);
+      const deletedConvMode = deletedConv?.mode || 'workspace';
+
       const nextConvs = state.conversations.filter(c => c.id !== convId);
       let nextActiveId = state.activeConversationId;
+
       if (state.activeConversationId === convId) {
-        nextActiveId = nextConvs.length > 0 ? nextConvs[0].id : null;
+        // Find other conversations of the same mode
+        const remainingSameModeConvs = nextConvs.filter(
+          c => (c.mode === deletedConvMode || (!c.mode && deletedConvMode === 'workspace'))
+        );
+        nextActiveId = remainingSameModeConvs.length > 0 ? remainingSameModeConvs[0].id : null;
       }
+
       return {
         conversations: nextConvs,
         activeConversationId: nextActiveId,
@@ -201,6 +210,12 @@ export const useWorkspaceStore = create((set, get) => ({
       );
       if (isDuplicate) {
         console.log(`Skipping duplicate file: ${file.name}`);
+        const existingDoc = get().documents.find(
+          (d) => d.name === file.name && d.size === `${(file.size / 1024).toFixed(1)} KB`
+        );
+        if (existingDoc) {
+          uploadedDocIds.push(existingDoc.id);
+        }
         completedCount++;
         set({ uploadProgress: Math.round((completedCount / totalFiles) * 100) });
         continue;
@@ -227,9 +242,9 @@ export const useWorkspaceStore = create((set, get) => ({
       await get().fetchDocuments();
 
       if (uploadedDocIds.length > 0) {
-        // Auto-select the newly uploaded documents
+        // Auto-select the newly uploaded documents (current selection only)
         set((state) => {
-          const nextSelected = [...new Set([...state.selectedDocumentIds, ...uploadedDocIds])];
+          const nextSelected = [...uploadedDocIds];
           return {
             selectedDocumentIds: nextSelected,
             activeDocumentId: uploadedDocIds[uploadedDocIds.length - 1], // Open preview of last uploaded doc
@@ -245,7 +260,7 @@ export const useWorkspaceStore = create((set, get) => ({
     }
   },
 
-  sendMessage: async (text) => {
+  sendMessage: async (text, mode = 'workspace') => {
     const input = text || get().chatInput;
     if (!input.trim()) return;
 
@@ -256,8 +271,9 @@ export const useWorkspaceStore = create((set, get) => ({
       activeConvId = `conv-${Date.now()}`;
       const newConv = {
         id: activeConvId,
-        title: input.slice(0, 30) + (input.length > 30 ? '...' : ''),
+        title: 'New Chat',
         messages: [],
+        mode: mode,
       };
       set((state) => ({
         conversations: [newConv, ...state.conversations],
@@ -288,8 +304,7 @@ export const useWorkspaceStore = create((set, get) => ({
     set((state) => {
       const updatedConvs = state.conversations.map((c) => {
         if (c.id === activeConvId) {
-          const updatedTitle = c.messages.length === 0 ? (input.slice(0, 30) + (input.length > 30 ? '...' : '')) : c.title;
-          return { ...c, title: updatedTitle, messages: [...c.messages, userMessage] };
+          return { ...c, messages: [...c.messages, userMessage] };
         }
         return c;
       });
@@ -318,7 +333,8 @@ export const useWorkspaceStore = create((set, get) => ({
       set((state) => {
         const updatedConvs = state.conversations.map((c) => {
           if (c.id === activeConvId) {
-            return { ...c, messages: [...c.messages, botMessage] };
+            const nextTitle = (response.title && (c.title === 'New Chat' || c.messages.length <= 2)) ? response.title : c.title;
+            return { ...c, title: nextTitle, messages: [...c.messages, botMessage] };
           }
           return c;
         });

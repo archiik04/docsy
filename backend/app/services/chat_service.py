@@ -13,6 +13,30 @@ client = AsyncOpenAI(
 )
 
 
+async def generate_title(question: str) -> str:
+    try:
+        response = await client.chat.completions.create(
+            model="meta-llama/llama-3-8b-instruct",
+            temperature=0.7,
+            max_tokens=15,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant. Generate an extremely short title (maximum 4-5 words) summarizing the user query. Do not use quotes, punctuation, or markdown."
+                },
+                {
+                    "role": "user",
+                    "content": question
+                }
+            ]
+        )
+        return response.choices[0].message.content.strip().strip('"').strip("'")
+    except Exception as e:
+        print(f"Error generating title: {e}")
+        first_line = question.split('\n')[0].strip()
+        return first_line[:40] + "..." if len(first_line) > 40 else first_line
+
+
 async def generate_chat_response(
     question: str,
     document_ids: list[str],
@@ -31,9 +55,11 @@ async def generate_chat_response(
     # NO RESULTS
 
     if not results:
+        title = await generate_title(question) if (not history or len(history) == 0) else None
         return (
             "The uploaded document does not contain enough information to answer this question.",
-            []
+            [],
+            title
         )
 
     # RERANK CONFIDENCE FILTER
@@ -51,10 +77,11 @@ TOP RERANK SCORE:
     # Confidence threshold
 
     if top_rerank_score < 1.0:
-
+        title = await generate_title(question) if (not history or len(history) == 0) else None
         return (
             "The uploaded document does not contain enough information to answer this question.",
-            results
+            results,
+            title
         )
 
     # LIMIT FINAL CONTEXT
@@ -190,7 +217,10 @@ ANSWER:
         ]
     )
 
+    title = await generate_title(question) if (not history or len(history) == 0) else None
+
     return (
         response.choices[0].message.content,
-        results
+        results,
+        title
     )

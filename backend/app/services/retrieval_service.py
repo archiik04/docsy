@@ -105,6 +105,8 @@ EXPANDED QUERY:
             dc.page_number,
             dc.section_title,
             d.file_path,
+            d.original_filename,
+            d.filename,
 
             dc.embedding <=> CAST(:embedding AS vector)
                 AS distance,
@@ -171,13 +173,15 @@ EXPANDED QUERY:
             
             "file_path": row[5],
             
-            "filename":row[5].split("/")[-1].split("\\")[-1],
+            "original_filename": row[6],
             
-            "pdf_url":f"http://127.0.0.1:8000/{pdf_path}",
+            "filename": row[7],
             
-            "distance":float(row[6]) if row[6] is not None else None,
+            "pdf_url": f"http://127.0.0.1:8000/{pdf_path}",
             
-            "keyword_rank":float(row[7]) if row[7] is not None else 0.0
+            "distance": float(row[8]) if row[8] is not None else None,
+            
+            "keyword_rank": float(row[9]) if row[9] is not None else 0.0
     })
 
     rows = formatted_rows

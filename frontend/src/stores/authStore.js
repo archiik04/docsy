@@ -26,6 +26,7 @@ export const useAuthStore = create((set, get) => ({
           id: data.id,
           email: data.email,
           name: data.full_name || data.email.split('@')[0],
+          role: data.role || 'user',
         },
         isAuthenticated: true,
         loading: false,

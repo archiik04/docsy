@@ -22,7 +22,7 @@ async def ask_question(
 
     try:
 
-        answer, chunks = await generate_chat_response(
+        answer, chunks, title = await generate_chat_response(
             question=request_data.question,
             document_ids=request_data.document_ids,
             history=request_data.history,
@@ -38,6 +38,7 @@ async def ask_question(
                 "page_number": chunk.get("page_number"),
                 "section_title": chunk.get("section_title"),
                 "filename": chunk.get("filename"),
+                "original_filename": chunk.get("original_filename"),
                 "distance": float(chunk["distance"]) if chunk.get("distance") is not None else None,
                 "keyword_rank": float(chunk["keyword_rank"]) if chunk.get("keyword_rank") is not None else None,
                 "rerank_score": float(chunk["rerank_score"]) if chunk.get("rerank_score") is not None else None
@@ -46,7 +47,8 @@ async def ask_question(
         return {
             "question": request_data.question,
             "answer": answer,
-            "citations": citations
+            "citations": citations,
+            "title": title
         }
 
     except Exception as e:

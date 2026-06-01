@@ -57,33 +57,39 @@ body {
 }
 
 
-/* Pill/outline buttons */
 .pill-button {
-  background: rgba(10, 11, 16, 0.45);
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  color: #fff;
+  background: rgba(255, 255, 255, 0.28) !important;
+  border: 1px solid rgba(10, 16, 28, 0.15) !important;
+  color: #0a101c !important;
   border-radius: 99px;
   padding: 10px 24px;
   font-family: var(--font-sans);
-  font-weight: 400;
+  font-weight: 500;
   font-size: 12.5px;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: var(--transition-bounce);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   text-decoration: none;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
 .pill-button:hover {
-  background: #fff;
-  color: var(--bg-darker);
-  border-color: #fff;
+  background: rgba(255, 255, 255, 0.55) !important;
+  color: #2d8fa0 !important;
+  border-color: rgba(100, 210, 225, 0.45) !important;
   transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 25px rgba(255, 255, 255, 0.2), 0 4px 10px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06), 0 0 12px rgba(100, 210, 225, 0.12);
+}
+
+.pill-button.active {
+  background: rgba(255, 255, 255, 0.6) !important;
+  color: #2d8fa0 !important;
+  border-color: rgba(100, 210, 225, 0.5) !important;
+  box-shadow: 0 4px 12px rgba(100, 210, 225, 0.08) !important;
 }
 
 .pill-button-glow {
@@ -2619,8 +2625,8 @@ body {
 .message-sender-tag.assistant {
   text-align: left;
   padding-left: 8px;
-  color: #64d2e1 !important;
-  text-shadow: 0 0 10px rgba(100, 210, 225, 0.25);
+  color: #0a101c !important;
+  text-shadow: none !important;
 }
 
 .message-bubble-glass {
@@ -2628,31 +2634,47 @@ body {
 }
 
 .message-wrapper-premium.user .message-bubble-glass {
-  background: rgba(10, 16, 28, 0.75) !important;
-  border: 1px solid rgba(100, 210, 225, 0.2) !important;
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.72) !important;
+  border: 1px solid rgba(255, 255, 255, 0.55) !important;
+  color: #0a101c !important;
   border-bottom-right-radius: 4px;
-  max-width: 70%;
-  padding: 12px 18px;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  max-width: 720px;
+  padding: 16px 20px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(10, 16, 28, 0.05);
   font-size: 13.5px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
 .message-wrapper-premium.assistant .message-bubble-glass {
-  background: rgba(10, 16, 28, 0.75) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  color: #ffffff;
+  background: rgba(255, 255, 255, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.65) !important;
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  color: #0a101c !important;
   line-height: 1.75;
   border-bottom-left-radius: 4px;
-  max-width: 100%;
-  width: 100%;
-  padding: 24px 28px;
-  border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
-              inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  max-width: 720px;
+  padding: 20px;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(10, 16, 28, 0.05),
+              inset 0 1px 0 rgba(255, 255, 255, 0.55);
+}
+
+.message-bubble-glass .markdown-p,
+.message-bubble-glass .markdown-text-block,
+.message-bubble-glass .markdown-list li,
+.message-bubble-glass .bold-text,
+.message-bubble-glass .markdown-h2,
+.message-bubble-glass .markdown-h3 {
+  color: #0a101c !important;
+}
+
+.message-bubble-glass .inline-code-text {
+  color: #0a101c !important;
+  background: rgba(10, 16, 28, 0.08) !important;
+  border-color: rgba(10, 16, 28, 0.15) !important;
 }
 
 /* Grounded citations tag list */
@@ -5255,10 +5277,10 @@ body {
 }
 
 .convo-thread-item:hover {
-  background: rgba(255, 255, 255, 0.35) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  color: #0a101c !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02) !important;
+  background: rgba(255, 255, 255, 0.45) !important;
+  border-color: rgba(100, 210, 225, 0.4) !important;
+  color: #2d8fa0 !important;
+  box-shadow: 0 2px 10px rgba(100, 210, 225, 0.05) !important;
 }
 
 .convo-thread-item.active {
@@ -5412,7 +5434,7 @@ body {
 .attached-file-chip .chip-remove-btn {
   background: transparent;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(10, 16, 28, 0.5);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -5429,8 +5451,8 @@ body {
 /* Sidebar Mode Selector Tabs (Workspace vs KB) */
 .sidebar-mode-selector {
   display: flex;
-  background: rgba(10, 16, 28, 0.04);
-  border: 1px solid rgba(10, 16, 28, 0.08);
+  background: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.35) !important;
   border-radius: 10px;
   padding: 4px;
   gap: 4px;
@@ -5457,14 +5479,15 @@ body {
 }
 
 .mode-tab-btn:hover {
-  color: #64d2e1;
-  background: rgba(100, 210, 225, 0.05);
+  color: #2d8fa0 !important;
+  background: rgba(255, 255, 255, 0.4) !important;
 }
 
 .mode-tab-btn.active {
-  color: #2d8fa0;
-  background: rgba(100, 210, 225, 0.12);
-  box-shadow: 0 2px 8px rgba(100, 210, 225, 0.05);
+  color: #2d8fa0 !important;
+  background: rgba(255, 255, 255, 0.65) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 2px 8px rgba(100, 210, 225, 0.05) !important;
 }
 
 /* Sidebar Logo styling override for Light Glass Theme */
