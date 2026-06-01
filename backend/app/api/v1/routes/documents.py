@@ -1,6 +1,5 @@
 import uuid
 import shutil
-import fitz
 
 from pathlib import Path
 
@@ -23,7 +22,14 @@ from app.models.document_chunk import DocumentChunk
 from app.services.text_chunker import chunk_text
 from app.services.embedding_service import generate_embedding
 from app.services.text_cleaner import clean_text
+
 from app.api.deps import require_admin
+
+from app.services.document_extractors import (
+    extract_pdf_text,
+    extract_txt_text,
+    extract_docx_text
+)
 
 router = APIRouter()
 
@@ -38,77 +44,88 @@ async def upload_document(
     db: AsyncSession = Depends(get_db),
 ):
 
-    # Generate unique filename
-    file_extension = Path(file.filename).suffix
-    unique_filename = f"{uuid.uuid4()}{file_extension}"
+    ALLOWED_EXTENSIONS = {
+        ".pdf",
+        ".txt",
+        ".docx"
+    }
+
+    file_extension = Path(
+        file.filename
+    ).suffix.lower()
+
+    if file_extension not in ALLOWED_EXTENSIONS:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type"
+        )
+
+    unique_filename = (
+        f"{uuid.uuid4()}{file_extension}"
+    )
 
     file_path = UPLOAD_DIR / unique_filename
 
     # Save uploaded file
     with open(file_path, "wb") as buffer:
-        shutil.copyfileobj(file.file, buffer)
+        shutil.copyfileobj(
+            file.file,
+            buffer
+        )
 
-    # Open PDF
-    pdf_document = fitz.open(file_path)
+    # Extract text based on file type
+    if file_extension == ".pdf":
 
-    extracted_text = ""
+        extracted_text = extract_pdf_text(
+            file_path
+        )
+
+    elif file_extension == ".txt":
+
+        extracted_text = extract_txt_text(
+            file_path
+        )
+
+    elif file_extension == ".docx":
+
+        extracted_text = extract_docx_text(
+            file_path
+        )
+
+    else:
+
+        raise HTTPException(
+            status_code=400,
+            detail="Unsupported file type"
+        )
+
+    extracted_text = clean_text(
+        extracted_text
+    )
+
+    chunks = chunk_text(
+        extracted_text
+    )
 
     all_chunks = []
 
-    # Process page-by-page
-    for page in pdf_document:
+    for chunk in chunks:
 
-        page_text = clean_text(
-            page.get_text()
+        embedding = generate_embedding(
+            chunk
         )
 
-        # Skip empty pages
-        if not page_text.strip():
-            continue
+        all_chunks.append({
+            "page_number": 1,
+            "chunk_text": chunk,
+            "section_title": "General",
+            "embedding": embedding
+        })
 
-        extracted_text += page_text + "\n"
-
-        lines = page_text.split("\n")
-
-        current_heading = "General"
-
-        # Detect probable section heading
-        for line in lines:
-
-            stripped = line.strip()
-
-            if not stripped:
-                continue
-
-            # probable heading
-            if (
-                len(stripped) < 100
-                and len(stripped.split()) <= 10
-                and not stripped.endswith(".")
-            ):
-
-                current_heading = stripped
-
-                break
-
-        # Chunk THIS page
-        page_chunks = chunk_text(page_text)
-
-        for chunk in page_chunks:
-
-            embedding = generate_embedding(chunk)
-
-            all_chunks.append({
-                "page_number": page.number + 1,
-                "chunk_text": chunk,
-                "section_title": current_heading,
-                "embedding": embedding
-            })
-
-    # Close PDF
-    pdf_document.close()
-
-    print(f"\nTOTAL CHUNKS: {len(all_chunks)}\n")
+    print(
+        f"\nTOTAL CHUNKS: {len(all_chunks)}\n"
+    )
 
     # Save document metadata
     new_document = Document(
@@ -129,7 +146,9 @@ async def upload_document(
     await db.refresh(new_document)
 
     # Save chunks
-    for index, chunk_data in enumerate(all_chunks):
+    for index, chunk_data in enumerate(
+        all_chunks
+    ):
 
         new_chunk = DocumentChunk(
             document_id=new_document.id,
@@ -205,14 +224,12 @@ async def delete_document(
             detail="Document not found"
         )
 
-    # Delete chunks
     chunk_delete_query = delete(DocumentChunk).where(
         DocumentChunk.document_id == document_id
     )
 
     await db.execute(chunk_delete_query)
 
-    # Delete document
     document_delete_query = delete(Document).where(
         Document.id == document_id
     )
@@ -221,7 +238,6 @@ async def delete_document(
 
     await db.commit()
 
-    # Delete file from disk
     try:
 
         file_path = Path(doc.file_path)
