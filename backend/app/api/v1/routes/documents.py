@@ -28,7 +28,8 @@ from app.api.deps import require_admin
 from app.services.document_extractors import (
     extract_pdf_text,
     extract_txt_text,
-    extract_docx_text
+    extract_docx_text,
+    extract_image_text
 )
 
 router = APIRouter()
@@ -47,7 +48,10 @@ async def upload_document(
     ALLOWED_EXTENSIONS = {
         ".pdf",
         ".txt",
-        ".docx"
+        ".docx",
+        ".png",
+        ".jpg",
+        ".jpeg"
     }
 
     file_extension = Path(
@@ -76,29 +80,34 @@ async def upload_document(
 
     # Extract text based on file type
     if file_extension == ".pdf":
-
         extracted_text = extract_pdf_text(
-            file_path
+        file_path
         )
-
+        
     elif file_extension == ".txt":
-
         extracted_text = extract_txt_text(
-            file_path
+        file_path
         )
-
+    
     elif file_extension == ".docx":
-
         extracted_text = extract_docx_text(
-            file_path
+        file_path
         )
-
+    
+    elif file_extension in {
+    ".png",
+    ".jpg",
+    ".jpeg"
+    }:
+        extracted_text = extract_image_text(
+        file_path
+        )
+        
     else:
-
         raise HTTPException(
-            status_code=400,
-            detail="Unsupported file type"
-        )
+        status_code=400,
+        detail="Unsupported file type"
+    )
 
     extracted_text = clean_text(
         extracted_text

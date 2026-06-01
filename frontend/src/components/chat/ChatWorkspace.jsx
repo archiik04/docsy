@@ -462,7 +462,7 @@ export function ChatWorkspace() {
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept=".pdf"
+                accept=".pdf,.txt,.docx,.png,.jpg,.jpeg"
                 style={{ display: 'none' }}
                 onChange={handleFileInputChange}
               />

@@ -158,7 +158,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
                 <input
                   type="file"
                   multiple
-                  accept=".pdf"
+                  accept=".pdf,.txt,.docx,.png,.jpg,.jpeg"
                   style={{ display: 'none' }}
                   onChange={handleFileUpload}
                   disabled={isUploading}

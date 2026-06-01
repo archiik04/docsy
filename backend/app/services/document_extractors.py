@@ -2,6 +2,10 @@ import fitz
 
 from docx import Document
 
+from app.services.ocr_service import (
+    extract_text_from_image
+)
+
 
 def extract_pdf_text(file_path):
 
@@ -39,3 +43,10 @@ def extract_docx_text(file_path):
     )
 
     return text
+
+def extract_image_text(
+    file_path
+):
+    return extract_text_from_image(
+        file_path
+    )
