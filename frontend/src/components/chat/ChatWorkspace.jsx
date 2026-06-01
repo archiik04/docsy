@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Send, Upload, Loader2, Plus, FileText, PlusCircle, Mic, BookOpen } from 'lucide-react';
+import { Send, Upload, Loader2, Plus, FileText, PlusCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useAuthStore } from '../../stores/authStore';
@@ -22,7 +22,7 @@ function MessageContentStream({ text, renderMessageContent }) {
       } else {
         clearInterval(interval);
       }
-    }, 15); // Fast, premium word-by-word streaming
+    }, 15); // Fast streaming
 
     return () => clearInterval(interval);
   }, [text]);
@@ -56,7 +56,6 @@ export function ChatWorkspace() {
   const fileInputRef = useRef(null);
 
   const [isDragging, setIsDragging] = useState(false);
-  const [streamedMessageIds, setStreamedMessageIds] = useState(new Set());
 
   const selectedDoc = documents.find((doc) => doc.id === activeDocumentId) || null;
   const currentConv = conversations.find(c => c.id === activeConversationId);
@@ -145,7 +144,7 @@ export function ChatWorkspace() {
         );
       }
 
-      // Inline formatting (bold, italics, inline code, list items)
+      // Inline formatting
       return (
         <div key={index} className="markdown-text-block">
           {part.split('\n').map((line, lineIdx) => {
@@ -355,9 +354,9 @@ export function ChatWorkspace() {
                   animate={{ opacity: 1, y: 0 }}
                 >
 
-                  <div className="message-sender-tag">
+                  <div className={`message-sender-tag ${msg.sender}`}>
                     {msg.sender === 'user'
-                      ? (user?.name || 'User')
+                      ? (user?.name || user?.full_name || 'User')
                       : 'Docsy'}
                   </div>
 

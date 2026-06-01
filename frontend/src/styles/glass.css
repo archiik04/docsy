@@ -42,11 +42,11 @@
 }
 
 .custom-scroll::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(100, 210, 225, 0.15);
   border-radius: 99px;
   transition: var(--transition-smooth);
 }
 
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(100, 210, 225, 0.3);
 }

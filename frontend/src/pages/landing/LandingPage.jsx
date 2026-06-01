@@ -106,7 +106,7 @@ export function LandingPage() {
                     <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', paddingLeft: '6px', marginBottom: '4px' }}>Ingested Archive</span>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                      <div className="doc-list-item active" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(77, 184, 200, 0.12)', border: '1px solid rgba(77, 184, 200, 0.2)' }}>
+                      <div className="doc-list-item active" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(100, 210, 225, 0.12)', border: '1px solid rgba(100, 210, 225, 0.2)' }}>
                         <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <FileText size={12} style={{ flexShrink: 0, color: '#64d2e1' }} />
                           <span className="doc-name" style={{ fontSize: '11px', color: '#ffffff', fontWeight: '500' }}>relativity.pdf</span>

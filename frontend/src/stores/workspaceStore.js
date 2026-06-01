@@ -87,13 +87,7 @@ export const useWorkspaceStore = create((set, get) => ({
 
       set({ documents: mappedDocs });
 
-      // Automatically select all documents for querying on first load if nothing was selected
-      set((state) => {
-        if (state.selectedDocumentIds.length === 0 && mappedDocs.length > 0) {
-          return { selectedDocumentIds: mappedDocs.map(d => d.id) };
-        }
-        return {};
-      });
+
 
       // Ensure at least one conversation exists
       if (get().conversations.length === 0) {
@@ -147,6 +141,7 @@ export const useWorkspaceStore = create((set, get) => ({
       activeConversationId: newConv.id,
       chatInput: '',
       highlightedCitation: null,
+      selectedDocumentIds: [],
     }));
   },
 

@@ -1,13 +1,14 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, HelpCircle } from 'lucide-react';
+import { FileText, HelpCircle, X } from 'lucide-react';
 import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { API_BASE_URL } from '../../constants/api';
 
 export function DocumentPreviewPanel({ document }) {
   const {
     highlightedCitation,
-    setHighlightedCitation
+    setHighlightedCitation,
+    setShowPreview
   } = useWorkspaceStore();
 
   const highlightRef = useRef(null);
@@ -85,7 +86,7 @@ export function DocumentPreviewPanel({ document }) {
           </span>
         </div>
 
-        <div className="header-meta-right">
+        <div className="header-meta-right" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           {highlightedCitation && (
             <button
               className="clear-focus-btn"
@@ -95,6 +96,24 @@ export function DocumentPreviewPanel({ document }) {
               Clear focus
             </button>
           )}
+          <button
+            onClick={() => setShowPreview(false)}
+            title="Close Preview Panel"
+            style={{ 
+              padding: '4px', 
+              border: 'none', 
+              background: 'none', 
+              cursor: 'pointer', 
+              display: 'flex', 
+              alignItems: 'center',
+              borderRadius: '4px',
+              transition: 'background 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.background = 'none'}
+          >
+            <X size={16} style={{ color: 'rgba(255, 255, 255, 0.5)' }} />
+          </button>
         </div>
       </div>
 
