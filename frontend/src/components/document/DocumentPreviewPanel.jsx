@@ -126,29 +126,9 @@ export function DocumentPreviewPanel({ document }) {
                   textTransform: 'uppercase'
                 }}
               >
-                ACTIVE CITED SEGMENT
               </div>
               
-              <div
-                style={{
-                  fontSize: '12.5px',
-                  fontWeight: 500,
-                  color: '#ffffff',
-                  marginBottom: '10px'
-                }}
-              >
-                Section: <span style={{ color: '#6ee7ff' }}>{highlightedCitation.section_title || 'General'}</span> | Page: <span style={{ color: '#6ee7ff' }}>{highlightedCitation.page_number}</span>
-              </div>
               
-              <div
-                style={{
-                  lineHeight: 1.6,
-                  fontSize: '13px',
-                  color: 'rgba(255, 255, 255, 0.9)'
-                }}
-              >
-                "{highlightedCitation.chunk_text}"
-              </div>
             </div>
           )}
 

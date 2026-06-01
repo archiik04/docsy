@@ -11,6 +11,7 @@ class Settings(BaseSettings):
 
     DATABASE_URL: str
     OPENROUTER_API_KEY: str
+    SECRET_KEY: str
 
     model_config = SettingsConfigDict(
         env_file=BASE_DIR / ".env"
