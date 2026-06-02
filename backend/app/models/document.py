@@ -13,6 +13,13 @@ from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
 
 from app.core.database import Base
+from enum import Enum
+from sqlalchemy import Enum as SQLEnum
+
+
+class DocumentScope(str, Enum):
+    PERSONAL = "PERSONAL"
+    KNOWLEDGE_BASE = "KNOWLEDGE_BASE"
 
 
 class Document(Base):
@@ -40,9 +47,9 @@ class Document(Base):
         default="uploaded"
     )
 
-    scope: Mapped[str] = mapped_column(
-        String,
-        default="PERSONAL",
+    scope: Mapped[DocumentScope] = mapped_column(
+        SQLEnum(DocumentScope, name="doc_scope"),
+        default=DocumentScope.PERSONAL,
         nullable=False
     )
 

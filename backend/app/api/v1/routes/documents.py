@@ -17,7 +17,10 @@ from app.api.deps import get_current_user
 from app.core.database import get_db
 
 from app.models.user import User
-from app.models.document import Document
+from app.models.document import (
+    Document,
+    DocumentScope
+)
 from app.models.document_chunk import DocumentChunk
 
 from app.services.text_chunker import chunk_text
@@ -40,23 +43,19 @@ UPLOAD_DIR.mkdir(exist_ok=True)
 @router.post("/upload")
 async def upload_document(
     file: UploadFile = File(...),
-    scope: str = Form("PERSONAL"),
+    scope: DocumentScope = Form(DocumentScope.PERSONAL),
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    normalized_scope = scope.upper()
 
-    if normalized_scope not in {"PERSONAL", "KNOWLEDGE_BASE"}:
+    if (
+    scope == DocumentScope.KNOWLEDGE_BASE
+    and current_user.role != "admin"
+    ):
         raise HTTPException(
-            status_code=400,
-            detail="Invalid document scope"
-        )
-
-    if normalized_scope == "KNOWLEDGE_BASE" and current_user.role != "admin":
-        raise HTTPException(
-            status_code=403,
-            detail="Admin access required"
-        )
+        status_code=403,
+        detail="Admin access required"
+    )
 
     ALLOWED_EXTENSIONS = {
         ".pdf",
@@ -157,7 +156,7 @@ async def upload_document(
         content_type=file.content_type,
         file_size=file.size,
         processing_status="uploaded",
-        scope=normalized_scope,
+        scope=scope,
         extracted_text=extracted_text,
         owner_id=current_user.id,
     )
@@ -206,7 +205,7 @@ async def list_documents(
         select(Document)
         .where(
             Document.owner_id == current_user.id,
-            Document.scope == "PERSONAL"
+            Document.scope == DocumentScope.PERSONAL
         )
         .order_by(Document.created_at.desc())
     )
