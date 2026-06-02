@@ -121,13 +121,29 @@ async def upload_document(
         detail="Unsupported file type"
     )
 
+    print("\n=== EXTRACTED TEXT ===")
+    print(repr(extracted_text))
+    print("TEXT LENGTH:", len(extracted_text))
+
     extracted_text = clean_text(
         extracted_text
     )
 
+    print("\n=== CLEANED TEXT ===")
+    print(repr(extracted_text))
+    print("CLEANED LENGTH:", len(extracted_text))
+
+
     chunks = chunk_text(
         extracted_text
     )
+    print("\n=== OCR DEBUG ===")
+    print("TEXT LENGTH:", len(extracted_text))
+    print("CHUNKS CREATED:", len(chunks))
+    
+    for i, c in enumerate(chunks):
+        print(f"Chunk {i}:")
+        print(repr(c))
 
     all_chunks = []
 
@@ -164,6 +180,9 @@ async def upload_document(
     db.add(new_document)
 
     await db.commit()
+    print(
+        f"Saved {len(all_chunks)} chunks for document {new_document.id}"
+    )
 
     await db.refresh(new_document)
 
@@ -171,6 +190,14 @@ async def upload_document(
     for index, chunk_data in enumerate(
         all_chunks
     ):
+        
+        print(
+            f"Saving chunk {index}"
+        )
+        
+        print(
+            f"Chunk length: {len(chunk_data['chunk_text'])}"
+        )
 
         new_chunk = DocumentChunk(
             document_id=new_document.id,
@@ -184,6 +211,10 @@ async def upload_document(
         db.add(new_chunk)
 
     await db.commit()
+    print("\n=== CHUNK INSERT COMPLETE ===")
+    print(
+        f"Inserted {len(all_chunks)} chunks into DB"
+    )
 
     return {
         "document_id": str(new_document.id),

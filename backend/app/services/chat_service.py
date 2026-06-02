@@ -79,14 +79,27 @@ TOP RERANK SCORE:
     """)
 
     # Confidence threshold
-
-    if top_rerank_score < 1.0:
-        title = await generate_title(question) if (not history or len(history) == 0) else None
-        return (
-            "No relevant information found.",
-            results,
-            title
+    if len(results) == 0:
+        
+        title = (
+            await generate_title(question)
+            if (
+            not history
+            or len(history) == 0
         )
+        else None
+    )
+        return (
+        "No relevant information found.",
+        [],
+        title
+        )
+    
+    print(
+        f"\nTOP RERANK SCORE: {top_rerank_score}\n"
+    )
+
+    
 
     # LIMIT FINAL CONTEXT
 
@@ -199,6 +212,10 @@ ANSWER:
 """
 
     # GENERATE RESPONSE
+
+    print("\n===== CONTEXT SENT TO LLM =====")
+    print(context)
+    print("==============================")
 
     response = await client.chat.completions.create(
 

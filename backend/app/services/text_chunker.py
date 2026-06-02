@@ -222,7 +222,25 @@ def chunk_text(
         stripped = chunk.strip()
 
         # Ignore tiny noisy chunks
-        if stripped and len(stripped) > 150:
+        MIN_CHUNK_LENGTH = 20
+
+        if stripped:
+            
+            if len(stripped) < MIN_CHUNK_LENGTH:
+                
+                if any(
+                    keyword.lower() in stripped.lower()
+                    for keyword in [
+                        "name",
+                        "university",
+                        "department",
+                        "email",
+                        "phone"
+                    ]
+                ):
+                    processed_chunks.append(stripped)
+                else:
+                    processed_chunks.append(stripped)
 
             # Preserve semantic titles/headings
             title_match = re.match(
