@@ -101,8 +101,8 @@ EXPANDED QUERY:
     db_limit = limit * 20
 
     scope_filter = """
-            d.owner_id = CAST(:user_id AS uuid)
-            AND d.scope = 'PERSONAL'
+    d.owner_id = CAST(:user_id AS uuid)
+    AND d.scope = CAST('PERSONAL' AS doc_scope)
     """
 
     sql_params = {
@@ -123,8 +123,8 @@ EXPANDED QUERY:
             ]
     else:
         scope_filter = """
-            d.scope = 'KNOWLEDGE_BASE'
-        """
+    d.scope = CAST('KNOWLEDGE_BASE' AS doc_scope)
+    """
 
     sql_query = text(
         f"""
@@ -191,7 +191,7 @@ EXPANDED QUERY:
             
             "original_filename": row[6],
             
-            "filename": row[7],
+            "filename": row[6],
             
             "pdf_url": f"http://127.0.0.1:8000/{pdf_path}",
             
