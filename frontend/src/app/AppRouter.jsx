@@ -7,31 +7,56 @@ import { SignupPage } from '../pages/auth/SignupPage';
 import { WorkspacePage } from '../pages/workspace/WorkspacePage';
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated, token, checkAuth } = useAuthStore();
+  const { isAuthenticated, token, checkAuth, loading } = useAuthStore();
 
   useEffect(() => {
-    if (token && !isAuthenticated) {
+    if (token && !isAuthenticated && !loading) {
       checkAuth();
     }
-  }, [token, isAuthenticated, checkAuth]);
+  }, [token, isAuthenticated, checkAuth, loading]);
 
   if (!token) {
     return <Navigate to="/login" replace />;
   }
 
-  // Allow showing loading state while validating token
+  if (!isAuthenticated) {
+    return (
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        height: '100vh',
+        width: '100vw',
+        background: '#040814',
+        color: '#f8fafc',
+        fontFamily: 'Inter, system-ui, sans-serif'
+      }}>
+        <div style={{
+          width: '32px',
+          height: '32px',
+          borderRadius: '50%',
+          border: '2px solid rgba(45, 143, 160, 0.1)',
+          borderTopColor: '#2d8fa0',
+          marginBottom: '16px',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+        <h2 style={{ fontSize: '15px', fontWeight: 600, color: '#f8fafc', margin: '0 0 6px 0', letterSpacing: '-0.01em' }}>Authenticating</h2>
+        <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.4)', margin: 0 }}>Securing your document workspace...</p>
+      </div>
+    );
+  }
+
   return children;
 }
 
 export function AppRouter() {
-  const { checkAuth, token } = useAuthStore();
-
-  useEffect(() => {
-    if (token) {
-      checkAuth();
-    }
-  }, [token, checkAuth]);
-
   return (
     <BrowserRouter>
       <Routes>

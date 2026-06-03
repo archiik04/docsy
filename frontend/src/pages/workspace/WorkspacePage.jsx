@@ -36,6 +36,7 @@ export function WorkspacePage() {
     isTyping,
     isUploading,
     uploadProgress,
+    uploadStatus,
     uploadScope,
     highlightedCitation,
     showPreview,
@@ -412,14 +413,14 @@ export function WorkspacePage() {
           >
             <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '8px', overflow: 'hidden' }}>
               <div className="rail-avatar-glow" style={{ width: '28px', height: '28px', fontSize: '11px', flexShrink: 0 }}>
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
+                {user?.name ? user.name.charAt(0).toUpperCase() : ''}
               </div>
               <div className="user-info" style={{ display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <span className="user-name" style={{ fontSize: '12px', fontWeight: '600', color: '#0a101c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {user?.name || 'Researcher'}
+                  {user?.name || ''}
                 </span>
                 <span className="user-email" style={{ fontSize: '9.5px', color: 'rgba(10, 16, 28, 0.55)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                  {user?.email || 'researcher@docsy.ai'}
+                  {user?.email || ''}
                 </span>
               </div>
             </div>
@@ -855,7 +856,7 @@ export function WorkspacePage() {
               }}
             >
               <Loader2 size={12} className="animate-spin" style={{ color: '#2d8fa0' }} />
-              <span style={{ fontWeight: 550 }}>Uploading & indexing context: {uploadProgress}%</span>
+              <span style={{ fontWeight: 550 }}>{uploadStatus || `Uploading & indexing context: ${uploadProgress}%`}</span>
             </div>
           )}
 

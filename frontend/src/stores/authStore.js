@@ -11,7 +11,10 @@ export const useAuthStore = create((set, get) => ({
 
   setError: (error) => set({ error }),
 
-  checkAuth: async () => {
+  checkAuth: async (force = false) => {
+    if (get().loading && !force) {
+      return get().isAuthenticated;
+    }
     const token = get().token;
     if (!token) {
       set({ isAuthenticated: false, user: null });
@@ -54,7 +57,7 @@ export const useAuthStore = create((set, get) => ({
       localStorage.setItem(LOCAL_STORAGE_KEYS.TOKEN, accessToken);
       set({ token: accessToken });
       
-      const success = await get().checkAuth();
+      const success = await get().checkAuth(true);
       return success;
     } catch (err) {
       set({ error: err.message || 'Login failed', loading: false });

@@ -11,6 +11,7 @@ export const useWorkspaceStore = create((set, get) => ({
   isTyping: false,
   isUploading: false,
   uploadProgress: 0,
+  uploadStatus: '',
   uploadScope: null,
   highlightedCitation: null,
   showPreview: false,
@@ -76,6 +77,7 @@ export const useWorkspaceStore = create((set, get) => ({
       isTyping: false,
       isUploading: false,
       uploadProgress: 0,
+      uploadStatus: '',
       uploadScope: null,
       highlightedCitation: null,
       showPreview: false,
@@ -221,20 +223,50 @@ export const useWorkspaceStore = create((set, get) => ({
     if (!files || files.length === 0) return;
     const normalizedScope = scope === 'KNOWLEDGE_BASE' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
     
-    set({ isUploading: true, uploadProgress: 0, uploadScope: normalizedScope, error: null });
+    set({ 
+      isUploading: true, 
+      uploadProgress: 0, 
+      uploadStatus: 'Preparing files for upload...', 
+      uploadScope: normalizedScope, 
+      error: null 
+    });
+    
     const totalFiles = files.length;
-    let completedCount = 0;
-
     const uploadedDocIds = [];
     const failedUploads = [];
 
-    for (const file of Array.from(files)) {
+    const fileList = Array.from(files);
+    for (let i = 0; i < totalFiles; i++) {
+      const file = fileList[i];
+      const baseProgress = (i / totalFiles) * 100;
+      
       try {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('scope', normalizedScope);
 
-        const result = await api.post('/api/v1/documents/upload', formData);
+        // Update status for starting upload
+        set({ 
+          uploadStatus: `Uploading ${file.name} (${i + 1}/${totalFiles}): 0%`,
+          uploadProgress: Math.round(baseProgress)
+        });
+
+        const result = await api.upload('/api/v1/documents/upload', formData, (percent) => {
+          const fileContribution = (percent * 0.7) / totalFiles;
+          const currentTotalProgress = baseProgress + fileContribution;
+          
+          set({ 
+            uploadProgress: Math.round(currentTotalProgress),
+            uploadStatus: `Uploading ${file.name} (${i + 1}/${totalFiles}): ${percent}%`
+          });
+          
+          if (percent === 100) {
+            set({ 
+              uploadStatus: `Running OCR & Indexing ${file.name} (${i + 1}/${totalFiles})...`
+            });
+          }
+        });
+
         if (result.document_id) {
           uploadedDocIds.push(result.document_id);
         }
@@ -242,8 +274,8 @@ export const useWorkspaceStore = create((set, get) => ({
         console.error(`Upload failed for ${file.name}:`, err);
         failedUploads.push(`${file.name}: ${err.message}`);
       } finally {
-        completedCount++;
-        set({ uploadProgress: Math.round((completedCount / totalFiles) * 100) });
+        const nextProgress = ((i + 1) / totalFiles) * 100;
+        set({ uploadProgress: Math.round(nextProgress) });
       }
     }
 
@@ -272,14 +304,16 @@ export const useWorkspaceStore = create((set, get) => ({
         set({
           error: `Upload failed: ${failedUploads.join(', ')}`,
         });
+      } else {
+        set({ uploadStatus: 'All files uploaded & indexed successfully!' });
       }
     } catch (err) {
       console.error('Failed updating workspace after upload:', err);
       set({ error: `Failed updating workspace after upload: ${err.message}` });
     } finally {
       setTimeout(() => {
-        set({ isUploading: false, uploadProgress: 0, uploadScope: null });
-      }, 500);
+        set({ isUploading: false, uploadProgress: 0, uploadScope: null, uploadStatus: '' });
+      }, 1000);
     }
   },
 

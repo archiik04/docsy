@@ -64,6 +64,54 @@ class ApiClient {
     });
   }
 
+  upload(path, formData, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      const url = `${this.baseUrl}${path}`;
+      
+      xhr.open('POST', url);
+      
+      const token = localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN);
+      if (token) {
+        xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+      }
+      
+      if (xhr.upload && onProgress) {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const percentComplete = Math.round((event.loaded / event.total) * 100);
+            onProgress(percentComplete);
+          }
+        });
+      }
+      
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            resolve(JSON.parse(xhr.responseText));
+          } catch (e) {
+            resolve(xhr.responseText);
+          }
+        } else {
+          let errorMessage = 'An error occurred';
+          try {
+            const errorData = JSON.parse(xhr.responseText);
+            errorMessage = errorData.detail || errorMessage;
+          } catch {
+            // ignore
+          }
+          reject(new Error(errorMessage));
+        }
+      };
+      
+      xhr.onerror = () => {
+        reject(new Error('Network error'));
+      };
+      
+      xhr.send(formData);
+    });
+  }
+
   delete(path) {
     return this.request(path, { method: 'DELETE' });
   }

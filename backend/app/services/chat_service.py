@@ -219,7 +219,7 @@ ANSWER:
 
     response = await client.chat.completions.create(
 
-        model="meta-llama/llama-3-8b-instruct",
+        model="meta-llama/llama-3.3-70b-instruct",
 
         temperature=0,
 

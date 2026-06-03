@@ -242,8 +242,8 @@ export function Sidebar({ isCollapsed, setIsCollapsed }) {
           </div>
           {!isCollapsed && (
             <div className="user-info">
-              <span className="user-name">{user?.name || 'Researcher'}</span>
-              <span className="user-email">{user?.email || 'researcher@docsy.ai'}</span>
+              <span className="user-name">{user?.name || ''}</span>
+              <span className="user-email">{user?.email || ''}</span>
             </div>
           )}
         </div>
