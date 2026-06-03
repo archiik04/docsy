@@ -36,6 +36,7 @@ export function WorkspacePage() {
     isTyping,
     isUploading,
     uploadProgress,
+    uploadScope,
     highlightedCitation,
     showPreview,
     error,
@@ -47,6 +48,7 @@ export function WorkspacePage() {
     selectConversation,
     deleteConversation,
     toggleDocumentSelection,
+    deleteDocument,
     switchMode,
     resetStore,
     fetchDocuments
@@ -393,6 +395,7 @@ export function WorkspacePage() {
             )}
           </div>
 
+
           {/* Profile and Logout Footer inside sidebar */}
           <div 
             className="sidebar-footer-premium" 
@@ -688,41 +691,83 @@ export function WorkspacePage() {
                 </p>
 
                 <div className="empty-chat-pills-row">
-                  <button 
-                    type="button" 
-                    className="empty-chat-pill"
-                    onClick={() => handleSuggestedPrompt("Summarize the key experiments and findings in relativity.pdf")}
-                  >
-                    Summarize a PDF
-                  </button>
-                  <button 
-                    type="button" 
-                    className="empty-chat-pill"
-                    onClick={() => handleSuggestedPrompt("Extract the core metrics and takeaways from this file")}
-                  >
-                    Extract key insights
-                  </button>
-                  <button 
-                    type="button" 
-                    className="empty-chat-pill"
-                    onClick={() => handleSuggestedPrompt("Run OCR and explain the contents of this image")}
-                  >
-                    Analyze an image
-                  </button>
-                  <button 
-                    type="button" 
-                    className="empty-chat-pill"
-                    onClick={() => handleSuggestedPrompt("Compare the methodologies across my uploaded context files")}
-                  >
-                    Compare documents
-                  </button>
-                  <button 
-                    type="button" 
-                    className="empty-chat-pill"
-                    onClick={() => handleSuggestedPrompt("Synthesize the text and generate neat structured notes")}
-                  >
-                    Generate notes
-                  </button>
+                  {mode === 'workspace' ? (
+                    <>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Summarize the key experiments and findings in my uploaded PDF")}
+                      >
+                        Summarize a PDF
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Extract the core metrics and takeaways from my files")}
+                      >
+                        Extract key insights
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Run OCR and explain the contents of my scanned image")}
+                      >
+                        Analyze an image
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Compare the methodologies across my uploaded context files")}
+                      >
+                        Compare documents
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Synthesize the text from my files and generate structured notes")}
+                      >
+                        Generate notes
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("What is the company policy on remote work and flexible hours?")}
+                      >
+                        Company Policies
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Show me the onboarding checklist for new engineers")}
+                      >
+                        Onboarding Guide
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("How do I submit an expense report for travel reimbursement?")}
+                      >
+                        Expense Reporting
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("Summarize the health insurance benefits and dental coverage")}
+                      >
+                        HR Benefits
+                      </button>
+                      <button 
+                        type="button" 
+                        className="empty-chat-pill"
+                        onClick={() => handleSuggestedPrompt("What are the password security and data protection guidelines?")}
+                      >
+                        Security Guidelines
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -787,6 +832,9 @@ export function WorkspacePage() {
 
           {/* Upload Progress Loader */}
           {isUploading && (
+            (mode === 'workspace' && uploadScope === 'PERSONAL') ||
+            (mode === 'knowledge_base' && uploadScope === 'KNOWLEDGE_BASE')
+          ) && (
             <div 
               style={{
                 display: 'flex',

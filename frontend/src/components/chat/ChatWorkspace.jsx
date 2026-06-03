@@ -108,9 +108,13 @@ export function ChatWorkspace() {
     setIsDragging(false);
     const files = e.dataTransfer.files;
     if (files && files.length > 0) {
-      const pdfFiles = Array.from(files).filter(f => f.type === 'application/pdf');
-      if (pdfFiles.length > 0) {
-        uploadDocuments(pdfFiles);
+      const allowedExtensions = ['.pdf', '.txt', '.docx', '.png', '.jpg', '.jpeg'];
+      const validFiles = Array.from(files).filter(f => {
+        const ext = f.name.substring(f.name.lastIndexOf('.')).toLowerCase();
+        return allowedExtensions.includes(ext);
+      });
+      if (validFiles.length > 0) {
+        uploadDocuments(validFiles);
       }
     }
   };

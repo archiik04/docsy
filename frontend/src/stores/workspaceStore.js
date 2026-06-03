@@ -11,6 +11,7 @@ export const useWorkspaceStore = create((set, get) => ({
   isTyping: false,
   isUploading: false,
   uploadProgress: 0,
+  uploadScope: null,
   highlightedCitation: null,
   showPreview: false,
   error: null,
@@ -75,6 +76,7 @@ export const useWorkspaceStore = create((set, get) => ({
       isTyping: false,
       isUploading: false,
       uploadProgress: 0,
+      uploadScope: null,
       highlightedCitation: null,
       showPreview: false,
       error: null,
@@ -219,7 +221,7 @@ export const useWorkspaceStore = create((set, get) => ({
     if (!files || files.length === 0) return;
     const normalizedScope = scope === 'KNOWLEDGE_BASE' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
     
-    set({ isUploading: true, uploadProgress: 0, error: null });
+    set({ isUploading: true, uploadProgress: 0, uploadScope: normalizedScope, error: null });
     const totalFiles = files.length;
     let completedCount = 0;
 
@@ -227,23 +229,6 @@ export const useWorkspaceStore = create((set, get) => ({
     const failedUploads = [];
 
     for (const file of Array.from(files)) {
-      // Prevent duplicate uploads if a file with same name and size is already uploaded
-      const isDuplicate = get().documents.some(
-        (d) => d.name === file.name && d.size === `${(file.size / 1024).toFixed(1)} KB`
-      );
-      if (isDuplicate) {
-        console.log(`Skipping duplicate file: ${file.name}`);
-        const existingDoc = get().documents.find(
-          (d) => d.name === file.name && d.size === `${(file.size / 1024).toFixed(1)} KB`
-        );
-        if (existingDoc) {
-          uploadedDocIds.push(existingDoc.id);
-        }
-        completedCount++;
-        set({ uploadProgress: Math.round((completedCount / totalFiles) * 100) });
-        continue;
-      }
-
       try {
         const formData = new FormData();
         formData.append('file', file);
@@ -267,9 +252,10 @@ export const useWorkspaceStore = create((set, get) => ({
       await get().fetchDocuments();
 
       if (uploadedDocIds.length > 0 && normalizedScope === 'PERSONAL') {
-        // Auto-select the newly uploaded documents (current selection only)
+        // Auto-select the newly uploaded documents (append to current selection)
         set((state) => {
-          const nextSelected = [...uploadedDocIds];
+          const currentSelected = state.selectedDocumentIds || [];
+          const nextSelected = Array.from(new Set([...currentSelected, ...uploadedDocIds]));
           return {
             selectedDocumentIds: nextSelected,
             activeDocumentId: uploadedDocIds[uploadedDocIds.length - 1], // Open preview of last uploaded doc
@@ -292,7 +278,7 @@ export const useWorkspaceStore = create((set, get) => ({
       set({ error: `Failed updating workspace after upload: ${err.message}` });
     } finally {
       setTimeout(() => {
-        set({ isUploading: false, uploadProgress: 0 });
+        set({ isUploading: false, uploadProgress: 0, uploadScope: null });
       }, 500);
     }
   },

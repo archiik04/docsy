@@ -164,8 +164,10 @@ async def upload_document(
         f"\nTOTAL CHUNKS: {len(all_chunks)}\n"
     )
 
+    document_id = uuid.uuid4()
     # Save document metadata
     new_document = Document(
+        id=document_id,
         filename=unique_filename,
         original_filename=file.filename,
         file_path=str(file_path),
@@ -178,13 +180,6 @@ async def upload_document(
     )
 
     db.add(new_document)
-
-    await db.commit()
-    print(
-        f"Saved {len(all_chunks)} chunks for document {new_document.id}"
-    )
-
-    await db.refresh(new_document)
 
     # Save chunks
     for index, chunk_data in enumerate(
@@ -200,7 +195,7 @@ async def upload_document(
         )
 
         new_chunk = DocumentChunk(
-            document_id=new_document.id,
+            document_id=document_id,
             chunk_index=index,
             chunk_text=chunk_data["chunk_text"],
             embedding=chunk_data["embedding"],

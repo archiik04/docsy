@@ -80,6 +80,15 @@ async def retrieve_similar_chunks(
         )
 
     print(f"""
+=== RETRIEVAL INPUTS ===
+QUERY: {query}
+MODE: {mode}
+USER ID: {user_id}
+DOCUMENT IDS: {document_ids}
+=========================
+    """)
+
+    print(f"""
 =========================
 ORIGINAL QUERY:
 {query}
@@ -191,7 +200,7 @@ EXPANDED QUERY:
             
             "original_filename": row[6],
             
-            "filename": row[6],
+            "filename": row[7],
             
             "pdf_url": f"http://127.0.0.1:8000/{pdf_path}",
             
