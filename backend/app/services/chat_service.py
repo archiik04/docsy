@@ -102,7 +102,7 @@ TOP RERANK SCORE:
     """)
 
     # Confidence threshold
-    if len(results) == 0 or top_rerank_score < -8.0:
+    if len(results) == 0 or top_rerank_score < -15.0:
         
         title = (
             await generate_title(question)

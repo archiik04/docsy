@@ -116,7 +116,7 @@ export const useWorkspaceStore = create((set, get) => ({
                   {
                     title: 'MANUSCRIPT OVERVIEW',
                     content: doc.processing_status === 'processing'
-                      ? 'Document is currently being processed by OCR.Space and indexed. Please wait...'
+                      ? 'Document is currently being processed by Tesseract OCR and indexed. Please wait...'
                       : doc.processing_status === 'failed'
                         ? 'Error: OCR processing failed for this document.'
                         : 'No text extracted or document is empty.',
@@ -173,7 +173,7 @@ export const useWorkspaceStore = create((set, get) => ({
                 {
                   title: 'MANUSCRIPT OVERVIEW',
                   content: doc.processing_status === 'processing'
-                    ? 'Document is currently being processed by OCR.Space and indexed. Please wait...'
+                    ? 'Document is currently being processed by Tesseract OCR and indexed. Please wait...'
                     : doc.processing_status === 'failed'
                       ? 'Error: OCR processing failed for this document.'
                       : 'No text extracted or document is empty.',

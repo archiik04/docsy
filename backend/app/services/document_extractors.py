@@ -20,7 +20,7 @@ def extract_pdf_text(file_path):
     pdf_document.close()
 
     if not text.strip():
-        print(f"No selectable text found in PDF {file_path}. Processing via OCR.Space...")
+        print(f"No selectable text found in PDF {file_path}. Processing via Tesseract OCR...")
         text = extract_text_from_image(file_path)
 
     return text

@@ -1097,7 +1097,7 @@ export function WorkspacePage() {
                     <div style={{ fontWeight: 600, color: '#0a101c', marginBottom: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Full Extracted Document Text:
                     </div>
-                    {activeDoc?.extracted_text || highlightedCitation?.extracted_text || (activeDoc?.processing_status === 'processing' ? "Document is currently being processed by OCR.Space and indexed. Please wait..." : "No text extracted from this document or it is currently being processed.")}
+                    {activeDoc?.extracted_text || highlightedCitation?.extracted_text || (activeDoc?.processing_status === 'processing' ? "Document is currently being processed by Tesseract OCR and indexed. Please wait..." : "No text extracted from this document or it is currently being processed.")}
                   </div>
                 ) : (
                   (highlightedCitation?.pdf_url || activeDoc?.filename) ? (

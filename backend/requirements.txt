@@ -26,7 +26,7 @@ cryptography==48.0.0
 distro==1.9.0
 dnspython==2.8.0
 durationpy==0.10
-easyocr==1.7.2
+pytesseract==0.3.13
 ecdsa==0.19.2
 email-validator==2.3.0
 fastapi==0.136.1
@@ -103,7 +103,7 @@ orjson==3.11.9
 ormsgpack==1.12.2
 overrides==7.7.0
 packaging==26.2
-paddlex==3.6.1
+
 pandas==3.0.3
 pgvector==0.4.2
 pillow==10.4.0
