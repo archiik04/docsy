@@ -1,15 +1,33 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import os
+import logging
+from contextlib import asynccontextmanager
 
 from app.api.v1.routes.auth import router as auth_router
 from app.api.v1.routes.documents import router as documents_router
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.routes.chat import router as chat_router
+from app.services.embedding_service import get_embedding_model
 
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logger.info("Pre-loading ML models at startup (lifespan)...")
+    try:
+        logger.info("Warming up embedding model...")
+        emb_model = get_embedding_model()
+        emb_model.encode(["warmup"])
+        logger.info("✓ Embedding model warmed up.")
+        logger.info("Docsy ready!")
+    except Exception as e:
+        logger.error(f"Error loading models at startup: {e}")
+    yield
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+
 os.makedirs("uploads", exist_ok=True)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -38,6 +56,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+
 
 
 app.include_router(

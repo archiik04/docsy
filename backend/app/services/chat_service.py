@@ -1,3 +1,4 @@
+import uuid
 from openai import AsyncOpenAI
 
 from app.core.config import settings
@@ -46,6 +47,28 @@ async def generate_chat_response(
     db=None
 ):
 
+    # CHECK IF ANY SELECTED DOCUMENTS ARE STILL PROCESSING
+    if document_ids and db:
+        from app.models.document import Document
+        from sqlalchemy import select
+        try:
+            doc_uuids = [uuid.UUID(d_id) for d_id in document_ids]
+            proc_query = select(Document).where(
+                Document.id.in_(doc_uuids),
+                Document.processing_status == "processing"
+            )
+            proc_result = await db.execute(proc_query)
+            processing_docs = proc_result.scalars().all()
+            if processing_docs:
+                filenames = ", ".join([f"'{d.original_filename}'" for d in processing_docs])
+                return (
+                    f"The document(s) {filenames} are still being indexed. Please wait a moment for Docsy to finish processing.",
+                    [],
+                    None
+                )
+        except Exception as e:
+            print(f"Error checking document processing status: {e}")
+
     # RETRIEVE CHUNKS
 
     results = await retrieve_similar_chunks(
@@ -79,7 +102,7 @@ TOP RERANK SCORE:
     """)
 
     # Confidence threshold
-    if len(results) == 0:
+    if len(results) == 0 or top_rerank_score < -8.0:
         
         title = (
             await generate_title(question)
@@ -189,6 +212,7 @@ You are Docsy, a document-grounded AI assistant. Your sole purpose is to help us
 - Never invent or infer facts not explicitly present in the context.
 - If the context contains partial information, use it and note the limitation.
 - Only say "No relevant information found." when the context has **nothing** relevant — not just incomplete information.
+- Structured key-value pairs (e.g. "Name: Cutie", "Department: Computer Science") are explicit, grounded facts. Extract values from these pairs directly when asked about those keys.
 
 ## Response Style
 

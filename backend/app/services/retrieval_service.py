@@ -262,7 +262,7 @@ CHUNK:
         )
 
         # Broader threshold
-        if score < 0.75:
+        if score < 0.95:
 
             row["hybrid_score"] = score
 

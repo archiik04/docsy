@@ -39,6 +39,7 @@ export const useWorkspaceStore = create((set, get) => ({
   setShowPreview: (showPreview) => set({ showPreview }),
 
   switchMode: (mode) => {
+    get().stopPollingDocuments();
     const conversations = get().conversations || [];
     const modeConversations = conversations.filter(
       (conversation) => conversation.mode === mode || (!conversation.mode && mode === 'workspace')
@@ -67,6 +68,7 @@ export const useWorkspaceStore = create((set, get) => ({
   },
 
   resetStore: () => {
+    get().stopPollingDocuments();
     set({
       documents: [],
       selectedDocumentIds: [],
@@ -85,10 +87,68 @@ export const useWorkspaceStore = create((set, get) => ({
     });
   },
 
-  fetchDocuments: async () => {
+  pollTimer: null,
+
+  startPollingDocuments: (scope = 'PERSONAL') => {
+    if (get().pollTimer) return;
+    const timer = setInterval(async () => {
+      try {
+        const docs = await api.get(`/api/v1/documents?scope=${scope}`);
+        const mappedDocs = docs.map(doc => ({
+          id: doc.id,
+          name: doc.original_filename,
+          filename: doc.filename,
+          size: doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : 'Unknown',
+          uploadedAt: doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'Just now',
+          extracted_text: doc.extracted_text || '',
+          processing_status: doc.processing_status || 'completed',
+          previewText: {
+            heading: doc.original_filename.toUpperCase(),
+            subheading: scope === 'KNOWLEDGE_BASE' ? 'Shared Archive Document' : 'Ingested PDF Manuscript',
+            sections: doc.extracted_text
+              ? [
+                  {
+                    title: 'EXTRACTED MANUSCRIPT FRAGMENT',
+                    content: doc.extracted_text.slice(0, 1500) + (doc.extracted_text.length > 1500 ? '...' : ''),
+                  }
+                ]
+              : [
+                  {
+                    title: 'MANUSCRIPT OVERVIEW',
+                    content: doc.processing_status === 'processing'
+                      ? 'Document is currently being processed by OCR.Space and indexed. Please wait...'
+                      : doc.processing_status === 'failed'
+                        ? 'Error: OCR processing failed for this document.'
+                        : 'No text extracted or document is empty.',
+                  }
+                ]
+          }
+        }));
+
+        set({ documents: mappedDocs });
+
+        const hasProcessing = mappedDocs.some(d => d.processing_status === 'processing');
+        if (!hasProcessing) {
+          get().stopPollingDocuments();
+        }
+      } catch (err) {
+        console.error('Error polling documents:', err);
+      }
+    }, 3000);
+    set({ pollTimer: timer });
+  },
+
+  stopPollingDocuments: () => {
+    if (get().pollTimer) {
+      clearInterval(get().pollTimer);
+      set({ pollTimer: null });
+    }
+  },
+
+  fetchDocuments: async (scope = 'PERSONAL') => {
     set({ error: null });
     try {
-      const docs = await api.get('/api/v1/documents');
+      const docs = await api.get(`/api/v1/documents?scope=${scope}`);
       
       // Map properties to match frontend expectation
       const mappedDocs = docs.map(doc => ({
@@ -98,9 +158,10 @@ export const useWorkspaceStore = create((set, get) => ({
         size: doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : 'Unknown',
         uploadedAt: doc.created_at ? new Date(doc.created_at).toLocaleDateString() : 'Just now',
         extracted_text: doc.extracted_text || '',
+        processing_status: doc.processing_status || 'completed',
         previewText: {
           heading: doc.original_filename.toUpperCase(),
-          subheading: 'Ingested PDF Manuscript',
+          subheading: scope === 'KNOWLEDGE_BASE' ? 'Shared Archive Document' : 'Ingested PDF Manuscript',
           sections: doc.extracted_text
             ? [
                 {
@@ -111,13 +172,25 @@ export const useWorkspaceStore = create((set, get) => ({
             : [
                 {
                   title: 'MANUSCRIPT OVERVIEW',
-                  content: 'No text extracted or document is empty.',
+                  content: doc.processing_status === 'processing'
+                    ? 'Document is currently being processed by OCR.Space and indexed. Please wait...'
+                    : doc.processing_status === 'failed'
+                      ? 'Error: OCR processing failed for this document.'
+                      : 'No text extracted or document is empty.',
                 }
               ]
         }
       }));
 
       set({ documents: mappedDocs });
+
+      // If any document is still processing, start polling
+      const hasProcessing = mappedDocs.some(d => d.processing_status === 'processing');
+      if (hasProcessing) {
+        get().startPollingDocuments(scope);
+      } else {
+        get().stopPollingDocuments();
+      }
 
     } catch (err) {
       console.error('Failed to fetch documents:', err);
@@ -146,7 +219,7 @@ export const useWorkspaceStore = create((set, get) => ({
 
   selectDocument: (docId) => {
     const state = get();
-    const doc = state.documents.find(d => d.id === docId);
+    const doc = state.documents.find((d) => d.id === docId);
     if (!doc) return;
     set({ activeDocumentId: docId, highlightedCitation: null, showPreview: true });
   },
@@ -179,7 +252,6 @@ export const useWorkspaceStore = create((set, get) => ({
       let nextActiveId = state.activeConversationId;
 
       if (state.activeConversationId === convId) {
-        // Find other conversations of the same mode
         const remainingSameModeConvs = nextConvs.filter(
           c => (c.mode === deletedConvMode || (!c.mode && deletedConvMode === 'workspace'))
         );
@@ -281,7 +353,7 @@ export const useWorkspaceStore = create((set, get) => ({
 
     try {
       // Refresh document registry
-      await get().fetchDocuments();
+      await get().fetchDocuments(normalizedScope);
 
       if (uploadedDocIds.length > 0 && normalizedScope === 'PERSONAL') {
         // Auto-select the newly uploaded documents (append to current selection)

@@ -14,7 +14,8 @@ import {
   Loader2, 
   LogOut,
   HelpCircle,
-  Menu
+  Menu,
+  Eye
 } from 'lucide-react';
 
 import { useWorkspaceStore } from '../../stores/workspaceStore';
@@ -61,6 +62,7 @@ export function WorkspacePage() {
     const saved = localStorage.getItem('docsy-sidebar-collapsed');
     return saved !== null ? JSON.parse(saved) : false;
   });
+  const [previewTab, setPreviewTab] = useState('view'); // view, ocr
 
   const messagesEndRef = useRef(null);
   const textInputRef = useRef(null);
@@ -68,8 +70,9 @@ export function WorkspacePage() {
 
   // Fetch documents and set initial conversation on mount
   useEffect(() => {
-    fetchDocuments();
-  }, [fetchDocuments]);
+    const scope = mode === 'knowledge_base' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
+    fetchDocuments(scope);
+  }, [fetchDocuments, mode]);
 
   // Scroll to bottom on new messages
   const currentConv = conversations.find(c => c.id === activeConversationId);
@@ -992,6 +995,49 @@ export function WorkspacePage() {
                     {highlightedCitation?.original_filename || (highlightedCitation?.filename ? cleanFilename(highlightedCitation.filename) : (activeDoc?.name || 'Document Viewer'))}
                   </span>
                 </div>
+                
+                {/* Modal View Tabs */}
+                <div style={{ display: 'flex', gap: '8px', background: 'rgba(10, 16, 28, 0.04)', padding: '3px', borderRadius: '8px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab('view')}
+                    style={{
+                      background: previewTab === 'view' ? '#ffffff' : 'transparent',
+                      border: 'none',
+                      color: '#0a101c',
+                      fontSize: '11px',
+                      fontWeight: 650,
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      boxShadow: previewTab === 'view' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.2s',
+                      outline: 'none'
+                    }}
+                  >
+                    Document File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewTab('ocr')}
+                    style={{
+                      background: previewTab === 'ocr' ? '#ffffff' : 'transparent',
+                      border: 'none',
+                      color: '#0a101c',
+                      fontSize: '11px',
+                      fontWeight: 650,
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      boxShadow: previewTab === 'ocr' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                      transition: 'all 0.2s',
+                      outline: 'none'
+                    }}
+                  >
+                    OCR / Extracted Text
+                  </button>
+                </div>
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {highlightedCitation && (
                     <span style={{ fontSize: '12px', background: 'rgba(100, 210, 225, 0.15)', color: '#2d8fa0', padding: '4px 10px', borderRadius: '6px', fontWeight: 600 }}>
@@ -1019,28 +1065,95 @@ export function WorkspacePage() {
                   </button>
                 </div>
               </div>
-
+ 
               {/* PDF Content Area */}
-              <div style={{ flex: 1, padding: '20px', background: 'rgba(255, 255, 255, 0.15)', overflow: 'hidden' }}>
-                {(highlightedCitation?.pdf_url || activeDoc?.filename) ? (
-                  <iframe
-                    key={highlightedCitation?.pdf_url || (activeDoc?.filename ? `${API_BASE_URL}/uploads/${activeDoc.filename}` : '')}
-                    src={highlightedCitation?.pdf_url || (activeDoc?.filename ? `${API_BASE_URL}/uploads/${activeDoc.filename}#page=1` : '')}
-                    title="PDF Viewer"
-                    width="100%"
-                    height="100%"
-                    style={{
-                      border: 'none',
-                      borderRadius: '14px',
-                      background: '#ffffff',
-                      boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
-                    }}
-                  />
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(10, 16, 28, 0.5)' }}>
-                    <HelpCircle size={32} style={{ marginBottom: '12px', color: 'rgba(10, 16, 28, 0.3)' }} />
-                    <span>No document file loaded.</span>
+              <div style={{ flex: 1, padding: '20px', background: 'rgba(255, 255, 255, 0.15)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {previewTab === 'ocr' ? (
+                  <div style={{
+                    flex: 1,
+                    background: 'rgba(255, 255, 255, 0.8)',
+                    borderRadius: '14px',
+                    padding: '24px',
+                    overflowY: 'auto',
+                    border: '1px solid rgba(10,16,28,0.08)',
+                    fontSize: '13px',
+                    lineHeight: '1.6',
+                    fontFamily: 'Inter, monospace',
+                    color: '#0a101c',
+                    whiteSpace: 'pre-wrap',
+                    textAlign: 'left'
+                  }}>
+                    {highlightedCitation?.chunk_text ? (
+                      <div>
+                        <div style={{ fontWeight: 600, color: '#2d8fa0', marginBottom: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Matched Citation Text Segment:
+                        </div>
+                        <div style={{ borderLeft: '3px solid #2d8fa0', paddingLeft: '12px', fontStyle: 'italic', marginBottom: '20px', color: '#1e293b' }}>
+                          "{highlightedCitation.chunk_text}"
+                        </div>
+                      </div>
+                    ) : null}
+                    
+                    <div style={{ fontWeight: 600, color: '#0a101c', marginBottom: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Full Extracted Document Text:
+                    </div>
+                    {activeDoc?.extracted_text || highlightedCitation?.extracted_text || (activeDoc?.processing_status === 'processing' ? "Document is currently being processed by OCR.Space and indexed. Please wait..." : "No text extracted from this document or it is currently being processed.")}
                   </div>
+                ) : (
+                  (highlightedCitation?.pdf_url || activeDoc?.filename) ? (
+                    (() => {
+                      const fileUrl = highlightedCitation?.pdf_url || (activeDoc?.filename ? `${API_BASE_URL}/uploads/${activeDoc.filename}` : '');
+                      const isImage = fileUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i);
+                      
+                      if (isImage) {
+                        return (
+                          <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '14px',
+                            background: '#0a0f1d',
+                            overflow: 'auto',
+                            padding: '16px'
+                          }}>
+                            <img
+                              src={fileUrl}
+                              alt="Document Preview"
+                              style={{
+                                maxWidth: '100%',
+                                maxHeight: '100%',
+                                objectFit: 'contain',
+                                borderRadius: '8px',
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
+                              }}
+                            />
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <iframe
+                          key={fileUrl}
+                          src={highlightedCitation?.pdf_url ? fileUrl : `${fileUrl}#page=1`}
+                          title="PDF Viewer"
+                          width="100%"
+                          height="100%"
+                          style={{
+                            border: 'none',
+                            borderRadius: '14px',
+                            background: '#ffffff',
+                            boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)'
+                          }}
+                        />
+                      );
+                    })()
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', color: 'rgba(10, 16, 28, 0.5)' }}>
+                      <HelpCircle size={32} style={{ marginBottom: '12px', color: 'rgba(10, 16, 28, 0.3)' }} />
+                      <span>No document file loaded.</span>
+                    </div>
+                  )
                 )}
               </div>
             </motion.div>

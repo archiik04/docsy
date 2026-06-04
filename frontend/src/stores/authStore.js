@@ -2,12 +2,20 @@ import { create } from 'zustand';
 import { api } from '../lib/api';
 import { LOCAL_STORAGE_KEYS } from '../constants/api';
 
-export const useAuthStore = create((set, get) => ({
-  user: null,
-  token: localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || null,
-  isAuthenticated: false,
-  loading: false,
-  error: null,
+export const useAuthStore = create((set, get) => {
+  if (typeof window !== 'undefined') {
+    window.addEventListener('auth-unauthorized', () => {
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.TOKEN);
+      set({ token: null, user: null, isAuthenticated: false, error: 'Session expired. Please log in again.' });
+    });
+  }
+
+  return {
+    user: null,
+    token: localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || null,
+    isAuthenticated: false,
+    loading: false,
+    error: null,
 
   setError: (error) => set({ error }),
 
@@ -92,4 +100,5 @@ export const useAuthStore = create((set, get) => ({
       loading: false,
     });
   },
-}));
+  };
+});

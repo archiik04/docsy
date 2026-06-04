@@ -1,110 +1,43 @@
-import re
-from PIL import Image
+import requests
+from app.core.config import settings
 
-_ocr_predictor = None
+OCR_SPACE_API_KEY = settings.OCR_SPACE_API_KEY
 
+def extract_text_from_image(image_path: str) -> str:
 
-def get_ocr_predictor():
-    global _ocr_predictor
+    with open(image_path, "rb") as image_file:
 
-    if _ocr_predictor is None:
-
-        print(
-            "\n===== INITIALIZING SURYA OCR MODEL ====="
+        response = requests.post(
+            "https://api.ocr.space/parse/image",
+            files={
+                "file": image_file
+            },
+            data={
+                "apikey": OCR_SPACE_API_KEY,
+                "language": "eng",
+                "OCREngine": 2,
+                "isOverlayRequired": False
+            }
         )
 
-        from surya.inference import (
-            SuryaInferenceManager
+    result = response.json()
+
+    if result.get("IsErroredOnProcessing"):
+        raise Exception(
+            result.get("ErrorMessage")
         )
 
-        from surya.recognition import (
-            RecognitionPredictor
+    text = ""
+
+    for page in result.get("ParsedResults", []):
+        text += page.get(
+            "ParsedText",
+            ""
         )
+        text += "\n"
 
-        manager = SuryaInferenceManager()
+    print("\n===== OCR SPACE OUTPUT =====")
+    print(text[:500])
+    print("============================\n")
 
-        _ocr_predictor = RecognitionPredictor(
-            manager
-        )
-
-        print(
-            "===== SURYA OCR MODEL LOADED =====\n"
-        )
-
-    return _ocr_predictor
-
-
-def extract_text_from_image(
-    image_path
-):
-
-    try:
-
-        ocr = get_ocr_predictor()
-
-        with Image.open(
-            image_path
-        ) as image:
-
-            results = ocr([
-                image
-            ])
-
-        if not results:
-
-            print(
-                "\n===== SURYA RETURNED NO RESULTS =====\n"
-            )
-
-            return ""
-
-        page = results[0]
-
-        text_parts = []
-
-        for block in page.blocks:
-
-            text = re.sub(
-                r"<[^>]+>",
-                "",
-                block.html
-            )
-
-            text = text.strip()
-
-            if text:
-
-                text_parts.append(
-                    text
-                )
-
-        combined_text = "\n".join(
-            text_parts
-        )
-
-        print(
-            "\n===== SURYA OCR OUTPUT ====="
-        )
-
-        print(
-            combined_text[:500]
-            + (
-                "..."
-                if len(combined_text) > 500
-                else ""
-            )
-        )
-
-        print(
-            "===========================\n"
-        )
-
-        return combined_text
-
-    except Exception as e:
-
-        print(
-            f"\n===== SURYA OCR ERROR =====\n{e}\n"
-        )
-
-        return ""
+    return text.strip()

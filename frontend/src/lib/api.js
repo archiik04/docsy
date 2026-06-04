@@ -35,6 +35,10 @@ class ApiClient {
       const response = await fetch(url, config);
       
       if (!response.ok) {
+        if (response.status === 401) {
+          localStorage.removeItem('docsy_token');
+          window.dispatchEvent(new Event('auth-unauthorized'));
+        }
         let errorMessage = 'An error occurred';
         try {
           const errorData = await response.json();
@@ -93,6 +97,10 @@ class ApiClient {
             resolve(xhr.responseText);
           }
         } else {
+          if (xhr.status === 401) {
+            localStorage.removeItem('docsy_token');
+            window.dispatchEvent(new Event('auth-unauthorized'));
+          }
           let errorMessage = 'An error occurred';
           try {
             const errorData = JSON.parse(xhr.responseText);
