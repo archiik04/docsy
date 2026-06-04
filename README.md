@@ -2,7 +2,6 @@
 
 Docsy is a high-performance, layout-aware Retrieval-Augmented Generation (RAG) platform. It allows users to upload documents (PDF, DOCX, TXT) and images (PNG, JPG, JPEG), extract their contents locally using **Tesseract OCR**, generate dense vector representations, and run grounded, context-aware semantic search and chatbot queries.
 
----
 
 ## Table of Contents
 1. [System Architecture](#system-architecture)
@@ -14,7 +13,6 @@ Docsy is a high-performance, layout-aware Retrieval-Augmented Generation (RAG) p
 7. [Installation & Setup](#installation--setup)
 8. [API Reference](#api-reference)
 
----
 
 ## System Architecture
 
@@ -50,8 +48,6 @@ graph TD
     I --> J[Context-Grounded Answer]
 ```
 
----
-
 ## Project Technology Stack
 
 ### Backend
@@ -75,7 +71,6 @@ graph TD
 * **Vector Extensions**: `pgvector` for Cosine similarity vector search
 * **Indices**: GIN indexes for Full-Text Search (`fts`), HNSW indices for high-dimensional vector search
 
----
 
 ## Directory Layout
 
@@ -130,7 +125,6 @@ docsy/
 └── README.md                       # Project system architecture guide
 ```
 
----
 
 ## Ingestion & OCR Pipeline
 
@@ -163,7 +157,6 @@ When a user submits a query to chat, Docsy follows these steps to retrieve groun
    * The top 4 ranked chunks are injected into a strict system prompt.
    * The LLM receives instructions to only answer based on the provided context, paying attention to semi-structured formats (e.g. key-value pairs like `Name: Cutie`).
 
----
 
 ## Database Schema
 
@@ -206,7 +199,6 @@ CREATE TABLE document_chunks (
 );
 ```
 
----
 
 ## Installation & Setup
 
@@ -285,7 +277,6 @@ sudo apt-get install -y tesseract-ocr libtesseract-dev
    npm run dev
    ```
 
----
 
 ## API Reference
 
