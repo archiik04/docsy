@@ -10,7 +10,10 @@ import {
   Compass,
   Search,
   Bookmark,
-  Settings
+  Settings,
+  Database,
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { Logo } from '../../components/ui/Logo';
 
@@ -24,6 +27,19 @@ export function LandingPage() {
     const x = (clientX - window.innerWidth / 2) / 60;
     const y = (clientY - window.innerHeight / 2) / 60;
     setMouseOffset({ x, y });
+  };
+
+  const pillStyle = {
+    padding: '6px 12px',
+    background: 'rgba(255, 255, 255, 0.45)',
+    border: '1px solid rgba(10, 16, 28, 0.08)',
+    borderRadius: '12px',
+    fontSize: '9.5px',
+    color: '#0a101c',
+    boxShadow: '0 2px 6px rgba(0, 0, 0, 0.02)',
+    cursor: 'default',
+    fontFamily: 'var(--font-sans)',
+    fontWeight: 500
   };
 
   return (
@@ -61,89 +77,152 @@ export function LandingPage() {
 
         {/* Right Side: Unified Perspective Product Mockup */}
         <div className="hero-preview-side animate-fade-in" style={{ animationDelay: '0.3s' }}>
-          <div className="workspace-preview-container">
-            <div className="mockup-workspace">
+          <div className="workspace-preview-container" style={{
+            background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0%, rgba(255, 255, 255, 0.15) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.55)',
+            boxShadow: '0 30px 100px rgba(10, 16, 28, 0.12), 0 0 80px rgba(100, 210, 225, 0.04)'
+          }}>
+            <div className="mockup-workspace" style={{
+              background: 'url(/docsy_hero.png) no-repeat center center',
+              backgroundSize: 'cover',
+              border: '1px solid rgba(255, 255, 255, 0.45)',
+              boxShadow: 'inset 0 1px 1px rgba(255, 255, 255, 0.5)',
+              display: 'flex'
+            }}>
               {/* Mini Sidebar */}
-              <aside className="sidebar" style={{ width: '200px', minWidth: '200px', borderRight: '1px solid rgba(255, 255, 255, 0.06)' }}>
-                <div className="sidebar-header" style={{ padding: '16px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                    <div style={{ display: 'flex', gap: '5px' }}>
-                      <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255, 95, 86, 0.7)' }} />
-                      <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(255, 189, 46, 0.7)' }} />
-                      <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: 'rgba(39, 201, 63, 0.7)' }} />
-                    </div>
-                    <Logo style={{ fontSize: '14px', marginLeft: '4px' }} />
+              <aside className="sidebar" style={{
+                width: '180px',
+                minWidth: '180px',
+                background: 'rgba(255, 255, 255, 0.32)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderRight: '1.5px solid rgba(255, 255, 255, 0.55)',
+                display: 'flex',
+                flexDirection: 'column',
+                height: '100%',
+                boxSizing: 'border-box'
+              }}>
+                <div style={{ padding: '12px 14px', borderBottom: '1px solid rgba(10, 16, 28, 0.08)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontFamily: 'var(--font-sans)', fontSize: '14px', fontWeight: 800, color: '#000000' }}>Docsy</span>
+                  <div className="sidebar-new-chat-btn" style={{
+                    width: '20px',
+                    height: '20px',
+                    borderRadius: '6px',
+                    background: 'rgba(100, 210, 225, 0.18)',
+                    border: '1px solid rgba(100, 210, 225, 0.45)',
+                    color: '#2d8fa0',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'default',
+                    boxShadow: '0 1px 3px rgba(100, 210, 225, 0.1)'
+                  }}>
+                    <Plus size={10} style={{ strokeWidth: 3 }} />
                   </div>
                 </div>
 
-                {/* Fake Command Search */}
-                <div style={{ padding: '4px 14px 10px 14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', padding: '6px 12px', fontSize: '10.5px', color: 'rgba(255,255,255,0.35)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <Search size={11} style={{ opacity: 0.6, color: '#64d2e1' }} />
-                      <span>Search archive...</span>
-                    </div>
-                    <span style={{ fontSize: '8px', opacity: 0.6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', padding: '1px 4px', borderRadius: '4px' }}>⌘K</span>
+                {/* Mode tabs selector (Workspace vs Knowledge Base) */}
+                <div className="sidebar-mode-selector" style={{ display: 'flex', gap: '4px', padding: '3px', borderRadius: '8px', margin: '8px 10px 4px 10px' }}>
+                  <div className="mode-tab-btn active" style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    padding: '6px 0',
+                    fontSize: '9px',
+                    fontWeight: 850,
+                    color: '#2d8fa0',
+                    background: 'rgba(255, 255, 255, 0.65)',
+                    border: '1.5px solid rgba(100, 210, 225, 0.45)',
+                    borderRadius: '6px',
+                    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.02)'
+                  }}>
+                    <Compass size={10} style={{ strokeWidth: 2.5 }} />
+                    <span>Workspace</span>
+                  </div>
+                  <div className="mode-tab-btn" style={{
+                    flex: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '4px',
+                    padding: '6px 0',
+                    fontSize: '9px',
+                    fontWeight: 800,
+                    color: 'rgba(10, 16, 28, 0.75)'
+                  }}>
+                    <Database size={10} style={{ opacity: 0.8 }} />
+                    <span>Knowledge Base</span>
                   </div>
                 </div>
 
-                {/* Fake Navigation Tabs */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', padding: '6px 14px' }}>
-                  <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em', paddingLeft: '6px', marginBottom: '2px' }}>Navigation</span>
-                  <div style={{ fontSize: '11px', color: '#64d2e1', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(45, 143, 160, 0.12)', border: '1px solid rgba(45, 143, 160, 0.2)', padding: '6px 12px', borderRadius: '6px', fontWeight: '500' }}>
-                    <Compass size={13} style={{ color: '#64d2e1' }} /> Workspace
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px' }}>
-                    <Bookmark size={13} style={{ opacity: 0.7 }} /> Saved Insights
-                  </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px' }}>
-                    <Settings size={13} style={{ opacity: 0.7 }} /> Settings
+                {/* Search */}
+                <div className="sidebar-search-container" style={{
+                  margin: '6px 10px',
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  background: 'rgba(255, 255, 255, 0.35)',
+                  border: '1px solid rgba(10, 16, 28, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <Search size={11} className="sidebar-search-icon" style={{ strokeWidth: 3, color: 'rgba(10, 16, 28, 0.65)' }} />
+                  <span className="sidebar-search-input" style={{ fontSize: '9.5px', fontWeight: 800, color: 'rgba(10, 16, 28, 0.65)' }}>Search threads...</span>
+                </div>
+
+                {/* Active Discussions List */}
+                <div className="sidebar-threads-scroll" style={{ flexGrow: 1, padding: '6px 10px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <div className="convo-thread-item active" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '6px 8px',
+                    borderRadius: '8px',
+                    background: 'rgba(255, 255, 255, 0.65)',
+                    border: '1.5px solid rgba(100, 210, 225, 0.5)',
+                    boxShadow: '0 2px 6px rgba(100, 210, 225, 0.08)',
+                    cursor: 'default'
+                  }}>
+                    <span className="thread-title-text" style={{ fontSize: '9.5px', fontWeight: 850, color: '#2d8fa0' }}>General Relativity</span>
+                    <button className="thread-delete-btn" style={{ opacity: 1, padding: '2px', background: 'transparent', border: 'none', color: 'rgba(10, 16, 28, 0.65)' }}>
+                      <Trash2 size={10} style={{ strokeWidth: 2.5 }} />
+                    </button>
                   </div>
                 </div>
 
-                <div className="sidebar-menu-wrapper" style={{ padding: '6px 14px' }}>
-                  <div className="sidebar-section">
-                    <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.08em', display: 'block', paddingLeft: '6px', marginBottom: '4px' }}>Ingested Archive</span>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                      <div className="doc-list-item active" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(100, 210, 225, 0.12)', border: '1px solid rgba(100, 210, 225, 0.2)' }}>
-                        <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <FileText size={12} style={{ flexShrink: 0, color: '#64d2e1' }} />
-                          <span className="doc-name" style={{ fontSize: '11px', color: '#ffffff', fontWeight: '500' }}>relativity.pdf</span>
-                        </div>
-                        <span style={{ fontSize: '8px', color: '#64d2e1', background: 'rgba(100, 210, 225, 0.15)', padding: '1px 4px', borderRadius: '3px', fontWeight: '600' }}>ACTIVE</span>
-                      </div>
-                      
-                      <div className="doc-list-item" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)' }}>
-                        <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <FileText size={12} style={{ flexShrink: 0, opacity: 0.5 }} />
-                          <span className="doc-name" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>quantum_mechanics.pdf</span>
-                        </div>
-                        <span className="status-pulse-sync" style={{ fontSize: '8px', color: '#ffd075', display: 'flex', alignItems: 'center', gap: '3px' }}>
-                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#ffd075', display: 'inline-block' }} />
-                          SYNCING
-                        </span>
-                      </div>
-
-                      <div className="doc-list-item" style={{ padding: '8px 12px', borderRadius: '6px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', opacity: 0.7 }}>
-                        <div className="doc-item-left" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <FileText size={12} style={{ flexShrink: 0, opacity: 0.4 }} />
-                          <span className="doc-name" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>neural_networks.pdf</span>
-                        </div>
-                      </div>
+                {/* Footer profile */}
+                <div className="sidebar-footer-premium" style={{
+                  padding: '10px 12px',
+                  borderTop: '1.5px solid rgba(10, 16, 28, 0.12)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background: 'rgba(255, 255, 255, 0.2)'
+                }}>
+                  <div className="user-profile" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div className="rail-avatar-glow" style={{
+                      width: '24px',
+                      height: '24px',
+                      borderRadius: '50%',
+                      background: 'rgba(45, 143, 160, 0.18)',
+                      border: '1.5px solid rgba(45, 143, 160, 0.45)',
+                      color: '#2d8fa0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 900
+                    }}>
+                      A
+                    </div>
+                    <div className="user-info" style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+                      <span className="user-name" style={{ fontSize: '10.5px', fontWeight: 850, color: '#000000' }}>Admin</span>
+                      <span className="user-email" style={{ fontSize: '8.5px', fontWeight: 750, color: 'rgba(10, 16, 28, 0.65)' }}>admin@gmail.com</span>
                     </div>
                   </div>
-                </div>
-
-                <div className="sidebar-footer" style={{ padding: '12px 14px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div className="user-profile" style={{ gap: '8px', display: 'flex', alignItems: 'center' }}>
-                    <div className="user-avatar" style={{ width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '10px', background: 'rgba(45, 143, 160, 0.2)', border: '1px solid rgba(45, 143, 160, 0.4)', color: '#64d2e1', fontWeight: '600' }}>U</div>
-                    <div className="user-info" style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span className="user-name" style={{ fontSize: '11px', fontWeight: '500', color: '#ffffff' }}>User</span>
-                      <span className="user-email" style={{ fontSize: '8.5px', color: 'rgba(255,255,255,0.35)', display: 'block' }}>user@gmail.com</span>
-                    </div>
-                  </div>
-                  <LogOut size={12} style={{ opacity: 0.5, cursor: 'pointer' }} />
+                  <LogOut size={12} style={{ color: 'rgba(10, 16, 28, 0.65)', strokeWidth: 2.5 }} />
                 </div>
               </aside>
 
@@ -152,50 +231,107 @@ export function LandingPage() {
                 flexGrow: 1,
                 display: 'flex',
                 flexDirection: 'column',
-                background: 'linear-gradient(to bottom, rgba(10, 11, 16, 0.78) 0%, rgba(10, 11, 16, 0.90) 100%)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
-                borderRight: '1px solid rgba(255, 255, 255, 0.06)'
+                background: 'transparent',
+                height: '100%',
+                boxSizing: 'border-box',
+                borderRight: '1.5px solid rgba(255, 255, 255, 0.55)'
               }}>
-                <header className="workspace-header" style={{ padding: '0 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10, 11, 16, 0.4)', height: '44px' }}>
+                <header style={{
+                  padding: '0 16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: '44px',
+                  background: 'transparent',
+                  borderBottom: '1px solid rgba(10, 16, 28, 0.08)'
+                }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Menu size={13} style={{ opacity: 0.6 }} />
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(45, 143, 160, 0.08)', border: '1px solid rgba(45, 143, 160, 0.2)', padding: '3px 8px', borderRadius: '4px', fontSize: '10px', color: '#64d2e1' }}>
-                      <span className="status-dot-pulse" style={{ display: 'inline-block', width: '5px', height: '5px', borderRadius: '50%', background: '#64d2e1' }} />
-                      Memory Sync Active
+                    <Menu size={14} style={{ color: '#000000', strokeWidth: 2.5 }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+                      <span style={{ fontSize: '11.5px', fontWeight: 850, color: '#000000' }}>
+                        Workspace <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 500 }}>Mode</span>
+                      </span>
+                      <span style={{ fontSize: '8.5px', fontWeight: 750, color: 'rgba(10, 16, 28, 0.65)' }}>Searching personal documents</span>
                     </div>
                   </div>
-                  <span style={{ fontSize: '10px', color: '#64d2e1', letterSpacing: '0.05em', fontWeight: '600' }}>MEM INDEX READY</span>
                 </header>
 
                 {/* Conversation Stream */}
-                <div className="conversation-scroll" style={{ flexGrow: 1, padding: '16px', display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto' }}>
+                <div className="conversation-scroll" style={{ flexGrow: 1, padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '12px', overflowY: 'auto' }}>
                   
                   {/* User Query */}
-                  <div className="message-wrapper user" style={{ alignSelf: 'flex-end', maxWidth: '85%' }}>
-                    <span className="message-sender" style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', textAlign: 'right', marginBottom: '4px' }}>User Query</span>
-                    <div className="message-bubble" style={{ background: 'rgba(255, 255, 255, 0.04)', border: '1px solid rgba(255, 255, 255, 0.08)', padding: '10px 12px', borderRadius: '10px', borderBottomRightRadius: '2px', fontSize: '11px', color: '#ffffff', lineHeight: '1.4' }}>
+                  <div className="message-wrapper user" style={{ alignSelf: 'flex-end', maxWidth: '80%' }}>
+                    <div className="message-bubble" style={{
+                      background: 'rgba(44, 76, 120, 0.85)',
+                      border: '1.5px solid rgba(44, 76, 120, 0.95)',
+                      padding: '8px 12px',
+                      borderRadius: '12px',
+                      borderBottomRightRadius: '2px',
+                      fontSize: '11px',
+                      fontWeight: 750,
+                      color: '#ffffff',
+                      lineHeight: '1.4',
+                      boxShadow: '0 4px 12px rgba(44, 76, 120, 0.15)'
+                    }}>
                       How does general relativity describe gravity?
                     </div>
                   </div>
 
                   {/* AI Response Card */}
                   <div className="message-wrapper assistant" style={{ alignSelf: 'flex-start', maxWidth: '90%' }}>
-                    <span className="message-sender" style={{ fontSize: '8px', color: '#64d2e1', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Docsy Engine</span>
-                    <div className="message-bubble" style={{ background: 'rgba(10, 15, 30, 0.5)', border: '1px solid rgba(57, 160, 175, 0.2)', padding: '12px 14px', borderRadius: '10px', borderBottomLeftRadius: '2px', fontSize: '11px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.5', boxShadow: '0 4px 20px rgba(0,0,0,0.3)' }}>
-                      Based on <strong style={{ color: '#ffffff' }}>relativity.pdf</strong>, Einstein's equations of general relativity describe gravity not as an attractive force, but as a geometric property of space and time. 
-                      <span style={{ display: 'block', margin: '8px 0', borderLeft: '2px solid rgba(100, 210, 225, 0.3)', paddingLeft: '8px', fontStyle: 'italic', color: 'rgba(255,255,255,0.6)' }}>
+                    <span className="message-sender" style={{ fontSize: '8.5px', fontWeight: 900, color: '#2d8fa0', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '4px' }}>Docsy Engine</span>
+                    <div className="message-bubble" style={{
+                      background: 'rgba(255, 255, 255, 0.5)',
+                      border: '1.5px solid rgba(100, 210, 225, 0.35)',
+                      padding: '10px 12px',
+                      borderRadius: '12px',
+                      borderBottomLeftRadius: '2px',
+                      fontSize: '11px',
+                      fontWeight: 750,
+                      color: '#0a101c',
+                      lineHeight: '1.45',
+                      boxShadow: '0 4px 20px rgba(10, 16, 28, 0.02)'
+                    }}>
+                      Based on <strong style={{ color: '#000000', fontWeight: 850 }}>relativity.pdf</strong>, Einstein's equations of general relativity describe gravity not as an attractive force, but as a geometric property of space and time. 
+                      <span style={{
+                        display: 'block',
+                        margin: '8px 0',
+                        borderLeft: '3px solid #2d8fa0',
+                        paddingLeft: '10px',
+                        fontStyle: 'italic',
+                        fontWeight: 750,
+                        color: '#000000'
+                      }}>
                         "Mass and energy curve spacetime, and this geometric curvature dictates the paths that free-falling objects follow."
                       </span>
                       This means that matter tells spacetime how to curve, and curved spacetime tells matter how to move.
                       
                       {/* Floating citations badge */}
-                      <div style={{ display: 'flex', gap: '6px', marginTop: '10px', borderTop: '1px solid rgba(255, 255, 255, 0.05)', paddingTop: '8px' }}>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '9px', color: '#64d2e1', background: 'rgba(100, 210, 225, 0.1)', border: '1px solid rgba(100, 210, 225, 0.25)', padding: '2px 6px', borderRadius: '4px', cursor: 'default' }}>
-                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#64d2e1' }} />
+                      <div style={{ display: 'flex', gap: '6px', marginTop: '8px', borderTop: '1px solid rgba(10, 16, 28, 0.12)', paddingTop: '6px' }}>
+                        <span style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontSize: '9px',
+                          fontWeight: 850,
+                          color: '#2d8fa0',
+                          background: 'rgba(100, 210, 225, 0.18)',
+                          border: '1.5px solid rgba(100, 210, 225, 0.35)',
+                          padding: '3px 6px',
+                          borderRadius: '6px',
+                          cursor: 'default'
+                        }}>
+                          <span style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#2d8fa0' }} />
                           relativity.pdf: L144-152
                         </span>
-                        <span style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)', padding: '2px 6px', borderRadius: '4px' }}>
+                        <span style={{
+                          fontSize: '9px',
+                          fontWeight: 800,
+                          color: 'rgba(10, 16, 28, 0.75)',
+                          background: 'rgba(255, 255, 255, 0.65)',
+                          border: '1px solid rgba(10, 16, 28, 0.12)',
+                          padding: '3px 6px',
+                          borderRadius: '6px'
+                        }}>
                           98.4% Confidence
                         </span>
                       </div>
@@ -203,26 +339,94 @@ export function LandingPage() {
                   </div>
 
                   {/* Processing Status Activity */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '4px 6px', borderRadius: '6px', background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.03)', width: 'fit-content' }}>
-                    <Cpu size={12} className="animate-pulse" style={{ color: '#64d2e1' }} />
-                    <span style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.4)', fontFamily: 'var(--font-mono)' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '5px 8px',
+                    borderRadius: '6px',
+                    background: 'rgba(255, 255, 255, 0.35)',
+                    border: '1px solid rgba(10, 16, 28, 0.08)',
+                    width: 'fit-content',
+                    marginLeft: '4px'
+                  }}>
+                    <Cpu size={12} className="animate-pulse" style={{ color: '#2d8fa0', strokeWidth: 2.5 }} />
+                    <span style={{ fontSize: '9.5px', fontWeight: 800, color: 'rgba(10, 16, 28, 0.65)' }}>
                       Synthesizing cross-document memory...
                     </span>
                   </div>
 
                 </div>
 
+                {/* Attached Files Chips Row */}
+                <div className="attached-files-row" style={{ display: 'flex', gap: '6px', padding: '4px 14px 0 14px', flexWrap: 'wrap' }}>
+                  <div className="attached-file-chip" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: 'rgba(255, 255, 255, 0.55)',
+                    border: '1px solid rgba(45, 143, 160, 0.45)',
+                    borderRadius: '8px',
+                    padding: '3px 6px',
+                    fontSize: '8.5px',
+                    fontWeight: 800
+                  }}>
+                    <FileText size={10} style={{ color: '#2d8fa0', strokeWidth: 2.5 }} />
+                    <span className="chip-name" style={{ color: '#000000', fontWeight: 800 }}>relativity.pdf</span>
+                    <span style={{ fontSize: '7.5px', color: '#2d8fa0', background: 'rgba(100, 210, 225, 0.18)', padding: '0 3px', borderRadius: '3px', fontWeight: '900', marginLeft: '2px' }}>ACTIVE</span>
+                  </div>
+
+                  <div className="attached-file-chip" style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    background: 'rgba(255, 255, 255, 0.3)',
+                    border: '1px solid rgba(255, 255, 255, 0.55)',
+                    borderRadius: '8px',
+                    padding: '3px 6px',
+                    fontSize: '8.5px',
+                    fontWeight: 750
+                  }}>
+                    <FileText size={10} style={{ opacity: 0.65, color: '#000000', strokeWidth: 2.5 }} />
+                    <span className="chip-name" style={{ color: 'rgba(10, 16, 28, 0.75)', fontWeight: 800 }}>quantum_mech...</span>
+                    <span className="status-pulse-sync" style={{ fontSize: '7.5px', color: '#d97706', display: 'flex', alignItems: 'center', gap: '2px', fontWeight: '900', marginLeft: '2px' }}>
+                      <span style={{ width: '3px', height: '3px', borderRadius: '50%', background: '#d97706', display: 'inline-block' }} />
+                      SYNCING
+                    </span>
+                  </div>
+                </div>
+
                 {/* Bottom Input Area */}
-                <div style={{ padding: '12px', background: 'rgba(10, 11, 16, 0.4)', borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="input-glow-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'rgba(0, 0, 0, 0.2)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', padding: '6px 12px' }}>
+                <div style={{ padding: '10px 14px', borderTop: '1px solid rgba(10, 16, 28, 0.08)' }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    background: 'rgba(255, 255, 255, 0.45)',
+                    border: '1px solid rgba(255, 255, 255, 0.65)',
+                    borderRadius: '8px',
+                    padding: '6px 12px'
+                  }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexGrow: 1 }}>
-                      <PlusCircle size={13} style={{ color: '#64d2e1', cursor: 'pointer' }} />
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center' }}>
-                        <span>Search cross-document references...</span>
-                        <span className="blinking-cursor" style={{ marginLeft: '1px', display: 'inline-block', width: '1.5px', height: '12px', background: '#64d2e1' }} />
+                      <div style={{
+                        width: '16px',
+                        height: '16px',
+                        borderRadius: '50%',
+                        background: 'rgba(100, 210, 225, 0.15)',
+                        border: '1px solid rgba(100, 210, 225, 0.3)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#2d8fa0'
+                      }}>
+                        <Plus size={10} style={{ strokeWidth: 3 }} />
+                      </div>
+                      <div style={{ fontSize: '10.5px', color: 'rgba(10, 16, 28, 0.7)', fontFamily: 'var(--font-sans)', display: 'flex', alignItems: 'center', fontWeight: 750 }}>
+                        <span>Ask a question about your files...</span>
+                        <span className="blinking-cursor" style={{ marginLeft: '2px', display: 'inline-block', width: '1.5px', height: '11px', background: '#2d8fa0' }} />
                       </div>
                     </div>
-                    <Send size={11} style={{ color: '#64d2e1', opacity: 0.7 }} />
+                    <Send size={12} style={{ color: '#2d8fa0', opacity: 0.9, strokeWidth: 2.5 }} />
                   </div>
                 </div>
               </div>
@@ -231,57 +435,76 @@ export function LandingPage() {
               <div className="preview-panel" style={{
                 width: '240px',
                 minWidth: '240px',
-                background: 'linear-gradient(to bottom, rgba(14, 16, 24, 0.85) 0%, rgba(14, 16, 24, 0.95) 100%)',
-                backdropFilter: 'blur(10px)',
-                WebkitBackdropFilter: 'blur(10px)',
+                background: 'rgba(255, 255, 255, 0.32)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                borderLeft: '1.5px solid rgba(255, 255, 255, 0.55)',
                 display: 'flex',
                 flexDirection: 'column',
-                height: '100%'
+                height: '100%',
+                boxSizing: 'border-box'
               }}>
-                <header className="preview-header" style={{ padding: '0 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.04)', background: 'rgba(10, 11, 16, 0.4)', height: '44px' }}>
+                <header className="preview-header" style={{ padding: '0 14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(10, 16, 28, 0.08)', height: '44px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <FileText size={12} style={{ color: '#ffd075' }} />
-                    <span style={{ fontSize: '10.5px', fontWeight: '500', color: '#ffffff' }}>relativity.pdf</span>
+                    <FileText size={12} style={{ color: '#d97706', strokeWidth: 2.5 }} />
+                    <span style={{ fontSize: '10.5px', fontWeight: 850, color: '#000000' }}>relativity.pdf</span>
                   </div>
-                  <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)', background: 'rgba(255,255,255,0.05)', padding: '2px 5px', borderRadius: '3px' }}>Page 14</span>
+                  <span style={{
+                    fontSize: '9px',
+                    color: 'rgba(10, 16, 28, 0.75)',
+                    fontWeight: 800,
+                    background: 'rgba(255, 255, 255, 0.55)',
+                    border: '1px solid rgba(10, 16, 28, 0.12)',
+                    padding: '3px 6px',
+                    borderRadius: '4px'
+                  }}>Page 14</span>
                 </header>
 
-                <div className="preview-content" style={{ flexGrow: 1, padding: '12px', display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
-                  <div className="pdf-mock" style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                <div className="preview-content" style={{ flexGrow: 1, padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', boxSizing: 'border-box' }}>
+                  <div className="pdf-mock" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     
                     {/* Simulated Text Lines */}
-                    <div style={{ width: '100%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
-                    <div style={{ width: '92%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
-                    <div style={{ width: '96%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
+                    <div style={{ width: '100%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
+                    <div style={{ width: '92%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
+                    <div style={{ width: '96%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
                     
                     {/* Highlighted Cited Paragraph */}
-                    <div className="pdf-citation-highlight-container" style={{ position: 'relative', margin: '8px 0', padding: '6px', background: 'rgba(100, 210, 225, 0.05)', borderLeft: '2.5px solid #64d2e1', borderRadius: '2px' }}>
-                      <div className="scanning-laser-line" />
-                      <p style={{ margin: 0, fontSize: '9.5px', color: '#ffffff', lineHeight: '1.4' }}>
-                        ...Einstein's field equations formulate gravity geometrically. <mark style={{ background: 'rgba(100, 210, 225, 0.2)', color: '#64d2e1', padding: '0 2px', borderRadius: '1px' }}>Mass and energy curve spacetime, and this geometric curvature dictates the paths</mark> that free-falling objects follow. Therefore, what we feel as gravity is...
+                    <div className="pdf-citation-highlight-container" style={{ position: 'relative', margin: '6px 0', padding: '6px', background: 'rgba(45, 143, 160, 0.08)', borderLeft: '2.5px solid #2d8fa0', borderRadius: '2px' }}>
+                      <div className="scanning-laser-line" style={{ background: 'linear-gradient(90deg, transparent, rgba(45, 143, 160, 0.8), transparent)', boxShadow: '0 0 4px rgba(45, 143, 160, 0.5)' }} />
+                      <p style={{ margin: 0, fontSize: '9.5px', color: '#0a101c', fontWeight: 750, lineHeight: '1.4' }}>
+                        ...Einstein's field equations formulate gravity geometrically. <mark style={{ background: 'transparent', color: '#097a8e', padding: '0', fontWeight: 850 }}>Mass and energy curve spacetime, and this geometric curvature dictates the paths</mark> that free-falling objects follow. Therefore, what we feel as gravity is...
                       </p>
-                      <div style={{ marginTop: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <span style={{ fontSize: '7.5px', color: '#64d2e1', fontWeight: '600' }}>COORDS: [x=144, y=320]</span>
-                        <span style={{ fontSize: '7.5px', color: 'rgba(255,255,255,0.4)' }}>Lines 144-152</span>
+                      <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '8px', color: '#2d8fa0', fontWeight: 850 }}>COORDS: [x=144, y=320]</span>
+                        <span style={{ fontSize: '8px', fontWeight: 750, color: 'rgba(10, 16, 28, 0.55)' }}>Lines 144-152</span>
                       </div>
                     </div>
 
-                    <div style={{ width: '94%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
-                    <div style={{ width: '88%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
-                    <div style={{ width: '92%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
-                    <div style={{ width: '90%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px' }} />
-                    <div style={{ width: '70%', height: '5px', background: 'rgba(255,255,255,0.1)', borderRadius: '1px', marginBottom: '8px' }} />
+                    <div style={{ width: '94%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
+                    <div style={{ width: '88%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
+                    <div style={{ width: '92%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
+                    <div style={{ width: '90%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px' }} />
+                    <div style={{ width: '70%', height: '4px', background: 'rgba(10, 16, 28, 0.12)', borderRadius: '1px', marginBottom: '6px' }} />
 
                     {/* Floating PDF metadata overlay card */}
-                    <div style={{ padding: '8px', background: 'rgba(0, 0, 0, 0.4)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                      <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: '600', textTransform: 'uppercase' }}>Index Metadata</span>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8.5px', color: 'rgba(255,255,255,0.6)' }}>
+                    <div style={{
+                      padding: '8px 10px',
+                      background: 'rgba(255, 255, 255, 0.65)',
+                      border: '1px solid rgba(10, 16, 28, 0.12)',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      boxShadow: '0 4px 12px rgba(10, 16, 28, 0.03)'
+                    }}>
+                      <span style={{ fontSize: '8px', color: 'rgba(10, 16, 28, 0.55)', fontWeight: 850, textTransform: 'uppercase', letterSpacing: '0.02em' }}>INDEX METADATA</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(10, 16, 28, 0.75)', fontWeight: 750 }}>
                         <span>Vector Space:</span>
-                        <span style={{ color: '#64d2e1' }}>1536-dim</span>
+                        <span style={{ color: '#2d8fa0', fontWeight: 850 }}>1536-dim</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '8.5px', color: 'rgba(255,255,255,0.6)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(10, 16, 28, 0.75)', fontWeight: 750 }}>
                         <span>Chunk ID:</span>
-                        <span style={{ color: '#ffd075' }}>chunk_14a_77</span>
+                        <span style={{ color: '#d97706', fontWeight: 850 }}>chunk_14a_77</span>
                       </div>
                     </div>
 
