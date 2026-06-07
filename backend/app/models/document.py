@@ -1,4 +1,5 @@
 import uuid
+from typing import Optional
 
 from datetime import datetime
 
@@ -6,6 +7,7 @@ from sqlalchemy import String
 from sqlalchemy import ForeignKey
 from sqlalchemy import DateTime
 from sqlalchemy import Integer
+from sqlalchemy import JSON
 
 from sqlalchemy.dialects.postgresql import UUID
 
@@ -15,6 +17,7 @@ from sqlalchemy.orm import mapped_column
 from app.core.database import Base
 from enum import Enum
 from sqlalchemy import Enum as SQLEnum
+
 
 
 class DocumentScope(str, Enum):
@@ -64,6 +67,12 @@ class Document(Base):
     )
 
     extracted_text: Mapped[str] = mapped_column(
-    String,
-    nullable=True
+        String,
+        nullable=True
     )
+
+    mindmap_data: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        nullable=True
+    )
+

@@ -23,6 +23,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { AmbientBackground } from '../../components/ui/AmbientBackground';
 import { Logo } from '../../components/ui/Logo';
 import { API_BASE_URL } from '../../constants/api';
+import MindMap from './MindMap';
 
 export function WorkspacePage() {
   const navigate = useNavigate();
@@ -53,7 +54,8 @@ export function WorkspacePage() {
     deleteDocument,
     switchMode,
     resetStore,
-    fetchDocuments
+    fetchDocuments,
+    selectDocument
   } = useWorkspaceStore();
 
   const [mode, setMode] = useState('workspace'); // workspace, knowledge_base
@@ -63,10 +65,16 @@ export function WorkspacePage() {
     return saved !== null ? JSON.parse(saved) : false;
   });
   const [previewTab, setPreviewTab] = useState('view'); // view, ocr
+  const [view, setView] = useState('chat'); // chat, document, mindmap, flashcards
 
   const messagesEndRef = useRef(null);
   const textInputRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Reset view back to chat when active document changes
+  useEffect(() => {
+    setView('chat');
+  }, [activeDocumentId]);
 
   // Fetch documents and set initial conversation on mount
   useEffect(() => {
@@ -354,6 +362,69 @@ export function WorkspacePage() {
             </button>
           </div>
 
+          {/* DOCUMENTS SECTION */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <div className="sidebar-heading-text" style={{ fontSize: '11px', fontWeight: 650, color: 'rgba(10, 16, 28, 0.45)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '8px' }}>
+              Documents
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }} className="custom-scroll">
+              {documents.map((doc) => {
+                const isActive = activeDocumentId === doc.id;
+                const isCompleted = doc.processing_status === 'completed';
+                
+                return (
+                  <div
+                    key={doc.id}
+                    className={`convo-thread-item ${isActive ? 'active' : ''}`}
+                    onClick={() => {
+                      selectDocument(doc.id);
+                    }}
+                    style={{
+                      padding: '8px 10px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      borderRadius: '8px'
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
+                      <FileText size={13} style={{ color: isActive ? '#2d8fa0' : 'rgba(10, 16, 28, 0.5)' }} />
+                      <span 
+                        style={{
+                          fontSize: '12px',
+                          fontWeight: isActive ? 600 : 500,
+                          color: isActive ? '#2d8fa0' : 'rgba(10, 16, 28, 0.7)',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis'
+                        }}
+                        title={doc.name}
+                      >
+                        {cleanFilename(doc.name)}
+                      </span>
+                    </div>
+                    {isCompleted && (
+                      <div 
+                        style={{
+                          width: '6px',
+                          height: '6px',
+                          borderRadius: '50%',
+                          background: '#10b981',
+                          flexShrink: 0
+                        }} 
+                      />
+                    )}
+                  </div>
+                );
+              })}
+              {documents.length === 0 && (
+                <span style={{ fontSize: '11px', color: 'rgba(10, 16, 28, 0.45)', paddingLeft: '8px' }}>
+                  No documents uploaded
+                </span>
+              )}
+            </div>
+          </div>
+
           {/* Search threads */}
           <div className="sidebar-search-container">
             <Search size={14} className="sidebar-search-icon" />
@@ -367,6 +438,9 @@ export function WorkspacePage() {
           </div>
 
           {/* Threads list */}
+          <div className="sidebar-heading-text" style={{ fontSize: '11px', fontWeight: 650, color: 'rgba(10, 16, 28, 0.45)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '8px', marginTop: '8px', marginBottom: '-8px' }}>
+            Recent Chats
+          </div>
           <div className="sidebar-threads-scroll custom-scroll">
             {filteredConvs.map((conv) => (
               <div
@@ -491,21 +565,110 @@ export function WorkspacePage() {
             </button>
             <div>
               <span style={{ fontSize: '14px', fontWeight: 600, color: '#0a101c', display: 'block' }}>
-                {mode === 'workspace' ? 'Workspace' : 'Knowledge Base'} <span className="title-serif" style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 300 }}>Mode</span>
+                {activeDoc ? `${cleanFilename(activeDoc.name)} — ${view === 'chat' ? 'Chat' : (view === 'document' ? 'Document' : (view === 'mindmap' ? 'Mind map' : 'Flashcards'))}` : (mode === 'workspace' ? 'Workspace Mode' : 'Knowledge Base Mode')}
               </span>
               <span style={{ fontSize: '10px', color: 'rgba(10, 16, 28, 0.5)', fontWeight: 400 }}>
-                {mode === 'workspace' 
-                  ? 'Searching personal documents'
-                  : (user?.role === 'admin' 
-                      ? 'Searching shared organizational knowledge' 
-                      : 'Searching shared organizational knowledge')}
+                {activeDoc ? 'Attached context file' : (mode === 'workspace' ? 'Searching personal documents' : 'Searching shared organizational knowledge')}
               </span>
             </div>
           </div>
+
+          {/* View switcher tabs */}
+          {activeDoc && (
+            <div style={{ display: 'flex', gap: '8px', background: 'rgba(10, 16, 28, 0.04)', padding: '3px', borderRadius: '8px', marginRight: '16px' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setView('chat');
+                  useWorkspaceStore.setState({ showPreview: false });
+                }}
+                style={{
+                  background: view === 'chat' ? '#ffffff' : 'transparent',
+                  border: 'none',
+                  color: '#0a101c',
+                  fontSize: '11px',
+                  fontWeight: 650,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  boxShadow: view === 'chat' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.2s',
+                  outline: 'none'
+                }}
+              >
+                Chat
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setView('document');
+                  useWorkspaceStore.setState({ showPreview: true });
+                }}
+                style={{
+                  background: view === 'document' ? '#ffffff' : 'transparent',
+                  border: 'none',
+                  color: '#0a101c',
+                  fontSize: '11px',
+                  fontWeight: 650,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  boxShadow: view === 'document' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                  transition: 'all 0.2s',
+                  outline: 'none'
+                }}
+              >
+                Document
+              </button>
+              {activeDoc.processing_status === 'completed' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('mindmap');
+                    useWorkspaceStore.setState({ showPreview: false });
+                  }}
+                  style={{
+                    background: view === 'mindmap' ? '#ffffff' : 'transparent',
+                    border: 'none',
+                    color: '#0a101c',
+                    fontSize: '11px',
+                    fontWeight: 650,
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    boxShadow: view === 'mindmap' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.2s',
+                    outline: 'none'
+                  }}
+                >
+                  Mind map
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => alert("Coming soon")}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(10, 16, 28, 0.4)',
+                  fontSize: '11px',
+                  fontWeight: 650,
+                  padding: '4px 10px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  outline: 'none'
+                }}
+              >
+                Flashcards
+              </button>
+            </div>
+          )}
         </header>
 
-        {/* Conversation Stream Scroll */}
-        <div className="chat-main-area-scroll custom-scroll">
+        {view === 'chat' && (
+          <>
+            <div className="chat-main-area-scroll custom-scroll">
           <div className="chat-width-limiter" style={{ maxWidth: '900px', margin: '0 auto' }}>
             
             {messages.length > 0 ? (
@@ -930,6 +1093,14 @@ export function WorkspacePage() {
             </form>
           </div>
         </div>
+      </>
+    )}
+
+        {view === 'mindmap' && activeDoc && (
+          <div style={{ flex: 1, width: '100%', height: 'calc(100% - 64px)', position: 'relative' }}>
+            <MindMap documentId={activeDoc.id} />
+          </div>
+        )}
 
       </main>
 
@@ -954,7 +1125,7 @@ export function WorkspacePage() {
               padding: '24px',
               pointerEvents: 'auto'
             }}
-            onClick={() => useWorkspaceStore.setState({ showPreview: false, highlightedCitation: null })}
+            onClick={() => { useWorkspaceStore.setState({ showPreview: false, highlightedCitation: null }); setView('chat'); }}
           >
             <motion.div 
               className="pdf-modal-card-premium"
@@ -1046,7 +1217,7 @@ export function WorkspacePage() {
                   )}
                   <button
                     type="button"
-                    onClick={() => useWorkspaceStore.setState({ showPreview: false, highlightedCitation: null })}
+                    onClick={() => { useWorkspaceStore.setState({ showPreview: false, highlightedCitation: null }); setView('chat'); }}
                     style={{
                       background: 'transparent',
                       border: 'none',

@@ -363,3 +363,50 @@ async def delete_document(
         logger.warning(f"Error deleting file: {e}")
     
     return {"message": "Document deleted successfully"}
+
+@router.post("/{document_id}/mindmap")
+async def generate_mindmap(
+    document_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    query = select(Document).where(
+        Document.id == document_id,
+        Document.owner_id == current_user.id
+    )
+    result = await db.execute(query)
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    if doc.mindmap_data:
+        return doc.mindmap_data
+    
+    from app.services.mindmap_service import generate_mindmap as svc_generate_mindmap
+    try:
+        mindmap = await svc_generate_mindmap(str(document_id), db)
+        return mindmap
+    except Exception as e:
+        logger.error(f"Error generating mindmap: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/{document_id}/mindmap")
+async def delete_mindmap(
+    document_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    query = select(Document).where(
+        Document.id == document_id,
+        Document.owner_id == current_user.id
+    )
+    result = await db.execute(query)
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    
+    doc.mindmap_data = None
+    db.add(doc)
+    await db.commit()
+    return {"message": "Mind map cache cleared"}
