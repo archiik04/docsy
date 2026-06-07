@@ -151,30 +151,77 @@ export function DocumentPreviewPanel({ document }) {
             </div>
           )}
 
-          {/* PDF IFRAME */}
+          {/* PDF IFRAME OR DOCX PREVIEW */}
           {pdfUrl ? (
-            <div
-              style={{
-                width: '100%',
-                height: '76vh',
-                borderRadius: '18px',
-                overflow: 'hidden',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                background: '#0a0f1d'
-              }}
-            >
-              <iframe
-                key={pdfUrl} // re-mount iframe only when switching different files
-                src={`${pdfUrl}#page=${activePage}`}
-                title="PDF Viewer"
-                width="100%"
-                height="100%"
+            pdfUrl.match(/\.docx$/i) ? (
+              <div
                 style={{
-                  border: 'none',
-                  background: '#111'
+                  width: '100%',
+                  height: '76vh',
+                  borderRadius: '18px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '24px',
+                  textAlign: 'center',
+                  boxSizing: 'border-box'
                 }}
-              />
-            </div>
+              >
+                <FileText size={48} style={{ color: '#2d8fa0', marginBottom: '16px' }} />
+                <h3 style={{ fontSize: '15px', fontWeight: 600, color: '#ffffff', marginBottom: '8px' }}>
+                  Word Document (.docx)
+                </h3>
+                <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)', maxWidth: '280px', lineHeight: '1.5', marginBottom: '24px' }}>
+                  This file type cannot be previewed directly in the browser panel. You can download the file to view its formatting, or read its extracted text in the chat window.
+                </p>
+                <a
+                  href={pdfUrl}
+                  download
+                  style={{
+                    background: '#2d8fa0',
+                    color: '#ffffff',
+                    padding: '10px 20px',
+                    borderRadius: '10px',
+                    fontSize: '12px',
+                    fontWeight: 650,
+                    textDecoration: 'none',
+                    transition: 'all 0.2s',
+                    boxShadow: '0 4px 12px rgba(45, 143, 160, 0.25)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = '#237380'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = '#2d8fa0'}
+                >
+                  Download Document
+                </a>
+              </div>
+            ) : (
+              <div
+                style={{
+                  width: '100%',
+                  height: '76vh',
+                  borderRadius: '18px',
+                  overflow: 'hidden',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  background: '#0a0f1d'
+                }}
+              >
+                <iframe
+                  key={pdfUrl} // re-mount iframe only when switching different files
+                  src={`${pdfUrl}#page=${activePage}`}
+                  title="PDF Viewer"
+                  width="100%"
+                  height="100%"
+                  style={{
+                    border: 'none',
+                    background: '#111'
+                  }}
+                />
+              </div>
+            )
           ) : (
             <div className="empty-panel-state-premium">
               <HelpCircle size={26} className="empty-icon animate-pulse" />

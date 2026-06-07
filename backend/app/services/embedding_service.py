@@ -13,25 +13,29 @@ def get_embedding_model():
     if _embedding_model is None:
         logger.info("Initializing SentenceTransformer embedding model (warm-loading)...")
         start = time.time()
-        _embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
+        _embedding_model = SentenceTransformer("intfloat/multilingual-e5-small")
         elapsed = time.time() - start
         logger.info(f"✓ Embedding model loaded successfully in {elapsed:.2f}s")
     return _embedding_model
 
 def generate_embedding(text: str):
     """
-    Generate embedding for text.
+    Generate embedding for text (query).
     """
     model = get_embedding_model()
-    embedding = model.encode(text)
+    # E5 models expect "query: " prefix for queries
+    prefixed_text = f"query: {text}"
+    embedding = model.encode(prefixed_text)
     return embedding.tolist()
 
 def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
     """
-    Generate embeddings for a list of texts in batch.
+    Generate embeddings for a list of texts (passages) in batch.
     """
     if not texts:
         return []
     model = get_embedding_model()
-    embeddings = model.encode(texts)
+    # E5 models expect "passage: " prefix for passages
+    prefixed_texts = [f"passage: {t}" for t in texts]
+    embeddings = model.encode(prefixed_texts)
     return embeddings.tolist()

@@ -1104,6 +1104,7 @@ export function WorkspacePage() {
                     (() => {
                       const fileUrl = highlightedCitation?.pdf_url || (activeDoc?.filename ? `${API_BASE_URL}/uploads/${activeDoc.filename}` : '');
                       const isImage = fileUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i);
+                      const isDocx = fileUrl.match(/\.docx$/i);
                       
                       if (isImage) {
                         return (
@@ -1128,6 +1129,51 @@ export function WorkspacePage() {
                                 boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
                               }}
                             />
+                          </div>
+                        );
+                      }
+                      
+                      if (isDocx) {
+                        return (
+                          <div style={{
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            borderRadius: '14px',
+                            background: 'rgba(255, 255, 255, 0.4)',
+                            border: '1px solid rgba(10, 16, 28, 0.08)',
+                            padding: '32px',
+                            textAlign: 'center',
+                            boxSizing: 'border-box'
+                          }}>
+                            <FileText size={48} style={{ color: '#2d8fa0', marginBottom: '16px' }} />
+                            <h3 style={{ fontSize: '16px', fontWeight: 600, color: '#0a101c', marginBottom: '8px' }}>
+                              Word Document (.docx)
+                            </h3>
+                            <p style={{ fontSize: '13px', color: 'rgba(10, 16, 28, 0.65)', maxWidth: '360px', lineHeight: '1.5', marginBottom: '24px' }}>
+                              Word documents cannot be previewed directly in the browser panel. You can read the extracted text in the <strong>OCR / Extracted Text</strong> tab above, or click below to download the original file.
+                            </p>
+                            <a
+                              href={fileUrl}
+                              download
+                              style={{
+                                background: '#2d8fa0',
+                                color: '#ffffff',
+                                padding: '10px 24px',
+                                borderRadius: '10px',
+                                fontSize: '13px',
+                                fontWeight: 600,
+                                textDecoration: 'none',
+                                transition: 'all 0.2s',
+                                boxShadow: '0 4px 12px rgba(45, 143, 160, 0.25)'
+                              }}
+                              onMouseEnter={(e) => e.currentTarget.style.background = '#237380'}
+                              onMouseLeave={(e) => e.currentTarget.style.background = '#2d8fa0'}
+                            >
+                              Download File
+                            </a>
                           </div>
                         );
                       }
