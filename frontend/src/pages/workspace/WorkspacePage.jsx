@@ -24,6 +24,7 @@ import { AmbientBackground } from '../../components/ui/AmbientBackground';
 import { Logo } from '../../components/ui/Logo';
 import { API_BASE_URL } from '../../constants/api';
 import MindMap from './MindMap';
+import Whiteboard from './Whiteboard';
 
 export function WorkspacePage() {
   const navigate = useNavigate();
@@ -565,7 +566,7 @@ export function WorkspacePage() {
             </button>
             <div>
               <span style={{ fontSize: '14px', fontWeight: 600, color: '#0a101c', display: 'block' }}>
-                {activeDoc ? `${cleanFilename(activeDoc.name)} — ${view === 'chat' ? 'Chat' : (view === 'document' ? 'Document' : (view === 'mindmap' ? 'Mind map' : 'Flashcards'))}` : (mode === 'workspace' ? 'Workspace Mode' : 'Knowledge Base Mode')}
+                {activeDoc ? `${cleanFilename(activeDoc.name)} — ${view === 'chat' ? 'Chat' : (view === 'document' ? 'Document' : (view === 'mindmap' ? 'Mind map' : (view === 'whiteboard' ? 'Whiteboard' : 'Flashcards')))}` : (mode === 'workspace' ? 'Workspace Mode' : 'Knowledge Base Mode')}
               </span>
               <span style={{ fontSize: '10px', color: 'rgba(10, 16, 28, 0.5)', fontWeight: 400 }}>
                 {activeDoc ? 'Attached context file' : (mode === 'workspace' ? 'Searching personal documents' : 'Searching shared organizational knowledge')}
@@ -642,6 +643,30 @@ export function WorkspacePage() {
                   }}
                 >
                   Mind map
+                </button>
+              )}
+              {activeDoc.processing_status === 'completed' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setView('whiteboard');
+                    useWorkspaceStore.setState({ showPreview: false });
+                  }}
+                  style={{
+                    background: view === 'whiteboard' ? '#ffffff' : 'transparent',
+                    border: 'none',
+                    color: '#0a101c',
+                    fontSize: '11px',
+                    fontWeight: 650,
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    boxShadow: view === 'whiteboard' ? '0 1px 3px rgba(0,0,0,0.06)' : 'none',
+                    transition: 'all 0.2s',
+                    outline: 'none'
+                  }}
+                >
+                  Whiteboard
                 </button>
               )}
               <button
@@ -1099,6 +1124,12 @@ export function WorkspacePage() {
         {view === 'mindmap' && activeDoc && (
           <div style={{ flex: 1, width: '100%', height: 'calc(100% - 64px)', position: 'relative' }}>
             <MindMap documentId={activeDoc.id} />
+          </div>
+        )}
+
+        {view === 'whiteboard' && activeDoc && (
+          <div style={{ flex: 1, width: '100%', height: 'calc(100% - 64px)', position: 'relative' }}>
+            <Whiteboard key={activeDoc.id} documentId={activeDoc.id} />
           </div>
         )}
 

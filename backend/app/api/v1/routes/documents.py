@@ -18,6 +18,7 @@ from app.models.document_chunk import DocumentChunk
 from app.services.text_chunker import chunk_text
 from app.services.embedding_service import generate_embeddings_batch
 from app.services.text_cleaner import clean_text
+from sqlalchemy.dialects.postgresql import JSONB
  
 from app.services.document_extractors import (
     extract_pdf_text,
@@ -409,4 +410,46 @@ async def delete_mindmap(
     doc.mindmap_data = None
     db.add(doc)
     await db.commit()
-    return {"message": "Mind map cache cleared"}
+    return {"message": "Mind map cache cleared"}
+
+@router.get("/{document_id}/whiteboard")
+async def get_whiteboard(
+    document_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.owner_id == current_user.id
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+    return { "canvas_data": doc.whiteboard_data }
+
+
+@router.post("/{document_id}/whiteboard")
+async def save_whiteboard(
+    document_id: str,
+    payload: dict,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user)
+):
+    result = await db.execute(
+        select(Document).where(
+            Document.id == document_id,
+            Document.owner_id == current_user.id
+        )
+    )
+    doc = result.scalar_one_or_none()
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    doc.whiteboard_data = payload.get("canvas_data")
+    db.add(doc)
+    await db.commit()
+    return { "message": "Saved" }
+
+
