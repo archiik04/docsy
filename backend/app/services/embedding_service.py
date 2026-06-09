@@ -28,6 +28,16 @@ def generate_embedding(text: str):
     embedding = model.encode(prefixed_text)
     return embedding.tolist()
 
+async def generate_embedding_async(text: str):
+    """
+    Generate embedding for text (query) asynchronously.
+    """
+    import asyncio
+    model = get_embedding_model()
+    prefixed_text = f"query: {text}"
+    embedding = await asyncio.to_thread(model.encode, prefixed_text)
+    return embedding.tolist()
+
 def generate_embeddings_batch(texts: list[str]) -> list[list[float]]:
     """
     Generate embeddings for a list of texts (passages) in batch.

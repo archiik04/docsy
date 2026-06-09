@@ -1,19 +1,44 @@
 import uuid
-from openai import AsyncOpenAI
-
 from app.core.config import settings
+from app.services.retrieval_service import retrieve_similar_chunks
 
-from app.services.retrieval_service import (
-    retrieve_similar_chunks
-)
+# Defensive imports for LangSmith tracing
+try:
+    from langsmith import traceable
+except ImportError:
+    # No-op decorator fallback if SDK not installed
+    def traceable(*args, **kwargs):
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        def decorator(func):
+            return func
+        return decorator
+
+client = None
+
+# Wrap AsyncOpenAI with LangSmith wrapper if LANGCHAIN_API_KEY is configured
+if settings.LANGCHAIN_API_KEY:
+    try:
+        from langsmith import wrappers
+        from openai import AsyncOpenAI as StandardAsyncOpenAI
+        client = wrappers.wrap_openai(StandardAsyncOpenAI(
+            api_key=settings.OPENROUTER_API_KEY,
+            base_url="https://openrouter.ai/api/v1"
+        ))
+        print("[TRACING] Initialized LangSmith wrapped AsyncOpenAI client")
+    except Exception as e:
+        print(f"[TRACING] Failed to wrap OpenAI client with LangSmith: {e}")
+
+# Fallback to standard OpenAI if LangSmith wrapping failed or isn't configured
+if not client:
+    from openai import AsyncOpenAI as StandardAsyncOpenAI
+    client = StandardAsyncOpenAI(
+        api_key=settings.OPENROUTER_API_KEY,
+        base_url="https://openrouter.ai/api/v1"
+    )
 
 
-client = AsyncOpenAI(
-    api_key=settings.OPENROUTER_API_KEY,
-    base_url="https://openrouter.ai/api/v1"
-)
-
-
+@traceable(name="Generate Title", run_type="llm")
 async def generate_title(question: str) -> str:
     try:
         response = await client.chat.completions.create(
@@ -38,6 +63,7 @@ async def generate_title(question: str) -> str:
         return first_line[:40] + "..." if len(first_line) > 40 else first_line
 
 
+@traceable(name="Generate Chat Response", run_type="chain")
 async def generate_chat_response(
     question: str,
     document_ids: list[str],
@@ -76,7 +102,8 @@ async def generate_chat_response(
         document_ids=document_ids,
         mode=mode,
         user_id=user_id,
-        db=db
+        db=db,
+        limit=10
     )
 
     # NO RESULTS
@@ -96,10 +123,7 @@ async def generate_chat_response(
         0
     )
 
-    print(f"""
-TOP RERANK SCORE:
-{top_rerank_score}
-    """)
+    # Top rerank score check
 
     # Confidence threshold
     if len(results) == 0 or top_rerank_score < -15.0:
@@ -118,9 +142,7 @@ TOP RERANK SCORE:
         title
         )
     
-    print(
-        f"\nTOP RERANK SCORE: {top_rerank_score}\n"
-    )
+    # Top rerank score logged
 
     
 
@@ -151,20 +173,7 @@ TOP RERANK SCORE:
 
         rerank_score = row.get("rerank_score")
 
-        print(f"""
-FILE: {filename}
-SECTION: {section_title}
-PAGE: {page_number}
-
-SEMANTIC DISTANCE:
-{distance}
-
-KEYWORD RANK:
-{keyword_rank}
-
-RERANK SCORE:
-{rerank_score}
-        """)
+        # Row metadata processed
 
         context_parts.append(
             f"""
@@ -235,18 +244,16 @@ QUESTION:
 ANSWER:
 """
 
+    # Start title generation task concurrently if it's the first message
+    title_task = None
+    if not history or len(history) == 0:
+        import asyncio
+        title_task = asyncio.create_task(generate_title(question))
+
     # GENERATE RESPONSE
-
-    print("\n===== CONTEXT SENT TO LLM =====")
-    print(context)
-    print("==============================")
-
     response = await client.chat.completions.create(
-
-        model="meta-llama/llama-3.3-70b-instruct",
-
+        model="meta-llama/llama-3.1-8b-instruct",
         temperature=0,
-
         messages=[
             {
                 "role": "system",
@@ -262,7 +269,12 @@ ANSWER:
         ]
     )
 
-    title = await generate_title(question) if (not history or len(history) == 0) else None
+    title = None
+    if title_task:
+        try:
+            title = await title_task
+        except Exception as e:
+            print(f"Error fetching concurrent title: {e}")
 
     return (
         response.choices[0].message.content,

@@ -1,8 +1,20 @@
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.services.embedding_service import generate_embedding
+from app.services.embedding_service import generate_embedding, generate_embedding_async
 from app.services.reranker_service import rerank_chunks
+
+# Defensive imports for LangSmith tracing
+try:
+    from langsmith import traceable
+except ImportError:
+    # No-op decorator fallback if SDK not installed
+    def traceable(*args, **kwargs):
+        if len(args) == 1 and callable(args[0]):
+            return args[0]
+        def decorator(func):
+            return func
+        return decorator
 
 # NEIGHBOR CHUNK FETCHER
 
@@ -43,6 +55,7 @@ async def fetch_neighbor_chunks(
 
 # MAIN RETRIEVAL FUNCTION
 
+@traceable(name="Retrieve Similar Chunks", run_type="retriever")
 async def retrieve_similar_chunks(
     query: str,
     document_ids: list[str],
@@ -79,28 +92,11 @@ async def retrieve_similar_chunks(
             " meaning explanation"
         )
 
-    print(f"""
-=== RETRIEVAL INPUTS ===
-QUERY: {query}
-MODE: {mode}
-USER ID: {user_id}
-DOCUMENT IDS: {document_ids}
-=========================
-    """)
-
-    print(f"""
-=========================
-ORIGINAL QUERY:
-{query}
-
-EXPANDED QUERY:
-{expanded_query}
-=========================
-    """)
+    # Query metadata logged internally
 
     # GENERATE QUERY EMBEDDING
 
-    query_embedding = generate_embedding(
+    query_embedding = await generate_embedding_async(
         expanded_query
     )
 
@@ -213,29 +209,7 @@ EXPANDED QUERY:
 
     # DEBUG LOGGING
 
-    print("\n===== HYBRID RETRIEVAL DEBUG =====\n")
-
-    if not rows:
-        print("NO ROWS RETURNED")
-
-    for row in rows:
-
-        print(f"""
-FILE: {row['filename']}
-PAGE: {row['page_number']}
-SECTION: {row['section_title']}
-
-SEMANTIC DISTANCE:
-{row['distance']}
-
-KEYWORD RANK:
-{row['keyword_rank']}
-
-CHUNK:
-{row['chunk_text'][:400]}
-        """)
-
-        print("\n-------------------------\n")
+    # Hybrid search results processed
 
     # HYBRID FILTERING
 
@@ -295,14 +269,12 @@ CHUNK:
         if len(unique_rows) >= limit:
             break
 
-    print(f"""
-FINAL UNIQUE CHUNKS:
-{len(unique_rows)}
-    """)
+    # Unique chunks calculated
 
     # RERANKING
-
-    reranked_rows = rerank_chunks(
+    import asyncio
+    reranked_rows = await asyncio.to_thread(
+        rerank_chunks,
         query=query,
         chunks=unique_rows
     )
@@ -310,48 +282,21 @@ FINAL UNIQUE CHUNKS:
     final_rows = reranked_rows[:5]
 
     # NEIGHBOR CHUNK EXPANSION
-
-    expanded_rows = []
-
-    for row in final_rows:
-
+    async def expand_single_row(row):
         neighbor_rows = await fetch_neighbor_chunks(
             document_id=row["document_id"],
             chunk_index=row["chunk_index"],
             db=db
         )
-
-        merged_text = "\n\n".join(
-            neighbor[0]
-            for neighbor in neighbor_rows
+        row["expanded_chunk_text"] = "\n\n".join(
+            neighbor[0] for neighbor in neighbor_rows
         )
+        return row
 
-        row["expanded_chunk_text"] = merged_text
+    import asyncio
+    expanded_rows = await asyncio.gather(*(expand_single_row(r) for r in final_rows))
+    final_rows = list(expanded_rows)
 
-        expanded_rows.append(row)
-
-    final_rows = expanded_rows
-
-    print("\n===== RERANKED RESULTS =====\n")
-
-    for row in final_rows:
-
-        print(f"""
-FILE: {row['filename']}
-PAGE: {row['page_number']}
-SECTION: {row['section_title']}
-
-RERANK SCORE:
-{row['rerank_score']}
-
-TOP CHUNK:
-{row['chunk_text'][:300]}
-        """)
-
-        print("\n===== EXPANDED CHUNK =====\n")
-
-        print(row["expanded_chunk_text"][:1000])
-
-        print("\n==========================\n")
+    # Reranking and neighborhood expansion complete
 
     return final_rows

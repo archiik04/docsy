@@ -66,7 +66,7 @@ export function WorkspacePage() {
     return saved !== null ? JSON.parse(saved) : false;
   });
   const [previewTab, setPreviewTab] = useState('view'); // view, ocr
-  const [view, setView] = useState('chat'); // chat, document, mindmap, flashcards
+  const [view, setView] = useState('chat'); // chat, document, mindmap, whiteboard
 
   const messagesEndRef = useRef(null);
   const textInputRef = useRef(null);
@@ -566,7 +566,7 @@ export function WorkspacePage() {
             </button>
             <div>
               <span style={{ fontSize: '14px', fontWeight: 600, color: '#0a101c', display: 'block' }}>
-                {activeDoc ? `${cleanFilename(activeDoc.name)} — ${view === 'chat' ? 'Chat' : (view === 'document' ? 'Document' : (view === 'mindmap' ? 'Mind map' : (view === 'whiteboard' ? 'Whiteboard' : 'Flashcards')))}` : (mode === 'workspace' ? 'Workspace Mode' : 'Knowledge Base Mode')}
+                {activeDoc ? `${cleanFilename(activeDoc.name)} — ${view === 'chat' ? 'Chat' : (view === 'document' ? 'Document' : (view === 'mindmap' ? 'Mind map' : 'Whiteboard'))}` : (mode === 'workspace' ? 'Workspace Mode' : 'Knowledge Base Mode')}
               </span>
               <span style={{ fontSize: '10px', color: 'rgba(10, 16, 28, 0.5)', fontWeight: 400 }}>
                 {activeDoc ? 'Attached context file' : (mode === 'workspace' ? 'Searching personal documents' : 'Searching shared organizational knowledge')}
@@ -669,24 +669,7 @@ export function WorkspacePage() {
                   Whiteboard
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => alert("Coming soon")}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'rgba(10, 16, 28, 0.4)',
-                  fontSize: '11px',
-                  fontWeight: 650,
-                  padding: '4px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s',
-                  outline: 'none'
-                }}
-              >
-                Flashcards
-              </button>
+
             </div>
           )}
         </header>
