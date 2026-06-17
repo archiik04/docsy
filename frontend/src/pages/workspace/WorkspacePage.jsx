@@ -363,69 +363,6 @@ export function WorkspacePage() {
             </button>
           </div>
 
-          {/* DOCUMENTS SECTION */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            <div className="sidebar-heading-text" style={{ fontSize: '11px', fontWeight: 650, color: 'rgba(10, 16, 28, 0.45)', textTransform: 'uppercase', letterSpacing: '0.05em', paddingLeft: '8px' }}>
-              Documents
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '180px', overflowY: 'auto', paddingRight: '4px' }} className="custom-scroll">
-              {documents.map((doc) => {
-                const isActive = activeDocumentId === doc.id;
-                const isCompleted = doc.processing_status === 'completed';
-                
-                return (
-                  <div
-                    key={doc.id}
-                    className={`convo-thread-item ${isActive ? 'active' : ''}`}
-                    onClick={() => {
-                      selectDocument(doc.id);
-                    }}
-                    style={{
-                      padding: '8px 10px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: 0 }}>
-                      <FileText size={13} style={{ color: isActive ? '#2d8fa0' : 'rgba(10, 16, 28, 0.5)' }} />
-                      <span 
-                        style={{
-                          fontSize: '12px',
-                          fontWeight: isActive ? 600 : 500,
-                          color: isActive ? '#2d8fa0' : 'rgba(10, 16, 28, 0.7)',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis'
-                        }}
-                        title={doc.name}
-                      >
-                        {cleanFilename(doc.name)}
-                      </span>
-                    </div>
-                    {isCompleted && (
-                      <div 
-                        style={{
-                          width: '6px',
-                          height: '6px',
-                          borderRadius: '50%',
-                          background: '#10b981',
-                          flexShrink: 0
-                        }} 
-                      />
-                    )}
-                  </div>
-                );
-              })}
-              {documents.length === 0 && (
-                <span style={{ fontSize: '11px', color: 'rgba(10, 16, 28, 0.45)', paddingLeft: '8px' }}>
-                  No documents uploaded
-                </span>
-              )}
-            </div>
-          </div>
-
           {/* Search threads */}
           <div className="sidebar-search-container">
             <Search size={14} className="sidebar-search-icon" />
@@ -834,7 +771,11 @@ export function WorkspacePage() {
                                 )}
                                 {cite.rerank_score !== undefined && cite.rerank_score !== null && (
                                   <span style={{ fontSize: '9px', color: '#2d8fa0', background: 'rgba(100, 210, 225, 0.15)', padding: '2px 4px', borderRadius: '4px', alignSelf: 'flex-start', marginTop: '2px', fontWeight: 600 }}>
-                                    Match: {Math.round(Math.min(cite.rerank_score * 10, 99))}%
+                                    {(() => {
+                                      const clamped = Math.max(-10, Math.min(10, cite.rerank_score));
+                                      const score = Math.round(((clamped + 10) / 20) * 100);
+                                      return `Match: ${score}%`;
+                                    })()}
                                   </span>
                                 )}
                               </div>

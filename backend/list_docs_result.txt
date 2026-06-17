@@ -1,0 +1,189 @@
+Total documents found: 188
+ID: eb1c7050-9c22-45e8-afa0-f12787a3801c | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 4fd7336d-536a-4e57-9779-a3458352c2de.pdf
+ID: cf0a8d30-e96d-47b2-828f-0f4746703b87 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: processing | Filename: c887ceb7-1db1-4232-8b39-0530c3cdd4ba.pdf
+ID: 0877615d-35c3-42b0-8ed3-3441a1f98139 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: bf67ff2c-0b53-4e43-8002-34d1e970cebd.pdf
+ID: cc7d8186-6441-471b-81b1-f824e44ae28c | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 07d591bb-6f70-41fd-a458-bdc11fd10a1e.pdf
+ID: 0cc02963-c726-4a6d-ac71-27913d6521cf | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: a308fbd2-2c72-4a9e-8472-a1f7bdf0e40f.pdf
+ID: 711030dd-8676-4955-81fa-c578b4468d2b | Original Name: CNN_Theory (1).pdf | Scope: PERSONAL | Status: completed | Filename: 3970e686-7a61-4c14-9977-b369e61bd153.pdf
+ID: 99663d6e-76e1-4204-b8ae-b3db0df79707 | Original Name: CNN_Theory (1).pdf | Scope: PERSONAL | Status: completed | Filename: d861050f-2255-4ab4-b250-e6ef6213bf5e.pdf
+ID: fe0560a1-21a1-4de8-b5d6-07d9bd3557d6 | Original Name: K-Median Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: 6b12a6e0-10c1-4335-ab80-2c9f76109bcd.pdf
+ID: 9518d54f-4c37-480b-9178-56925af90b8c | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 31f47740-14fe-4fa7-a03e-64217a15e5a3.pdf
+ID: f037bd3b-9071-4cab-8a3a-de3caf16f607 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: a395c469-e0a1-4dad-a55a-7be65799b489.pdf
+ID: 5e2954d2-b772-4b60-91b3-122a0bb4f055 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 59c3252b-c268-4093-89e5-8d4c1b4ddba1.pdf
+ID: 1f81da01-bf17-493a-8c37-eed80e6e6b23 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 056972c9-6388-4c61-8367-eaae38f6c336.pdf
+ID: 885d1209-17eb-4dc6-8f60-4908d3be7625 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: b5f518b9-91f7-4823-b68a-0ee7371d92e8.pdf
+ID: 68ade11e-7799-4517-83e6-d6519540a0d5 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 91395855-e447-46f7-8cd9-0815ee365908.pdf
+ID: 93eb6523-09f8-4224-975c-6c1e6bb0abae | Original Name: K-Median Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: f46c3fe4-a2d3-4bbd-8a0e-4deeff03d429.pdf
+ID: a987d394-ebbb-4c66-9896-a60ff4872b7c | Original Name: K-Median Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: df8f7573-4765-4336-a8bc-a296b6296802.pdf
+ID: e7cf47f2-a40a-47d9-90ca-22b04eb1ef73 | Original Name: K-Median Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: ed0e2a77-a17a-4b4d-a5d8-ac4701ed120e.pdf
+ID: d6855c9d-7298-43e0-80e0-bd8b8113f25f | Original Name: K-Median Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: a7e6b925-bfff-4b86-888b-c2db1427378a.pdf
+ID: 04cd605f-bbfb-41f0-b292-6658972a2f60 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 6a3a5170-102a-41dc-b020-d2e420f5c233.pdf
+ID: ef08f816-39c1-408c-b219-ba77fa5fdf02 | Original Name: 28. K-Means Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 442ab185-6659-4f3e-961d-1cd63d45c82e.pdf
+ID: 9bcd3c39-fb92-422e-b04a-89c1f8ac4597 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 07a402b9-8fa1-4267-bb5f-0806df6465e1.pdf
+ID: a8f4e548-ce50-499b-9571-424c79672a64 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: cdd4674b-1d6b-4419-880a-1fb9a5c186ee.pdf
+ID: 1e5ba794-0ae4-4fde-9481-dbb2a7b2dde9 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: cc44a1fc-c26c-46fb-b337-04587ac3684e.pdf
+ID: ef711d00-e37b-4215-8c88-e4ec03a56d59 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 4a9e284e-6cf6-4d51-861e-3cb509c668e5.pdf
+ID: 51f3f0d7-199b-4141-a462-649c5fe9ef79 | Original Name: Module_1__Universal Human Values.pptx.pdf | Scope: PERSONAL | Status: completed | Filename: c0f60894-96c5-42a0-853e-1818fd4b21c7.pdf
+ID: d1e88d9e-dca5-430a-9168-32d0c645e9b2 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 33022fe9-f9ac-4d4e-876c-f9ca46f551c9.pdf
+ID: 84c978fa-719b-4d55-a6b2-44913aea556d | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 66e1e23c-3ab5-4803-821b-2eb228cc1c6b.png
+ID: 0e33e0fa-14d2-46f2-8de8-5fb5b84ef057 | Original Name: Anandabazar Patrika 04-06.pdf | Scope: PERSONAL | Status: completed | Filename: 9aaeaaff-484c-4f5a-82a9-5be503141f52.pdf
+ID: 30424d6c-b5b0-4abd-ba51-13f360697704 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: d22e151d-3afc-4b44-bc4f-376dcfdb40bd.pdf
+ID: 6616921c-45d7-4117-8dfc-506f7b4109ad | Original Name: 28. K-Means Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 20529039-7965-4af1-9e37-2b5030cced17.pdf
+ID: d8d6f126-499d-4b22-a895-8800ebe10e0c | Original Name: DEMAND ANALYSIS (1).docx | Scope: PERSONAL | Status: completed | Filename: 7e5f3f8a-0299-445f-a336-38d6315e0358.docx
+ID: 65f72750-3e40-4c73-8fef-39c029546222 | Original Name: DEMAND ANALYSIS (1).docx | Scope: PERSONAL | Status: completed | Filename: b3b33d4f-464f-4f07-9996-f7be040fa479.docx
+ID: f47e5d14-2577-4797-b33d-483505552857 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: 173b38d1-3314-4522-b20a-51f211b4cacf.pdf
+ID: 1d096ac6-9f92-4549-aade-f1d4fe63d655 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: fdeefca1-349f-475b-8afd-261d6121a7bd.pdf
+ID: 8428e0a6-5bb5-44d9-aeef-fd7c2b859938 | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: 23a7e813-4fc6-4b41-8bf2-353751335482.pdf
+ID: 413ada3a-e049-4183-b10f-69fcaed83475 | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: f9a10d9d-3d9f-42d5-9ef0-edf68059c2e3.pdf
+ID: 40a15289-c71e-46cb-98f5-fd36ced81ac3 | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: e83d2b83-7a76-4db0-92af-8b1450cab6ec.pdf
+ID: b4ef67c3-4f62-43b1-a41e-35fccd9602bd | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: 26f54870-2062-4597-a3ac-e97727095f74.pdf
+ID: 15e5d8a6-1da7-4aae-860c-acd1b521fd6e | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: cc26a333-a86f-426d-b957-6feba71f7ac3.pdf
+ID: 9f63a4bb-ca8d-42bb-a0c2-c11ffd06a1de | Original Name: UDAQ   1884.pdf | Scope: PERSONAL | Status: completed | Filename: c7440ff4-de68-483e-bccb-7efe96edd218.pdf
+ID: d8446a88-58a2-431f-8353-452c55b19c54 | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: 7c69ac61-f219-4f95-9c4e-973622b1d13e.pdf
+ID: 7f88d38e-a048-4675-96ca-78cb179548a0 | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: 2e6085e2-3bf0-491e-b32b-967495c4a9b7.pdf
+ID: 49ed351e-7389-4698-aa71-83a8a73c9dec | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: f4ba32a1-b367-49b2-8890-86b995c22c55.pdf
+ID: bb338790-c4b9-4022-8d68-9d9282b0f6c6 | Original Name: Screenshot 2026-05-21 150519.png | Scope: PERSONAL | Status: completed | Filename: d33c2143-341d-4148-8dc3-d25bc31b0e85.png
+ID: 73e8448a-fbe3-4827-9ad2-038f68180b75 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 5ac52992-e4b6-4f7e-9e2c-026f1c6062e3.png
+ID: feda9ecc-b772-461d-b7f4-9660f0b6bada | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 998c0419-d4be-49a4-bffa-1f136ba3a92f.png
+ID: 507c9731-154a-474c-b985-666f1399dcb4 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: fad16420-708b-4d63-892d-9477c4f9dc88.png
+ID: 159ca7e2-18d7-488d-b0de-1ece9dd856a9 | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 3407b69c-a712-4719-a782-111fe2240fb9.pdf
+ID: 7d972740-47f3-4491-8608-5976d1405bbe | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 6b051e4c-767e-4511-abef-456ce2ae46ad.png
+ID: 9af110bb-9d2b-4644-9668-60403f065d9f | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 8be27e23-6cad-4481-91c8-8155fa8ebef0.png
+ID: 4d142e70-010f-4237-93c4-88fffac34ef6 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: ec26cffb-e2eb-475f-add4-a17b6b34c8f5.png
+ID: d033d2fd-224a-4a70-b042-fc8330ce94d0 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 23c5c821-2f61-42ce-be1c-33a1d30918e9.png
+ID: 900a4429-5262-4808-a393-2d3826009d75 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 59bab9c4-c0cf-43c7-bffe-2f81aada009e.png
+ID: 95b6e0be-5bdc-40a4-b462-a936b68b844c | Original Name: adversarial search.pdf | Scope: PERSONAL | Status: completed | Filename: 0676a054-f2ef-4ad6-ad7c-a9a874a72832.pdf
+ID: 4b095659-1720-4985-bb3c-4e41aaf0cf52 | Original Name: 4_Cloud_Computing_Services.pdf | Scope: PERSONAL | Status: processing | Filename: cdf52b01-7735-4ffb-9263-d2276b9265f6.pdf
+ID: eb718e37-5549-4d99-b558-af1c83ad98db | Original Name: eggsmart_20240715_004.pdf | Scope: PERSONAL | Status: completed | Filename: 9e9298df-4b44-421f-9104-66e125ca50b9.pdf
+ID: c69d386d-f3bc-4736-b4fb-e9af1d5c7e84 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 5427ed6a-a593-461d-b074-211b9eb3f4b1.png
+ID: abb4e690-f630-4ac4-bf92-5ea949e5e609 | Original Name: K-Median Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 71da6d71-29b4-4824-aef8-97802f500736.pdf
+ID: 2dbffb0b-fd91-4eb7-9179-9e20dafecc92 | Original Name: 33. Agglomerative Clustering (Questions) (1).pdf | Scope: PERSONAL | Status: completed | Filename: 9f93420a-b20a-4777-a1c1-68b536f84baf.pdf
+ID: 4d0aaae6-dcd4-4e04-a1df-532ce2c14b16 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 9837a387-3283-4d03-9852-8415be814dc3.png
+ID: c30494c9-6da1-43c3-b631-faa5bec42580 | Original Name: Principal Component Analysis (PCA)_.pdf | Scope: PERSONAL | Status: completed | Filename: d418cfa6-f57b-43a6-83c7-d65dd3ed9950.pdf
+ID: 12d53649-a99f-4694-b231-b62b9e3a905f | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 369496bf-b1fb-44ec-9808-35b8685f3756.png
+ID: 500763b2-eb37-4b26-979d-ab3177a1507d | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 7b26006d-7b7b-46c1-8622-8d3026cc0c46.png
+ID: fd9f05b5-5cb2-4422-bfed-58a9b0d4dc13 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 2e9b0598-2942-482b-b658-a1796612452e.png
+ID: 0997b422-cbdc-42f3-87e2-b622d3cf2e86 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: e37755d9-3b1b-45cc-ad04-8ebc98dd6d5e.png
+ID: 57f15cae-3a74-4481-af54-c1aa9ee0a28f | Original Name: Principal Component Analysis (PCA)_.pdf | Scope: PERSONAL | Status: completed | Filename: 56963d32-e582-48de-8b89-e3e4d69251a8.pdf
+ID: 6deb5500-808d-42db-a558-a6afa4d25b29 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 01f6bf2c-58f1-4793-88ea-79760d1a988e.png
+ID: 78494d28-ed30-4abf-ab57-e59ac798e6ba | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 0e2dd095-5f98-4a39-844b-52669d10e24f.png
+ID: 5dde9ed1-5205-4817-bc8a-2f6f0eb1804b | Original Name: 28. K-Means Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 6931867a-1c00-416a-92a8-673d1d74cb59.pdf
+ID: 7ba4c602-e896-46e7-a5cf-fe9b75433d21 | Original Name: K-Median Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 7aa79ed7-a596-4cc3-b67d-3b2fd0a39649.pdf
+ID: cbef301d-912a-4b52-8144-da636cff257c | Original Name: T&P Regulations_2027 Batch.pdf | Scope: PERSONAL | Status: completed | Filename: d7f7d3d1-0213-4627-a99b-ecae9aa0b3f1.pdf
+ID: 6eb985a6-2072-454b-bdac-660ada27bd4a | Original Name: 2305605_tnp.pdf | Scope: PERSONAL | Status: completed | Filename: 9932b405-586c-4b7c-8194-834742fadd91.pdf
+ID: d0a146e2-9863-4663-bd4f-689aea156d8d | Original Name: archi_kanungo (3).pdf | Scope: PERSONAL | Status: completed | Filename: fa41b25c-e14f-41f0-a84a-d903f1db2901.pdf
+ID: 75a9ef42-b17a-47d2-942d-ba215b86c941 | Original Name: certificate (1).pdf | Scope: PERSONAL | Status: completed | Filename: 2ed658d3-3cbe-47fa-b1da-c31e503d30d2.pdf
+ID: ed50145a-01bd-498b-9647-4813d19ad0f8 | Original Name: Archi Kanungo-Go for Gold-iAspire certificate.pdf | Scope: PERSONAL | Status: completed | Filename: 8f8c2629-a02f-499e-a735-9eccea3d5048.pdf
+ID: e6514c93-0d90-40b4-b1b7-dbc40fd9e016 | Original Name: id (2).pdf | Scope: PERSONAL | Status: completed | Filename: d563ecb4-af80-4822-9a58-954d8f828505.pdf
+ID: 2697096d-5bab-447c-97ba-d297a1715fe6 | Original Name: kiit-id.jpg | Scope: PERSONAL | Status: completed | Filename: e52ebdbd-a5ac-4f3a-8a9a-12b75189145f.jpg
+ID: 5a919de2-9bb4-4e65-b8a4-ef37afdd4c1e | Original Name: id (2)_page-0001.jpg | Scope: PERSONAL | Status: completed | Filename: c90182c9-d2ff-4f46-be38-aa0df73d76e0.jpg
+ID: 64e00fbe-72ca-457d-afe5-43e497983fcd | Original Name: resumee_.pdf | Scope: PERSONAL | Status: completed | Filename: a2cf68c2-425e-445b-8501-df32ad71f88e.pdf
+ID: 802bc602-5a9d-4df6-94e1-3bc02c24539a | Original Name: cisco_image.jpeg | Scope: PERSONAL | Status: completed | Filename: 2eecfa63-d61c-4373-a91a-0b7dffcb4e69.jpeg
+ID: 97587bf4-e689-4ece-a9d5-35fe9e4dc7ce | Original Name: semester_grade_report.pdf | Scope: PERSONAL | Status: completed | Filename: e1496fec-1714-4584-b7ef-584cdb556514.pdf
+ID: edbf824a-aa33-4e8c-bf46-e739f9b3494c | Original Name: ET-AI_Hackathon_2026_Certificate_Archi_Kanungo.pdf | Scope: PERSONAL | Status: completed | Filename: 305ae98b-6222-4d39-b3fa-15f85c933e58.pdf
+ID: 8de8e4ad-f928-481b-9e26-263c7b3eaed3 | Original Name: ET-AI_Hackathon_2026_Certificate_Archi_Kanungo_page-0001.jpg | Scope: PERSONAL | Status: completed | Filename: 20123302-6bee-4200-a99b-487f8f05207a.jpg
+ID: d8c742ef-2c16-4752-8987-fef2a598660e | Original Name: archi_kanungo (4).pdf | Scope: PERSONAL | Status: completed | Filename: c8770914-8261-4b00-a20d-e111e5978309.pdf
+ID: bf6c1587-efb9-4018-a8ac-18c400ff9a72 | Original Name: WhatsApp Image 2026-05-12 at 19.46.30.jpeg | Scope: PERSONAL | Status: completed | Filename: e8f3657c-5923-47f4-91d2-2a9ee1145784.jpeg
+ID: 98ff9588-f6f9-4482-9d1f-a5ca64001ed8 | Original Name: WhatsApp Image 2026-05-12 at 19.46.31.jpeg | Scope: PERSONAL | Status: completed | Filename: 84ef3bb3-8e6f-4b4d-84c6-32f755b7a4b6.jpeg
+ID: 5cc7daeb-7a9a-4404-864d-416e153aa783 | Original Name: WhatsApp Image 2026-05-12 at 19.46.31 (1).jpeg | Scope: PERSONAL | Status: completed | Filename: f56e8241-1209-4015-88c4-ce21fa848bcd.jpeg
+ID: 8cc6db4b-34b2-4cb3-ac26-e46011361dec | Original Name: WhatsApp Image 2026-05-12 at 19.46.32.jpeg | Scope: PERSONAL | Status: completed | Filename: 4bda64f6-c252-421e-936a-304ded0cf902.jpeg
+ID: b106c5ca-fba0-48e0-8b0e-2abf92a4343f | Original Name: 87ebf7324d86e2a5ed65305a5127aaca.jpg | Scope: PERSONAL | Status: completed | Filename: 08113199-78a3-4a93-834a-e433466f6152.jpg
+ID: 044f384e-0982-455b-b227-91e81d934a6c | Original Name: archi2.jpg | Scope: PERSONAL | Status: completed | Filename: ee03c792-be85-4767-bab0-b1f08c6fc6bd.jpg
+ID: 1c9bc6c1-5003-4570-bf7a-e8a05475ddbf | Original Name: archi_kanungo (5).pdf | Scope: PERSONAL | Status: completed | Filename: 91f6c9d1-b907-4665-83aa-e8030b929bda.pdf
+ID: 4b9aebab-d58f-4bc4-a748-a4ea940d8432 | Original Name: WhatsApp Image 2026-05-14 at 16.39.52.jpeg | Scope: PERSONAL | Status: completed | Filename: 2e84a8ea-bae6-4e20-afd7-e3e7bfea5048.jpeg
+ID: 7a77ff56-c5ea-4d44-afbb-93d46888d55c | Original Name: Naming convention.pdf | Scope: PERSONAL | Status: completed | Filename: 05953514-4b07-4883-a52c-0b8c195ed4fe.pdf
+ID: 60df50bd-2463-4f32-8670-8ef8145652dc | Original Name: 2027 Campus hiring DN 5.0_ JAVA FSE_Student brochure.pdf | Scope: PERSONAL | Status: completed | Filename: 0ad6fd48-a2e7-43b9-813c-a7e50114db7c.pdf
+ID: b0c78e98-d86e-4a5b-9cf7-3fafacccc62d | Original Name: WhatsApp Image 2026-05-15 at 02.25.48.jpeg | Scope: PERSONAL | Status: completed | Filename: 4f35e36d-4ebe-4a51-9f33-1fd5346f648f.jpeg
+ID: 69a40cd6-85ba-4d31-81e0-88d742b5919a | Original Name: cool_fun_elements.jpg | Scope: PERSONAL | Status: completed | Filename: e2b40186-925d-47ce-9b37-5c5b74675331.jpg
+ID: e12017f3-185e-4138-95c8-93c22f950033 | Original Name: feels_like_a_wallet.jpg | Scope: PERSONAL | Status: completed | Filename: 2eb57934-433b-4220-a113-dcf000910384.jpg
+ID: 11216f15-5394-4f22-8172-9dd8ff082403 | Original Name: ui_interface.jpg | Scope: PERSONAL | Status: completed | Filename: d8710e60-7d9e-4820-a089-71708bad7727.jpg
+ID: aedf0ba3-92f5-4cd6-ad1a-34b01e5bea50 | Original Name: ui_inspo2.jpg | Scope: PERSONAL | Status: completed | Filename: 788e6dda-20a9-468c-b7f5-5e8bd99586ae.jpg
+ID: f9e396d1-a9d1-42e8-9a92-09132b36ec93 | Original Name: categories.jpg | Scope: PERSONAL | Status: completed | Filename: 2d801194-9b4c-4f7f-bf16-fe9b2d20ca5c.jpg
+ID: a048e12e-9d5a-41fa-89f6-9546dd11170d | Original Name: 1.jpeg | Scope: PERSONAL | Status: completed | Filename: 8d61d063-cf91-475b-b9d0-64d4edd1fe0e.jpeg
+ID: de64d0ad-6446-4217-8937-0e8809b16e46 | Original Name: 2.jpeg | Scope: PERSONAL | Status: completed | Filename: 102b9923-13a6-47e3-b4c7-df126046e3df.jpeg
+ID: 3c621cac-08a1-4452-9763-ec56b0d2bb3b | Original Name: 3.jpeg | Scope: PERSONAL | Status: completed | Filename: f1ec8d19-0fbe-4c36-81e9-e13b944ae0df.jpeg
+ID: 6cd279bc-8836-4cb5-9819-af352d2c34dc | Original Name: 4.jpeg | Scope: PERSONAL | Status: completed | Filename: f0a5f72b-81ea-4f5d-ad77-8316d079aab3.jpeg
+ID: f52c3d86-3256-4055-833a-f3b1faad2ad8 | Original Name: 5.jpeg | Scope: PERSONAL | Status: completed | Filename: 1f141b2c-1a4d-42be-adc4-87878d4bdd80.jpeg
+ID: a6f73767-920c-4f23-8838-367b844b6d46 | Original Name: archi_kanungo. (2).pdf | Scope: PERSONAL | Status: completed | Filename: a8f5c24e-9f9b-4c1a-9f75-ea068848c434.pdf
+ID: ceb93997-e363-4f58-a101-311b8f2437ed | Original Name: Docsy Rag Backend Progress And Roadmap.pdf | Scope: PERSONAL | Status: completed | Filename: b8d7d5aa-9ed5-4599-81a8-9416e998bdbb.pdf
+ID: f25725cf-9234-443f-be7f-22eb5cce7112 | Original Name: message (1).txt | Scope: PERSONAL | Status: completed | Filename: aafcc441-b1b8-4dfe-8bc3-7800824dd907.txt
+ID: 3acb5d79-1d34-44e1-96d3-16e8a6ef9e3e | Original Name: Index portfolio.jpg | Scope: PERSONAL | Status: completed | Filename: 647aad7b-4ada-4480-9d43-316548cc3e23.jpg
+ID: dba36610-cf6b-46a3-b3b6-9aef311d7e30 | Original Name: download (13).jpg | Scope: PERSONAL | Status: completed | Filename: 6558c153-a078-4d33-a115-53b99e3a22b5.jpg
+ID: 39e93df6-37ad-4afc-8b7f-41c434da2a95 | Original Name: Вот это да!.jpg | Scope: PERSONAL | Status: completed | Filename: 842bf49b-f925-4b47-be65-31c9abbe6b76.jpg
+ID: 1d2d3ade-6763-4eb6-b960-e6a81021fa02 | Original Name: download (14).jpg | Scope: PERSONAL | Status: completed | Filename: 50125bb4-d720-4f54-8487-14de02d0af20.jpg
+ID: 9dc7b367-3dff-4e17-80fd-0a7ad0eceff7 | Original Name: X.jpg | Scope: PERSONAL | Status: completed | Filename: 2f7e78be-9b34-435b-a146-3d81b21829c7.jpg
+ID: 54675ff6-bf53-4007-8d67-0e8cc1017e1a | Original Name: Твой гид в AI-дизайн.jpg | Scope: PERSONAL | Status: completed | Filename: f21d77b9-4b73-458b-a108-fa30ed2ae4b0.jpg
+ID: da514204-30fa-49a2-b1d9-344651ec0b52 | Original Name: download (15).jpg | Scope: PERSONAL | Status: completed | Filename: 4716fba9-03b5-401c-b26f-c7b637ef84f5.jpg
+ID: 56ec0b94-2b51-489d-b6ce-33ac96053f90 | Original Name: To recreate or put in a video shoot angels ideas.jpg | Scope: PERSONAL | Status: completed | Filename: 21b0af2a-7bc8-42ec-aa15-ab15324215cc.jpg
+ID: 932f5f52-8342-4990-853b-1e533924b4b5 | Original Name: Art _ Midjourney.jpg | Scope: PERSONAL | Status: completed | Filename: acc51fe3-a499-40c3-8626-a37244b1eaec.jpg
+ID: 0670c058-6f04-4a3b-8fc8-12625b7dc862 | Original Name: download (16).jpg | Scope: PERSONAL | Status: completed | Filename: cb728cc5-814b-4fc1-b247-238da07d9469.jpg
+ID: 5c6af1b7-c631-47c4-ae68-509214686b1c | Original Name: download (17).jpg | Scope: PERSONAL | Status: completed | Filename: de923877-1811-4157-9179-e5fbb6afef8f.jpg
+ID: 760e2922-def5-48dd-9f31-97d60f224cdc | Original Name: download (18).jpg | Scope: PERSONAL | Status: completed | Filename: a59377ae-766d-446b-9f52-47c2922e299d.jpg
+ID: a0a4baf8-4c00-4235-9ec5-825d08a9d3ab | Original Name: Gemini_Generated_Image_s7ntqzs7ntqzs7nt.jpg | Scope: PERSONAL | Status: completed | Filename: 62b07011-efbf-4888-9fa2-c929039c5afc.jpg
+ID: 790f3c96-9da7-4d69-9afc-0932095e0725 | Original Name: Gemini_Generated_Image_o3tkevo3tkevo3tk.jpg | Scope: PERSONAL | Status: completed | Filename: d0a0a820-0dbb-401c-a8d8-1cac9cf3ec34.jpg
+ID: 1fb8a170-06d6-46f5-8dce-edf2278e40ae | Original Name: Gemini_Generated_Image_o3tkevo3tkevo3tk (1).jpg | Scope: PERSONAL | Status: completed | Filename: 493a4fc3-2db2-49d2-9cf7-bb05022b0e7b.jpg
+ID: 63939dec-64ba-409f-afcf-07c3a8255ab5 | Original Name: docsy_15_day_plan.pdf | Scope: PERSONAL | Status: completed | Filename: 0e0cb857-8f2c-44c4-b92d-4e5f0465ea87.pdf
+ID: 5eb270e4-4a7d-4efc-b554-7c5abcbbf68c | Original Name: Gemini_Generated_Image_vp7wtovp7wtovp7w.jpg | Scope: PERSONAL | Status: completed | Filename: 7d1ab604-5ebd-4e9b-8560-66c50feb485a.jpg
+ID: 2429d238-2c72-4eb7-ace4-630d12ce04c0 | Original Name: Gemini_Generated_Image_a93tbla93tbla93t.jpg | Scope: PERSONAL | Status: completed | Filename: 624e92ff-b01a-4a7a-bcfb-a5294ba8a3db.jpg
+ID: 14247549-9f05-4e2d-9622-e851884e2097 | Original Name: Surreal photography, minimalistic.jpg | Scope: PERSONAL | Status: completed | Filename: 0e0ef12d-2773-4563-8a47-76e8f06a50c2.jpg
+ID: 68cec15e-0bae-468f-85ef-18f192a4c67a | Original Name: Edge of Infinity – A Cinematic Surreal Cloudscape.jpg | Scope: PERSONAL | Status: completed | Filename: 8a394768-2f29-4493-b868-0cf4a8d79bbf.jpg
+ID: c0b5b797-7e73-4c32-a11f-98340f8f1fdb | Original Name: The Watcher – Observing Infinity.jpg | Scope: PERSONAL | Status: completed | Filename: 4ab1ff7e-8b01-45cd-907f-9111cfdd4d1b.jpg
+ID: c8c7a447-4a85-47d6-969f-00fc056125e7 | Original Name: Gemini_Generated_Image_4tntwj4tntwj4tnt.jpg | Scope: PERSONAL | Status: completed | Filename: 4a6a5101-2be7-443e-bfd3-40c54ca3fd9f.jpg
+ID: 5e16c464-d026-45fb-bb97-ada3d6b3f59f | Original Name: download (19).jpg | Scope: PERSONAL | Status: completed | Filename: d275c451-ca06-44bb-8e31-87096a02447e.jpg
+ID: 10d28579-3f09-4b15-bc74-7b8521a4135f | Original Name: download (20).jpg | Scope: PERSONAL | Status: completed | Filename: 65ea02b5-95a5-4b05-8447-24b07fe8bd06.jpg
+ID: 415c4d1a-ef7a-4f6c-a9c4-f2772a488895 | Original Name: Gemini_Generated_Image_4tntwj4tntwj4tnt (1).jpg | Scope: PERSONAL | Status: completed | Filename: a82a904c-66c9-4f5c-b6fe-4dd85a5d5a6e.jpg
+ID: 80fc00ff-c715-4c21-9bf5-0c323f5c7eb9 | Original Name: Gemini_Generated_Image_djew5udjew5udjew.jpg | Scope: PERSONAL | Status: completed | Filename: 10896be2-2fda-4bd9-8099-8342864276d5.jpg
+ID: 7f584dde-a394-4132-bb09-1f848a628f94 | Original Name: Gemini_Generated_Image_djew5udjew5udjew (1).jpg | Scope: PERSONAL | Status: completed | Filename: 34965f69-c6fb-4009-a5da-70e620fcd0cc.jpg
+ID: daade0ed-1829-4bc6-b340-afcb875ae661 | Original Name: download (21).jpg | Scope: PERSONAL | Status: completed | Filename: c5feca40-ba92-47fa-9257-8d2b2ec0e0f6.jpg
+ID: fd0f3044-c86d-4561-a3ed-f5c7dba80592 | Original Name: DN5.0-Upskilling-Handbook-Java-FSE.pdf | Scope: PERSONAL | Status: completed | Filename: e9d7b108-80f3-4c1f-a97d-6899f5446b76.pdf
+ID: 3511427d-8a2e-4aaf-9a65-45232f4a30a4 | Original Name: T&P Regulations_2027 Batch.pdf | Scope: PERSONAL | Status: completed | Filename: b8b2152d-aacb-4ce5-999b-a630cb584416.pdf
+ID: ce6d5cb6-8009-48a9-8b9b-b5a4d7d62989 | Original Name: 2305605_tnp.pdf | Scope: PERSONAL | Status: completed | Filename: b46802dd-ebbc-4032-bbcc-26e47911c96a.pdf
+ID: 6a6173c0-502d-4b7b-bef8-cbb409d51bea | Original Name: archi_kanungo (5) (1).pdf | Scope: PERSONAL | Status: completed | Filename: 727293f5-33ca-47a4-af1b-6d1430181a7c.pdf
+ID: 353a85fc-467f-4bb3-bc4f-e899e88151c2 | Original Name: Lab - Implement Advanced STP Modifications and Mechanisms.pdf | Scope: PERSONAL | Status: completed | Filename: 465affbc-c097-4008-acbe-e9cf8a390954.pdf
+ID: c45865c5-38ed-44e9-8411-edc17b781f28 | Original Name: advtDEAL27052026.pdf | Scope: PERSONAL | Status: completed | Filename: d04c1192-504f-43f9-9b27-45a40f428224.pdf
+ID: 5487329b-786c-4c96-9d28-4d037088fd66 | Original Name: LaTeX Report Generator3psLCCA.docx | Scope: PERSONAL | Status: completed | Filename: c47a0cdf-aef7-4c4c-b129-4b31cee1b4a7.docx
+ID: 95542d6f-5fd3-47d6-b670-3c37e4b2bf78 | Original Name: 4a4dfd32-d7a7-49fc-a706-d0dba284df8d.png | Scope: PERSONAL | Status: completed | Filename: b5d6511d-2bc1-45f1-9b0a-2837545db627.png
+ID: 7ebc01d3-9a3b-4829-8494-f199e2a1ed39 | Original Name: epa_sample_letter_sent_to_commissioners_dated_february_29_2015.pdf | Scope: PERSONAL | Status: completed | Filename: b50148ee-b683-4d8d-9ce5-bcbbbedea2d0.pdf
+ID: a670dc06-6cc4-44a4-97cd-e64e370f1231 | Original Name: resume (19).pdf | Scope: PERSONAL | Status: completed | Filename: c6eedcc5-ac5d-4260-80c6-b0271546c029.pdf
+ID: e4a04a3d-f4ea-4c97-befa-4f1db1645656 | Original Name: Fade Wallpaper _ Black, Background, Dark Wallpaper, Uni.jpg | Scope: PERSONAL | Status: completed | Filename: fc3a8b89-a099-4554-a71e-d44704c9d150.jpg
+ID: 48480226-3f31-4a3a-81ee-80cce549fd21 | Original Name: download (22).jpg | Scope: PERSONAL | Status: completed | Filename: 4f30dc36-08a4-48d7-9c3c-a7939cdeeded.jpg
+ID: b72c53d0-b202-4e5e-8f37-508d5caa776c | Original Name: download (23).jpg | Scope: PERSONAL | Status: completed | Filename: 46604b42-d7b5-44e3-a0df-7a0284da6f7f.jpg
+ID: bd8a6e8f-c375-4aa6-81e8-6158f1aec111 | Original Name: Pin by noam shitrit on Beckround _ Minimalist desktop wallpaper, Macbook wallpaper, Minimalist wallpaper.jpg | Scope: PERSONAL | Status: completed | Filename: 919d8ec9-81db-4bfb-b1e2-03d5612d8196.jpg
+ID: f01299f7-d39f-4b46-81ac-452994fa0741 | Original Name: Horizion.jpg | Scope: PERSONAL | Status: completed | Filename: 34e14e94-bc07-467f-ac35-909c4997792e.jpg
+ID: 5926df4e-8f4a-4bca-aab5-4b65d52dfc75 | Original Name: epa_sample_letter_sent_to_commissioners_dated_february_29_2015 (1).pdf | Scope: PERSONAL | Status: completed | Filename: 84d832fa-d782-406c-b365-2e62543c4272.pdf
+ID: bb8cf49d-38d7-4346-8b73-eef3864ebc47 | Original Name: K-Median Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: f5087475-524c-4a14-a063-7b5b76b415c7.pdf
+ID: 3a49c348-d80a-40b2-9614-65f74bc7675a | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 03e4d1e6-4594-439a-bd22-fa3d4eee684d.pdf
+ID: 4e90514c-95f2-4c0b-a136-c2fbbeb1b1b8 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 95a89e85-b483-4401-946f-0872e5a111a6.png
+ID: 27ce720c-f755-4740-aa1b-b78a14415a85 | Original Name: test.png | Scope: PERSONAL | Status: uploaded | Filename: test-66ba8a13-e8b2-4e75-8f15-c2cae53e39a6.png
+ID: 7d459214-f8a0-4014-a71c-230ff6e05904 | Original Name: test.png | Scope: PERSONAL | Status: uploaded | Filename: test-9ba4a3a4-d41b-4c63-808d-9285e766b40a.png
+ID: 7b90c5aa-0319-40d5-b79f-38ef7a3e92e1 | Original Name: epa_sample_letter_sent_to_commissioners_dated_february_29_2015.pdf | Scope: PERSONAL | Status: completed | Filename: 54f8347e-9702-4f71-95f2-a8b0bd6f1c3b.pdf
+ID: 2df6b161-fdfd-4579-a9f4-295464f74b1a | Original Name: LaTeX Report Generator3psLCCA.docx | Scope: PERSONAL | Status: completed | Filename: 620eff96-1628-4093-8784-37e4ea6cb503.docx
+ID: f315b0a1-6b2e-4048-97d9-6dad0011c613 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 0b3ccb37-8047-477d-ba9c-58f942eee585.png
+ID: 354d31c4-0e7d-4b04-b3ec-3ab0191d7804 | Original Name: Depreciation (Dr. Suvendu Barik).pdf | Scope: PERSONAL | Status: completed | Filename: b0060a92-bba4-4bd7-82aa-7d5ec0dd5158.pdf
+ID: fcafd91a-92b3-4357-b8c4-3589f478a6a6 | Original Name: CNN_Theory.pdf | Scope: KNOWLEDGE_BASE | Status: completed | Filename: eb3ca355-79e7-4f91-9211-f25d2718c1af.pdf
+ID: 02567e31-684c-4686-9cfc-741ac65ee915 | Original Name: Chapter 1 Cloud Computing fundamentals_748b5fb9c02ce799df201aab25c7c912.pdf | Scope: PERSONAL | Status: completed | Filename: 505d8046-da14-412b-9608-d9039dfff1aa.pdf
+ID: 5ea4fba1-cbed-469f-9c61-5cdadd840d74 | Original Name: 29. K-Median Clustering_.pdf | Scope: PERSONAL | Status: completed | Filename: 5360aaa4-336a-41ee-8c05-62cdafed688f.pdf
+ID: cd298981-acad-48de-8e81-d3c955abf1fa | Original Name: K-Median Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: 3ec59b4f-415c-48e7-b2a9-d91ee8eadfc8.pdf
+ID: f3b39d4a-06e1-477a-99ab-b491768f00e2 | Original Name: Mean Shift Clustering.pdf | Scope: PERSONAL | Status: completed | Filename: aa5a3ee3-df35-43ed-bdac-8319a23f0d8a.pdf
+ID: 808bab53-60d9-4ea5-b7b3-5dbb859be2d0 | Original Name: Horizion.jpg | Scope: PERSONAL | Status: completed | Filename: ffbaeda3-d9b1-49b1-80d4-0eebca94a89b.jpg
+ID: 933e627b-1094-4bfc-b04c-9079faef3d7d | Original Name: 31. DBSCAN Clustering_.pdf | Scope: PERSONAL | Status: completed | Filename: 7b864d51-fee1-4db1-bb3e-94222b88ec4c.pdf
+ID: 1d0c6eb5-192d-473d-9bcc-8af93cbb7694 | Original Name: 31. DBSCAN Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 29ae87c1-d0c5-443d-9223-fbad9bc741fb.pdf
+ID: 3160d8c4-0c1e-42a6-884e-52a10b793182 | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: c2f4cc4f-969f-425c-ba23-3ce80729d4af.pdf
+ID: 6dfeba31-3b64-487f-8e2f-fb6e9e965139 | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: ed9dba1e-e553-4109-b318-23e8e2f601b4.pdf
+ID: 6340a877-84c4-4082-b4b9-e9027ca6c8d7 | Original Name: 28. K-Means Clustering_.pdf | Scope: PERSONAL | Status: completed | Filename: 7114b90f-1475-4be1-bcf7-2ad5816f8fcb.pdf
+ID: 4abfe1ad-6d66-48aa-89cf-acd39bf305c4 | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 094f1717-8fc2-4b00-af76-41b55859de4d.pdf
+ID: 4b492b08-b1bb-4de4-9ba2-10665a860ceb | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 321a83b5-2164-4c52-8f4f-58b83d5dd4d6.pdf
+ID: 5730177f-b971-4b9b-99bc-0208bb7bb826 | Original Name: Mean Shift Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 4fd39d3e-2f37-4aca-93bd-0a9856f70740.pdf
+ID: 316d4b3d-54bb-4864-828a-c60dbe946dd4 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: 35bf408d-a1f2-49c4-8293-721bc94d4a21.png
+ID: bfe984fe-2953-408d-b3b6-b079fd36ebfb | Original Name: 29. K-Median Clustering_ (1).pdf | Scope: KNOWLEDGE_BASE | Status: completed | Filename: 36b5e5aa-6ccf-4d40-aacf-fe2efcd8aa36.pdf
+ID: dfde75e1-5ac6-447b-982b-f3aab39fdb02 | Original Name: K-Median Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 29470a30-7fc5-47a9-a5e7-94a048216c54.pdf
+ID: d227819e-bb65-4716-b406-c70cbc0a9314 | Original Name: 28. K-Means Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 91bf0004-e078-4cbf-9d64-482fa62dc678.pdf
+ID: d2bdaf64-79e5-43f3-9614-f060f70434c0 | Original Name: ocr-test.png | Scope: PERSONAL | Status: completed | Filename: f6ec893d-d7ce-455a-a4f8-8239835e85a2.png
+ID: a8e90b97-7650-44dc-80f3-5e9e28a51694 | Original Name: 28. K-Means Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 153bf1bf-1006-48c0-84ef-377239c293b1.pdf
+ID: 2652aca7-24ee-44fb-81a4-15c9f74c73c1 | Original Name: CN Lab - 2.docx.pdf | Scope: PERSONAL | Status: completed | Filename: 4f9fe221-b551-4c83-a187-c8d51beec176.pdf
+ID: 122c2d11-c9b1-41ab-a7c8-1cbe479bd909 | Original Name: npc_script.txt | Scope: PERSONAL | Status: completed | Filename: 749f3fe3-002d-4733-b64e-3c80abaa6380.txt
+ID: 9300b0d0-793f-44d3-add3-2fbfafcbda36 | Original Name: 28. K-Means Clustering_.pdf | Scope: PERSONAL | Status: completed | Filename: 9087f486-4b01-4a8f-8ae8-50cd98679e2f.pdf
+ID: bb9bfdf4-759a-4b5b-b274-fa02a950c8f1 | Original Name: 28. K-Means Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 3890e8a9-8fe4-490f-b583-59c4db4b056f.pdf
+ID: 6aa8db57-5d65-4996-85d4-3a2858c78bc3 | Original Name: 31. DBSCAN Clustering_ (1).pdf | Scope: PERSONAL | Status: completed | Filename: 12250e26-d68c-4fb5-9651-71fdfd8857c1.pdf
+ID: ce836bdc-14e9-43b2-8365-c4a668b7e004 | Original Name: 31. DBSCAN Clustering_.pdf | Scope: PERSONAL | Status: completed | Filename: c1659877-e831-4ae4-99c3-0c7df2bd3bd1.pdf
+ID: 3cf0c63c-3480-4ba6-b6be-3de3a82ff737 | Original Name: K-Median Clustering (1).pdf | Scope: PERSONAL | Status: completed | Filename: 35205b02-7e61-40b4-b589-310c655d7b2d.pdf

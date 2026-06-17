@@ -43,6 +43,31 @@ ALLOWED_EXTENSIONS = {
 }
  
  
+async def generate_document_summary(text: str) -> str:
+    from app.services.chat_service import client
+    # Use up to 8000 characters for summary
+    preview = text[:8000]
+    try:
+        response = await client.chat.completions.create(
+            model="meta-llama/llama-3.1-8b-instruct",
+            temperature=0,
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You are a helpful assistant. Write a concise, 2-3 paragraph summary of the following document content, detailing its main topic, key concepts, and structured sections."
+                },
+                {
+                    "role": "user",
+                    "content": f"Document content:\n{preview}"
+                }
+            ]
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        logger.error(f"Error generating document summary: {e}")
+        return f"This document contains the following text: {preview[:300]}..."
+
+
 async def process_document_background(
     document_id: uuid.UUID,
     file_path: Path,
@@ -91,6 +116,13 @@ async def process_document_background(
         chunks = chunk_text(extracted_text)
         logger.info(f"[BG] Created {len(chunks)} chunks")
         
+        # Generate document summary chunk
+        summary_text = await generate_document_summary(extracted_text)
+        summary_chunk = f"SUMMARY OF THE DOCUMENT:\n{summary_text}"
+        
+        # Prepend summary chunk to chunks
+        chunks.insert(0, summary_chunk)
+        
         # Generate embeddings in batch (more efficient than one-by-one)
         embeddings = generate_embeddings_batch(chunks)
         logger.info(f"[BG] Generated {len(embeddings)} embeddings")
@@ -100,10 +132,10 @@ async def process_document_background(
             {
                 "page_number": 1,
                 "chunk_text": chunk,
-                "section_title": "General",
+                "section_title": "Summary" if idx == 0 else "General",
                 "embedding": embedding
             }
-            for chunk, embedding in zip(chunks, embeddings)
+            for idx, (chunk, embedding) in enumerate(zip(chunks, embeddings))
         ]
         
         # Save chunks to DB
