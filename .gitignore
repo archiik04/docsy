@@ -35,3 +35,6 @@ build/
 
 # Uploaded files
 uploads/
+
+# Hugging Face deployment repo
+docsy-backend/

@@ -1,0 +1,2 @@
+[build.environment]
+  VITE_API_BASE_URL = "https://archeese04-docsy-backend.hf.space"

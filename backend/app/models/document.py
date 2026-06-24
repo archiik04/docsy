@@ -76,3 +76,9 @@ class Document(Base):
         nullable=True
     )
 
+    whiteboard_data: Mapped[Optional[dict]] = mapped_column(
+        JSON,
+        nullable=True
+    )
+
+

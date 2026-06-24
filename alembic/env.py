@@ -10,6 +10,28 @@ import os
 
 sys.path.append(os.path.abspath("backend"))
 
+# Dynamically load the database URL from settings and convert to psycopg2 format
+import urllib.parse
+from app.core.config import settings
+
+db_url = settings.DATABASE_URL
+if db_url:
+    if db_url.startswith("postgresql+asyncpg://"):
+        db_url = db_url.replace("postgresql+asyncpg://", "postgresql://", 1)
+    parsed = urllib.parse.urlparse(db_url)
+    query_params = urllib.parse.parse_qs(parsed.query)
+    new_query_params = {}
+    if "sslmode" in query_params:
+        new_query_params["sslmode"] = query_params["sslmode"]
+    else:
+        new_query_params["sslmode"] = ["require"]
+    new_query = urllib.parse.urlencode(new_query_params, doseq=True)
+    parsed = parsed._replace(query=new_query)
+    db_url = urllib.parse.urlunparse(parsed)
+    
+    # Set the URL dynamically in the config object
+    context.config.set_main_option("sqlalchemy.url", db_url)
+
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 config = context.config
@@ -26,6 +48,7 @@ if config.config_file_name is not None:
 from app.core.database import Base
 from app.models.user import User
 from app.models.document import Document
+from app.models.document_chunk import DocumentChunk
 
 target_metadata = Base.metadata
 
