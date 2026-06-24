@@ -186,4 +186,4 @@ zipp==3.23.1
 zstandard==0.25.0
 langfuse>=2.0.0
 redis>=5.0.1
-slowapi>=0.1.10
+slowapi==0.1.10

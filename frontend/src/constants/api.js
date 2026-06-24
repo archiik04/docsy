@@ -1,4 +1,9 @@
-export const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+const configuredApiUrl = import.meta.env.VITE_API_BASE_URL?.trim();
+const defaultApiUrl = import.meta.env.DEV
+  ? 'http://127.0.0.1:8000'
+  : 'https://archeese04-docsy-backend.hf.space';
+
+export const API_BASE_URL = (configuredApiUrl || defaultApiUrl).replace(/\/+$/, '');
 
 export const API_ENDPOINTS = {
   AUTH: {
