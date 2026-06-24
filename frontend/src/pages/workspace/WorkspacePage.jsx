@@ -24,7 +24,8 @@ import { AmbientBackground } from '../../components/ui/AmbientBackground';
 import { Logo } from '../../components/ui/Logo';
 import { API_BASE_URL } from '../../constants/api';
 import MindMap from './MindMap';
-import Whiteboard from './WhiteBoard';
+import Whiteboard from './Whiteboard';
+
 
 export function WorkspacePage() {
   const navigate = useNavigate();
