@@ -9,11 +9,7 @@ from app.core.config import settings
 from app.models.document import Document
 from app.models.document_chunk import DocumentChunk
 
-# same client pattern as chat_service.py
-client = AsyncOpenAI(
-    api_key=settings.OPENROUTER_API_KEY,
-    base_url="https://openrouter.ai/api/v1"
-)
+from app.services.chat_service import client, groq_active
 
 
 def strip_fences(raw: str) -> str:
@@ -26,7 +22,7 @@ def strip_fences(raw: str) -> str:
 
 async def call_llm(messages: list, temperature: float = 0.3) -> str:
     response = await client.chat.completions.create(
-        model="meta-llama/llama-3-8b-instruct",
+        model="llama-3.1-8b-instant" if groq_active else "meta-llama/llama-3.1-8b-instruct",
         temperature=temperature,
         max_tokens=2000,
         messages=messages

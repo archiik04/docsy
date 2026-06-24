@@ -4,7 +4,7 @@ import logging
 from pathlib import Path
 from typing import Optional
  
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, BackgroundTasks, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete, update
  
@@ -44,12 +44,12 @@ ALLOWED_EXTENSIONS = {
  
  
 async def generate_document_summary(text: str) -> str:
-    from app.services.chat_service import client
+    from app.services.chat_service import client, groq_active
     # Use up to 8000 characters for summary
     preview = text[:8000]
     try:
         response = await client.chat.completions.create(
-            model="meta-llama/llama-3.1-8b-instruct",
+            model="llama-3.1-8b-instant" if groq_active else "meta-llama/llama-3.1-8b-instruct",
             temperature=0,
             messages=[
                 {
@@ -183,6 +183,7 @@ async def process_document_background(
  
 @router.post("/upload")
 async def upload_document(
+    request: Request,
     file: UploadFile = File(...),
     scope: DocumentScope = Form(DocumentScope.PERSONAL),
     current_user: User = Depends(get_current_user),
@@ -193,21 +194,68 @@ async def upload_document(
     Upload document endpoint - Returns immediately.
     
     Process flow:
-    1. Validate file
+    1. Validate file size and type
     2. Save file to disk
     3. Create document record with status="processing"
     4. Queue background task
     5. Return immediately to user
-    
-    Response time: ~100-500ms (not 30-60s)
-    
-    Background task handles:
-    - OCR/text extraction
-    - Embedding generation
-    - Database indexing
     """
+    # Enforce file size limit (limit: 100MB)
+    MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB
+    content_length = request.headers.get("content-length")
+    if content_length and int(content_length) > MAX_FILE_SIZE:
+        from app.core.audit import log_audit
+        await log_audit(
+            action="UPLOAD_DOCUMENT",
+            resource="document",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": "File size exceeds content-length limit of 100MB", "filename": file.filename},
+            db=db
+        )
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Max: {MAX_FILE_SIZE / (1024 * 1024)}MB"
+        )
+
+    # Validate file size dynamically in chunks
+    file_size = 0
+    chunk_size = 1024 * 1024  # 1MB
+    while True:
+        chunk = await file.read(chunk_size)
+        if not chunk:
+            break
+        file_size += len(chunk)
+        if file_size > MAX_FILE_SIZE:
+            from app.core.audit import log_audit
+            await log_audit(
+                action="UPLOAD_DOCUMENT",
+                resource="document",
+                status="FAILURE",
+                user_id=str(current_user.id),
+                ip_address=request.client.host if request.client else None,
+                details={"error": "File size exceeds streaming limit of 100MB", "filename": file.filename},
+                db=db
+            )
+            raise HTTPException(
+                status_code=413,
+                detail=f"File too large. Max: {MAX_FILE_SIZE / (1024 * 1024)}MB"
+            )
+    await file.seek(0)
+
+    from app.core.audit import log_audit
     
     if scope == DocumentScope.KNOWLEDGE_BASE and current_user.role != "admin":
+        await log_audit(
+            action="UPLOAD_DOCUMENT",
+            resource="document",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": "Admin access required", "filename": file.filename},
+            db=db
+        )
         raise HTTPException(
             status_code=403,
             detail="Admin access required"
@@ -216,6 +264,15 @@ async def upload_document(
     file_extension = Path(file.filename).suffix.lower()
     
     if file_extension not in ALLOWED_EXTENSIONS:
+        await log_audit(
+            action="UPLOAD_DOCUMENT",
+            resource="document",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": "Unsupported file type", "filename": file.filename},
+            db=db
+        )
         raise HTTPException(
             status_code=400,
             detail=f"Unsupported file type. Allowed: {', '.join(ALLOWED_EXTENSIONS)}"
@@ -231,6 +288,15 @@ async def upload_document(
             shutil.copyfileobj(file.file, buffer)
         logger.info(f"File saved: {unique_filename}")
     except Exception as e:
+        await log_audit(
+            action="UPLOAD_DOCUMENT",
+            resource="document",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": f"File save failed: {e}", "filename": file.filename},
+            db=db
+        )
         raise HTTPException(status_code=500, detail=f"File save failed: {e}")
     
     # Create document record with "processing" status
@@ -241,16 +307,44 @@ async def upload_document(
         original_filename=file.filename,
         file_path=str(file_path),
         content_type=file.content_type,
-        file_size=file.size,
+        file_size=file_size,
         processing_status="processing",  # Key: not "completed" yet
         scope=scope,
         extracted_text="",  # Will be filled by background task
         owner_id=current_user.id,
     )
     
-    db.add(new_document)
-    await db.commit()
-    logger.info(f"Document record created: {document_id}")
+    try:
+        db.add(new_document)
+        await db.commit()
+        logger.info(f"Document record created: {document_id}")
+        
+        # Log successful upload in audit logs
+        await log_audit(
+            action="UPLOAD_DOCUMENT",
+            resource="document",
+            resource_id=str(document_id),
+            status="SUCCESS",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"filename": file.filename, "size": file_size, "scope": str(scope)},
+            db=db
+        )
+    except Exception as db_err:
+        logger.error(f"Error saving document record: {db_err}")
+        # Clean up file on disk
+        if file_path.exists():
+            file_path.unlink()
+        await log_audit(
+            action="UPLOAD_DOCUMENT",
+            resource="document",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": f"DB record save failed: {db_err}", "filename": file.filename},
+            db=db
+        )
+        raise HTTPException(status_code=500, detail="Failed to save document info to database.")
     
     # Queue background processing
     background_tasks.add_task(
@@ -357,11 +451,13 @@ async def get_document(
  
 @router.delete("/{document_id}")
 async def delete_document(
+    request: Request,
     document_id: uuid.UUID,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Delete document and chunks."""
+    from app.core.audit import log_audit
     
     query = select(Document).where(
         Document.id == document_id,
@@ -372,28 +468,62 @@ async def delete_document(
     doc = result.scalar_one_or_none()
     
     if not doc:
+        await log_audit(
+            action="DELETE_DOCUMENT",
+            resource="document",
+            resource_id=str(document_id),
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": "Document not found or access denied"},
+            db=db
+        )
         raise HTTPException(status_code=404, detail="Document not found")
     
-    # Delete chunks
-    chunk_delete_query = delete(DocumentChunk).where(
-        DocumentChunk.document_id == document_id
-    )
-    await db.execute(chunk_delete_query)
-    
-    # Delete document
-    document_delete_query = delete(Document).where(
-        Document.id == document_id
-    )
-    await db.execute(document_delete_query)
-    await db.commit()
-    
-    # Delete file
     try:
-        file_path = Path(doc.file_path)
-        if file_path.exists():
-            file_path.unlink()
+        # Delete chunks
+        chunk_delete_query = delete(DocumentChunk).where(
+            DocumentChunk.document_id == document_id
+        )
+        await db.execute(chunk_delete_query)
+        
+        # Delete document
+        document_delete_query = delete(Document).where(
+            Document.id == document_id
+        )
+        await db.execute(document_delete_query)
+        await db.commit()
+        
+        # Delete file
+        try:
+            file_path = Path(doc.file_path)
+            if file_path.exists():
+                file_path.unlink()
+        except Exception as e:
+            logger.warning(f"Error deleting file: {e}")
+            
+        await log_audit(
+            action="DELETE_DOCUMENT",
+            resource="document",
+            resource_id=str(document_id),
+            status="SUCCESS",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"filename": doc.original_filename},
+            db=db
+        )
     except Exception as e:
-        logger.warning(f"Error deleting file: {e}")
+        await log_audit(
+            action="DELETE_DOCUMENT",
+            resource="document",
+            resource_id=str(document_id),
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": str(e)},
+            db=db
+        )
+        raise HTTPException(status_code=500, detail=f"Failed to delete document: {e}")
     
     return {"message": "Document deleted successfully"}
 

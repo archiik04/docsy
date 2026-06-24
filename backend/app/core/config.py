@@ -18,6 +18,18 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str
     SECRET_KEY: str
     TESSERACT_CMD: Optional[str] = None
+    REDIS_URL: str = "redis://localhost:6379/0"
+    GROQ_API_KEY: Optional[str] = None
+    ALLOWED_ORIGINS: list[str] = [
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:5174",
+        "http://127.0.0.1:5174",
+        "http://localhost:5175",
+        "http://127.0.0.1:5175",
+    ]
 
     # Langfuse Tracing
     LANGFUSE_PUBLIC_KEY: Optional[str] = None

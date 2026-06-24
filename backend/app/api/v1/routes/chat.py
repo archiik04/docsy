@@ -1,6 +1,4 @@
-from fastapi import APIRouter
-from fastapi import Depends
-from fastapi import HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -18,13 +16,24 @@ router = APIRouter()
 
 @router.post("/ask")
 async def ask_question(
+    request: Request,
     request_data: ChatRequest,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
+    from app.core.audit import log_audit
 
     try:
         if request_data.mode not in {"WORKSPACE", "KNOWLEDGE_BASE"}:
+            await log_audit(
+                action="CHAT_ASK",
+                resource="chat",
+                status="FAILURE",
+                user_id=str(current_user.id),
+                ip_address=request.client.host if request.client else None,
+                details={"error": "Invalid retrieval mode", "mode": request_data.mode},
+                db=db
+            )
             raise HTTPException(
                 status_code=400,
                 detail="Invalid retrieval mode"
@@ -42,7 +51,6 @@ async def ask_question(
         citations = []
 
         for chunk in chunks:
-
             citations.append({
                 "chunk_text": chunk.get("chunk_text"),
                 "page_number": chunk.get("page_number"),
@@ -54,6 +62,16 @@ async def ask_question(
                 "rerank_score": float(chunk["rerank_score"]) if chunk.get("rerank_score") is not None else None
             })
 
+        await log_audit(
+            action="CHAT_ASK",
+            resource="chat",
+            status="SUCCESS",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"mode": request_data.mode, "num_citations": len(citations), "title": title},
+            db=db
+        )
+
         return {
             "question": request_data.question,
             "answer": answer,
@@ -61,14 +79,32 @@ async def ask_question(
             "title": title
         }
 
-    except HTTPException:
+    except HTTPException as http_ex:
+        await log_audit(
+            action="CHAT_ASK",
+            resource="chat",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": http_ex.detail},
+            db=db
+        )
         raise
 
     except Exception as e:
-
         print("\n===== CHAT ERROR =====\n")
         print(str(e))
         print("\n======================\n")
+
+        await log_audit(
+            action="CHAT_ASK",
+            resource="chat",
+            status="FAILURE",
+            user_id=str(current_user.id),
+            ip_address=request.client.host if request.client else None,
+            details={"error": str(e)},
+            db=db
+        )
 
         raise HTTPException(
             status_code=500,

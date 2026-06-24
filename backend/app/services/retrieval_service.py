@@ -68,42 +68,17 @@ async def retrieve_similar_chunks(
     if mode not in {"WORKSPACE", "KNOWLEDGE_BASE"}:
         raise ValueError("Invalid retrieval mode")
 
-    # QUERY EXPANSION
-
+    # Use query directly without manual query expansion rules
     expanded_query = query
 
-    if "examples" in query.lower():
-        expanded_query += (
-            " EXAMPLE example sample illustration"
-        )
-
-    if "workflow" in query.lower():
-        expanded_query += (
-            " steps process algorithm iterations"
-        )
-
-    if "limitations" in query.lower():
-        expanded_query += (
-            " drawbacks disadvantages problems"
-        )
-
-    if "definition" in query.lower():
-        expanded_query += (
-            " meaning explanation"
-        )
-
-    # Query metadata logged internally
-
     # GENERATE QUERY EMBEDDING
-
     query_embedding = await generate_embedding_async(
         expanded_query
     )
 
     # HYBRID SQL RETRIEVAL
-
-    # Retrieve more candidates initially
-    db_limit = limit * 20
+    # db_limit multiplier reduced from 20 to 5 to fetch fewer, more targeted candidates
+    db_limit = limit * 5
 
     scope_filter = """
     d.owner_id = CAST(:user_id AS uuid)
@@ -131,6 +106,11 @@ async def retrieve_similar_chunks(
     d.scope = CAST('KNOWLEDGE_BASE' AS doc_scope)
     """
 
+    # Hybrid SQL search query:
+    # 1. Computes distance and keyword_rank using pgvector and FTS.
+    # 2. Computes hybrid_score directly in SQL.
+    # 3. Filters candidates with distance < 0.95 to utilize vector index scans.
+    # 4. Orders by hybrid_score ASC.
     sql_query = text(
         f"""
         SELECT
@@ -149,7 +129,10 @@ async def retrieve_similar_chunks(
             ts_rank(
                 dc.fts,
                 plainto_tsquery('english', :query)
-            ) AS keyword_rank
+            ) AS keyword_rank,
+
+            (dc.embedding <=> CAST(:embedding AS vector)) - (0.05 * COALESCE(ts_rank(dc.fts, plainto_tsquery('english', :query)), 0.0))
+                AS hybrid_score
 
         FROM document_chunks dc
 
@@ -157,10 +140,10 @@ async def retrieve_similar_chunks(
             ON dc.document_id = d.id
 
         WHERE {scope_filter}
+            AND (dc.embedding <=> CAST(:embedding AS vector)) < 0.95
 
         ORDER BY
-            keyword_rank DESC NULLS LAST,
-            distance ASC
+            hybrid_score ASC
 
         LIMIT :db_limit
         """
@@ -173,87 +156,39 @@ async def retrieve_similar_chunks(
 
     rows = result.fetchall()
 
-    # CONVERT TUPLES → DICTS
-    formatted_rows = []
+    # CONVERT TUPLES → DICTS & FILTER BY HYBRID SCORE
+    filtered_rows = []
     
     for row in rows:
-        
         pdf_path = row[5].replace("\\", "/")
+        distance = float(row[8]) if row[8] is not None else None
+        keyword_rank = float(row[9]) if row[9] is not None else 0.0
+        hybrid_score = float(row[10]) if row[10] is not None else 1.0
         
-        formatted_rows.append({
-            
+        filtered_rows.append({
             "document_id": row[0],
-            
             "chunk_index": row[1],
-            
             "chunk_text": row[2],
-            
             "page_number": row[3],
-            
             "section_title": row[4],
-            
             "file_path": row[5],
-            
             "original_filename": row[6],
-            
             "filename": row[7],
-            
             "pdf_url": f"http://127.0.0.1:8000/{pdf_path}",
-            
-            "distance": float(row[8]) if row[8] is not None else None,
-            
-            "keyword_rank": float(row[9]) if row[9] is not None else 0.0
-    })
+            "distance": distance,
+            "keyword_rank": keyword_rank,
+            "hybrid_score": hybrid_score
+        })
 
-    rows = formatted_rows
-
-    # DEBUG LOGGING
-
-    # Hybrid search results processed
-
-    # HYBRID FILTERING
-
-    filtered_rows = []
-
-    query_words = expanded_query.lower().split()
-
-    for row in rows:
-
-        chunk_text = row["chunk_text"]
-
-        distance = row["distance"]
-
-        # Keyword overlap bonus
-        keyword_matches = sum(
-            1
-            for word in query_words
-            if word in chunk_text.lower()
-        )
-
-        # Lower score is better
-        score = distance - (
-            keyword_matches * 0.05
-        )
-
-        # Broader threshold
-        if score < 0.95:
-
-            row["hybrid_score"] = score
-
-            filtered_rows.append(row)
-
-    # SORT HYBRID SCORE
-
+    # Sort in Python by the SQL hybrid score to make sure they are in order
     filtered_rows.sort(
         key=lambda x: x["hybrid_score"]
     )
 
     seen_texts = set()
-
     unique_rows = []
 
     for row in filtered_rows:
-
         normalized = (
             row["chunk_text"]
             .strip()
@@ -261,42 +196,76 @@ async def retrieve_similar_chunks(
         )
 
         if normalized not in seen_texts:
-
             seen_texts.add(normalized)
-
             unique_rows.append(row)
 
         if len(unique_rows) >= limit:
             break
 
-    # Unique chunks calculated
-
-    # RERANKING
+    # RERANKING (Rerank top-5 only instead of all candidate chunks)
     import asyncio
     reranked_rows = await asyncio.to_thread(
         rerank_chunks,
         query=query,
-        chunks=unique_rows
+        chunks=unique_rows[:5]
     )
 
-    final_rows = reranked_rows[:5]
+    final_rows = reranked_rows
 
-    # NEIGHBOR CHUNK EXPANSION
-    async def expand_single_row(row):
-        neighbor_rows = await fetch_neighbor_chunks(
-            document_id=row["document_id"],
-            chunk_index=row["chunk_index"],
-            db=db
+    # BATCH NEIGHBOR CHUNK EXPANSION (1 DB hit instead of N sequential ones)
+    if final_rows:
+        from collections import defaultdict
+        
+        clauses = []
+        params = {}
+        for i, row in enumerate(final_rows):
+            doc_id_param = f"doc_{i}"
+            start_param = f"start_{i}"
+            end_param = f"end_{i}"
+            
+            clauses.append(
+                f"(document_id = CAST(:{doc_id_param} AS uuid) AND chunk_index BETWEEN :{start_param} AND :{end_param})"
+            )
+            params[doc_id_param] = str(row["document_id"])
+            params[start_param] = row["chunk_index"] - 1
+            params[end_param] = row["chunk_index"] + 1
+
+        where_clause = " OR ".join(clauses)
+        neighbor_query = text(
+            f"""
+            SELECT
+                document_id,
+                chunk_text,
+                chunk_index
+            FROM document_chunks
+            WHERE {where_clause}
+            ORDER BY chunk_index ASC
+            """
         )
-        row["expanded_chunk_text"] = "\n\n".join(
-            neighbor[0] for neighbor in neighbor_rows
-        )
-        return row
-
-    import asyncio
-    expanded_rows = await asyncio.gather(*(expand_single_row(r) for r in final_rows))
-    final_rows = list(expanded_rows)
-
-    # Reranking and neighborhood expansion complete
+        
+        result = await db.execute(neighbor_query, params)
+        neighbor_rows = result.fetchall()
+        
+        neighbors_by_doc = defaultdict(list)
+        for r in neighbor_rows:
+            neighbors_by_doc[r[0]].append((r[2], r[1]))  # (chunk_index, chunk_text)
+            
+        for row in final_rows:
+            doc_id = row["document_id"]
+            target_idx = row["chunk_index"]
+            
+            doc_chunks = neighbors_by_doc[doc_id]
+            matching_chunks = [
+                text for idx, text in doc_chunks
+                if target_idx - 1 <= idx <= target_idx + 1
+            ]
+            
+            if matching_chunks:
+                row["expanded_chunk_text"] = "\n\n".join(matching_chunks)
+            else:
+                row["expanded_chunk_text"] = row["chunk_text"]
+    else:
+        final_rows = []
 
     return final_rows
+
