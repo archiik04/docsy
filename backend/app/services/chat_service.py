@@ -67,7 +67,7 @@ if not client:
 async def generate_title(question: str) -> str:
     try:
         response = await client.chat.completions.create(
-            model="llama-3.1-8b-instant" if groq_active else "meta-llama/llama-3.1-8b-instruct",
+            model="openai/gpt-oss-20b" if groq_active else "meta-llama/llama-3.1-8b-instruct",
             temperature=0.7,
             max_tokens=15,
             messages=[
@@ -95,8 +95,13 @@ async def generate_chat_response(
     mode: str,
     user_id: str,
     history: list = [],
-    db=None
+    db=None,
+    skip_llm: bool = False
 ):
+    # Debug/instrumentation only (used by scripts/load_test.py to measure
+    # real retrieval-only latency and cache hit rate without depending on
+    # external tracing infra). Has no effect on app behavior.
+    import time as _time
 
     # CHECK IF ANY SELECTED DOCUMENTS ARE STILL PROCESSING
     if document_ids and db:
@@ -115,17 +120,21 @@ async def generate_chat_response(
                 return (
                     f"The document(s) {filenames} are still being indexed. Please wait a moment for Docsy to finish processing.",
                     [],
-                    None
+                    None,
+                    {"retrieval_ms": None, "cache_hit": None}
                 )
         except Exception as e:
             print(f"Error checking document processing status: {e}")
 
     # RETRIEVE CHUNKS WITH REDIS CACHING
     from app.services.cache_service import generate_cache_key, get_cached_retrieval, set_cached_retrieval
-    
+
     cache_key = generate_cache_key(user_id, mode, question, document_ids)
+
+    _retrieval_start = _time.perf_counter()
     results = get_cached_retrieval(cache_key)
-    
+    cache_hit = results is not None
+
     if results is None:
         results = await retrieve_similar_chunks(
             query=question,
@@ -137,6 +146,8 @@ async def generate_chat_response(
         )
         if results:
             set_cached_retrieval(cache_key, results)
+    retrieval_ms = (_time.perf_counter() - _retrieval_start) * 1000
+    debug_info = {"retrieval_ms": round(retrieval_ms, 2), "cache_hit": cache_hit}
 
     # NO RESULTS
     if not results:
@@ -144,7 +155,8 @@ async def generate_chat_response(
         return (
             "No relevant information found.",
             [],
-            title
+            title,
+            debug_info
         )
 
     # RERANK CONFIDENCE FILTER
@@ -155,11 +167,25 @@ async def generate_chat_response(
         return (
             "No relevant information found.",
             [],
-            title
+            title,
+            debug_info
         )
 
     # LIMIT FINAL CONTEXT TO 2 CHUNKS (OPTIMIZED FROM 4)
     results = results[:2]
+
+    if skip_llm:
+        # Debug/load-testing only. Everything above this line (cache lookup,
+        # hybrid retrieval, cross-encoder reranking, confidence filtering,
+        # top-2 truncation) is identical to the real production path -- this
+        # just skips the LLM call so load_test.py can measure retrieval at
+        # real concurrency without hitting the LLM provider's rate limit.
+        return (
+            "(skipped LLM generation: skip_llm=true)",
+            results,
+            None,
+            debug_info
+        )
 
     # BUILD CONTEXT (SLIM FORMAT)
     context_parts = []
@@ -203,7 +229,7 @@ ANSWER:"""
 
     # GENERATE RESPONSE WITH STABLE MODEL
     response = await client.chat.completions.create(
-        model="llama-3.1-8b-instant" if groq_active else "meta-llama/llama-3.1-8b-instruct",
+        model="openai/gpt-oss-20b" if groq_active else "meta-llama/llama-3.1-8b-instruct",
         temperature=0,
         messages=[
             {
@@ -228,5 +254,6 @@ ANSWER:"""
     return (
         sanitized_content,
         results,
-        title
+        title,
+        debug_info
     )

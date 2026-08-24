@@ -5,6 +5,7 @@ from datetime import datetime
 from sqlalchemy import Column, ForeignKey, String
 from sqlalchemy import Integer
 from sqlalchemy import DateTime
+from sqlalchemy import Computed
 
 from sqlalchemy.orm import Mapped
 from sqlalchemy.orm import mapped_column
@@ -41,8 +42,15 @@ class DocumentChunk(Base):
         Vector(384)
     )
 
+    # STORED generated column, auto-derived from chunk_text by Postgres on
+    # every insert/update. Previously this was a plain nullable column that
+    # nothing in the app ever populated, so every ts_rank() call in
+    # retrieval_service.py scored against NULL and the "keyword" half of
+    # hybrid search never contributed anything. See migration that fixes
+    # this in-place plus the GIN index that makes it fast.
     fts = mapped_column(
-        TSVECTOR
+        TSVECTOR,
+        Computed("to_tsvector('english', chunk_text)", persisted=True)
     )
 
     created_at: Mapped[datetime] = mapped_column(

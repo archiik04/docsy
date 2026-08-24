@@ -27,7 +27,7 @@ import MindMap from './MindMap';
 import Whiteboard from './Whiteboard';
 
 
-export function WorkspacePage() {
+export function WorkspacePage({ isDemo = false }) {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const {
@@ -60,7 +60,7 @@ export function WorkspacePage() {
     selectDocument
   } = useWorkspaceStore();
 
-  const [mode, setMode] = useState('workspace'); // workspace, knowledge_base
+  const mode = 'workspace';
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('docsy-sidebar-collapsed');
@@ -78,11 +78,43 @@ export function WorkspacePage() {
     setView('chat');
   }, [activeDocumentId]);
 
-  // Fetch documents and set initial conversation on mount
+  // Fetch documents or initialize demo mode from localStorage on mount
   useEffect(() => {
-    const scope = mode === 'knowledge_base' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
-    fetchDocuments(scope);
-  }, [fetchDocuments, mode]);
+    if (isDemo) {
+      // 1. Set mock user in auth store
+      useAuthStore.setState({
+        user: {
+          id: 'demo-user-id',
+          email: 'guest@docsy.ai',
+          name: 'Demo Researcher',
+          role: 'user'
+        },
+        isAuthenticated: true,
+        token: 'demo-token'
+      });
+
+      // 2. Set isDemo to true and load local storage documents/conversations in workspace store
+      const storedDocs = localStorage.getItem('docsy-demo-documents');
+      const storedConvs = localStorage.getItem('docsy-demo-conversations');
+      
+      const demoDocs = storedDocs ? JSON.parse(storedDocs) : [];
+      const demoConvs = storedConvs ? JSON.parse(storedConvs) : [];
+
+      useWorkspaceStore.setState({
+        isDemo: true,
+        documents: demoDocs,
+        selectedDocumentIds: demoDocs.length > 0 ? [demoDocs[0].id] : [],
+        activeDocumentId: demoDocs.length > 0 ? demoDocs[0].id : null,
+        conversations: demoConvs,
+        activeConversationId: demoConvs.length > 0 ? demoConvs[0].id : null,
+        showPreview: demoDocs.length > 0
+      });
+    } else {
+      useWorkspaceStore.setState({ isDemo: false });
+      const scope = mode === 'knowledge_base' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
+      fetchDocuments(scope);
+    }
+  }, [isDemo, fetchDocuments, mode]);
 
   // Scroll to bottom on new messages
   const currentConv = conversations.find(c => c.id === activeConversationId);
@@ -106,14 +138,6 @@ export function WorkspacePage() {
     });
   };
 
-  const handleModeChange = (newMode) => {
-    setMode(newMode);
-    switchMode(newMode);
-
-    if (textInputRef.current) {
-      textInputRef.current.style.height = 'auto';
-    }
-  };
 
   const handleSend = async (e) => {
     if (e) e.preventDefault();
@@ -342,27 +366,6 @@ export function WorkspacePage() {
             </button>
           </div>
 
-          {/* Mode Selector (Workspace vs KB) inside sidebar */}
-          <div className="sidebar-mode-selector">
-            <button 
-              type="button" 
-              className={`mode-tab-btn ${mode === 'workspace' ? 'active' : ''}`}
-              onClick={() => handleModeChange('workspace')}
-              title="Workspace Mode (Attached Context)"
-            >
-              <Compass size={14} />
-              <span>Workspace</span>
-            </button>
-            <button 
-              type="button" 
-              className={`mode-tab-btn ${mode === 'knowledge_base' ? 'active' : ''}`}
-              onClick={() => handleModeChange('knowledge_base')}
-              title="Knowledge Base Mode (Shared Archive)"
-            >
-              <Database size={14} />
-              <span>Knowledge Base</span>
-            </button>
-          </div>
 
           {/* Search threads */}
           <div className="sidebar-search-container">
@@ -947,35 +950,6 @@ export function WorkspacePage() {
             </div>
           )}
 
-          {/* Upload Progress Loader */}
-          {isUploading && (
-            (mode === 'workspace' && uploadScope === 'PERSONAL') ||
-            (mode === 'knowledge_base' && uploadScope === 'KNOWLEDGE_BASE')
-          ) && (
-            <div 
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                width: '100%',
-                maxWidth: '760px',
-                margin: '0 auto 8px auto',
-                background: 'rgba(255, 255, 255, 0.6)',
-                border: '1px solid rgba(10, 16, 28, 0.08)',
-                borderRadius: '8px',
-                padding: '6px 12px',
-                fontSize: '11.5px',
-                color: '#0a101c',
-                pointerEvents: 'auto',
-                backdropFilter: 'blur(10px)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.04)'
-              }}
-            >
-              <Loader2 size={12} className="animate-spin" style={{ color: '#2d8fa0' }} />
-              <span style={{ fontWeight: 550 }}>{uploadStatus || `Uploading & indexing context: ${uploadProgress}%`}</span>
-            </div>
-          )}
-
           {/* Form Composer */}
           <div 
             style={{ 
@@ -987,6 +961,34 @@ export function WorkspacePage() {
               pointerEvents: 'auto'
             }}
           >
+            {/* Upload Progress Loader */}
+            {isUploading && (
+              (mode === 'workspace' && uploadScope === 'PERSONAL') ||
+              (mode === 'knowledge_base' && uploadScope === 'KNOWLEDGE_BASE')
+            ) && (
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  margin: '0 auto 8px auto',
+                  background: 'rgba(255, 255, 255, 0.65)',
+                  border: '1px solid rgba(10, 16, 28, 0.08)',
+                  borderRadius: '12px',
+                  padding: '8px 16px',
+                  fontSize: '11.5px',
+                  color: '#0a101c',
+                  pointerEvents: 'auto',
+                  backdropFilter: 'blur(10px)',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.04)',
+                  boxSizing: 'border-box'
+                }}
+              >
+                <Loader2 size={12} className="animate-spin" style={{ color: '#2d8fa0' }} />
+                <span style={{ fontWeight: 550 }}>{uploadStatus || `Uploading & indexing context: ${uploadProgress}%`}</span>
+              </div>
+            )}
 
             <form 
               className={`chat-input-container-premium ${isDragging ? 'dragging' : ''}`} 

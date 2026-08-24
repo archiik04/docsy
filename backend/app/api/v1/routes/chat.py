@@ -24,7 +24,7 @@ async def ask_question(
     from app.core.audit import log_audit
 
     try:
-        if request_data.mode not in {"WORKSPACE", "KNOWLEDGE_BASE"}:
+        if request_data.mode not in {"WORKSPACE"}:
             await log_audit(
                 action="CHAT_ASK",
                 resource="chat",
@@ -39,13 +39,14 @@ async def ask_question(
                 detail="Invalid retrieval mode"
             )
 
-        answer, chunks, title = await generate_chat_response(
+        answer, chunks, title, debug_info = await generate_chat_response(
             question=request_data.question,
             document_ids=request_data.document_ids,
             mode=request_data.mode,
             user_id=str(current_user.id),
             history=request_data.history,
-            db=db
+            db=db,
+            skip_llm=request_data.skip_llm
         )
 
         citations = []
@@ -76,7 +77,11 @@ async def ask_question(
             "question": request_data.question,
             "answer": answer,
             "citations": citations,
-            "title": title
+            "title": title,
+            # retrieval-only latency + cache hit flag, for load_test.py --
+            # isolates retrieval from LLM generation time so caching's real
+            # effect is measurable instead of being swamped by LLM latency.
+            "debug": debug_info
         }
 
     except HTTPException as http_ex:

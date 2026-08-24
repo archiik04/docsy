@@ -50,7 +50,10 @@ export function LandingPage() {
       <nav className="navbar">
         <Logo onClick={() => navigate('/')} />
         <div style={{ display: 'flex', gap: '14px', alignItems: 'center' }}>
-          <button className="pill-button" onClick={() => navigate('/login')}>
+          <button className="pill-button-glow" onClick={() => navigate('/login')}>
+            Sign In
+          </button>
+          <button className="pill-button-glow" onClick={() => navigate('/demo')}>
             Start Researching
           </button>
         </div>
@@ -68,7 +71,7 @@ export function LandingPage() {
           <div className="hero-ctas animate-fade-in" style={{ animationDelay: '0.1s', marginBottom: '20px' }}>
             <button
               className="pill-button-glow"
-              onClick={() => navigate('/signup')}
+              onClick={() => navigate('/demo')}
             >
               Start Researching
             </button>
@@ -123,40 +126,7 @@ export function LandingPage() {
                   </div>
                 </div>
 
-                {/* Mode tabs selector (Workspace vs Knowledge Base) */}
-                <div className="sidebar-mode-selector" style={{ display: 'flex', gap: '3px', padding: '2px', borderRadius: '6px', margin: '6px 12px 4px 12px', background: 'rgba(10, 16, 28, 0.02)', width: 'auto', boxSizing: 'border-box' }}>
-                  <div className="mode-tab-btn active" style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '3px',
-                    padding: '4px 0',
-                    fontSize: '8.5px',
-                    fontWeight: 850,
-                    color: '#2d8fa0',
-                    background: 'rgba(255, 255, 255, 0.65)',
-                    border: '1px solid rgba(100, 210, 225, 0.35)',
-                    borderRadius: '4px'
-                  }}>
-                    <Compass size={9} style={{ strokeWidth: 2.5 }} />
-                    <span>Workspace</span>
-                  </div>
-                  <div className="mode-tab-btn" style={{
-                    flex: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '3px',
-                    padding: '4px 0',
-                    fontSize: '8.5px',
-                    fontWeight: 800,
-                    color: 'rgba(10, 16, 28, 0.75)'
-                  }}>
-                    <Database size={9} style={{ opacity: 0.8 }} />
-                    <span style={{ whiteSpace: 'nowrap' }}>Knowledge Base</span>
-                  </div>
-                </div>
+                {/* Mode tabs selector removed */}
 
                 {/* Search */}
                 <div className="sidebar-search-container" style={{

@@ -10,7 +10,7 @@ class ChatRequest(BaseModel):
         max_length=5000,
         description="User question"
     )
-    mode: Literal["WORKSPACE", "KNOWLEDGE_BASE"]
+    mode: Literal["WORKSPACE"] = "WORKSPACE"
     document_ids: list[str] = Field(
         default_factory=list,
         max_length=100,
@@ -20,6 +20,10 @@ class ChatRequest(BaseModel):
         default_factory=list,
         max_length=50,
         description="Conversation history context"
+    )
+    skip_llm: bool = Field(
+        default=False,
+        description="Debug/load-testing only: run real retrieval + rerank but skip LLM answer generation. Defaults to False (normal behavior) for every real client."
     )
 
     @field_validator("question")

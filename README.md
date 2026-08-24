@@ -69,7 +69,7 @@ graph TD
 ### Database
 * **Engine**: PostgreSQL 16
 * **Vector Extensions**: `pgvector` for Cosine similarity vector search
-* **Indices**: GIN indexes for Full-Text Search (`fts`), HNSW indices for high-dimensional vector search
+* **Indices**: GIN index on a `fts` generated column (STORED, derived from `chunk_text`) for Full-Text Search; IVFFLAT index (cosine ops, `lists` sized to `sqrt(row_count)`) on `embedding` for approximate nearest-neighbor vector search
 
 
 ## Directory Layout
@@ -149,7 +149,7 @@ When a user submits a query to chat, Docsy follows these steps to retrieve groun
 1. **Candidate Retrieval (Hybrid Search)**:
    * **Semantic Search**: Generates query embeddings and queries PostgreSQL using Cosine distance operator (`<=>`).
    * **Keyword Search**: Uses PostgreSQL Full-Text Search GIN index `ts_rank` to score keyword matches.
-   * Combined score is calculated to yield up to 400 candidate chunks.
+   * Combined score is calculated over up to `limit * 5` candidate chunks (100 at the default `limit=20`).
 2. **Cross-Encoder Reranking**:
    * Chunks are scored via Cross-Encoder relevance matching (`cross-encoder/ms-marco-MiniLM-L-6-v2`).
    * Results with a reranking logit score lower than **`-15.0`** are filtered out.
@@ -192,11 +192,19 @@ CREATE TABLE document_chunks (
     chunk_index INTEGER NOT NULL,
     chunk_text VARCHAR NOT NULL,
     embedding VECTOR(384) NOT NULL, -- pgvector 384 dimensions
-    fts TSVECTOR,                   -- Full Text Search index column
+    fts TSVECTOR GENERATED ALWAYS AS (to_tsvector('english', chunk_text)) STORED,
     created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc', now()),
     page_number INTEGER NOT NULL,
     section_title VARCHAR NOT NULL
 );
+
+-- Indices
+CREATE INDEX ix_document_chunks_fts
+    ON document_chunks USING GIN (fts);
+
+CREATE INDEX ix_document_chunks_embedding_ivfflat
+    ON document_chunks USING ivfflat (embedding vector_cosine_ops)
+    WITH (lists = <sqrt(row_count), min 10>); -- computed dynamically in the migration
 ```
 
 

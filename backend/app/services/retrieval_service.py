@@ -65,7 +65,7 @@ async def retrieve_similar_chunks(
     limit: int = 20
 ):
 
-    if mode not in {"WORKSPACE", "KNOWLEDGE_BASE"}:
+    if mode not in {"WORKSPACE"}:
         raise ValueError("Invalid retrieval mode")
 
     # Use query directly without manual query expansion rules
@@ -91,61 +91,61 @@ async def retrieve_similar_chunks(
         "db_limit": db_limit
     }
 
-    if mode == "WORKSPACE":
-        sql_params["user_id"] = str(user_id)
-        if document_ids:
-            scope_filter += """
-            AND dc.document_id = ANY(:document_ids)
-            """
-            sql_params["document_ids"] = [
-                str(doc_id)
-                for doc_id in document_ids
-            ]
-    else:
-        scope_filter = """
-    d.scope = CAST('KNOWLEDGE_BASE' AS doc_scope)
-    """
+    sql_params["user_id"] = str(user_id)
+    if document_ids:
+        scope_filter += """
+        AND dc.document_id = ANY(:document_ids)
+        """
+        sql_params["document_ids"] = [
+            str(doc_id)
+            for doc_id in document_ids
+        ]
 
-    # Hybrid SQL search query:
-    # 1. Computes distance and keyword_rank using pgvector and FTS.
-    # 2. Computes hybrid_score directly in SQL.
-    # 3. Filters candidates with distance < 0.95 to utilize vector index scans.
-    # 4. Orders by hybrid_score ASC.
+    # Hybrid SQL search query, in two stages:
+    # 1. `candidates` CTE does a pure nearest-neighbor scan
+    #    (ORDER BY embedding <=> :embedding LIMIT :db_limit). This is the
+    #    query shape pgvector's ivfflat index can actually use -- the old
+    #    version filtered on `distance < 0.95` in a WHERE clause instead,
+    #    which ivfflat cannot use (it only accelerates ORDER BY nearest-
+    #    neighbor queries, not arbitrary distance range predicates), so it
+    #    silently forced a full sequential scan regardless of any index.
+    # 2. The outer query blends in FTS keyword_rank and re-sorts the
+    #    (already small) candidate set by hybrid_score.
     sql_query = text(
         f"""
-        SELECT
-            dc.document_id,
-            dc.chunk_index,
-            dc.chunk_text,
-            dc.page_number,
-            dc.section_title,
-            d.file_path,
-            d.original_filename,
-            d.filename,
-
-            dc.embedding <=> CAST(:embedding AS vector)
-                AS distance,
-
-            ts_rank(
+        WITH candidates AS (
+            SELECT
+                dc.document_id,
+                dc.chunk_index,
+                dc.chunk_text,
+                dc.page_number,
+                dc.section_title,
                 dc.fts,
-                plainto_tsquery('english', :query)
-            ) AS keyword_rank,
-
-            (dc.embedding <=> CAST(:embedding AS vector)) - (0.05 * COALESCE(ts_rank(dc.fts, plainto_tsquery('english', :query)), 0.0))
-                AS hybrid_score
-
-        FROM document_chunks dc
-
-        JOIN documents d
-            ON dc.document_id = d.id
-
-        WHERE {scope_filter}
-            AND (dc.embedding <=> CAST(:embedding AS vector)) < 0.95
-
-        ORDER BY
-            hybrid_score ASC
-
-        LIMIT :db_limit
+                d.file_path,
+                d.original_filename,
+                d.filename,
+                dc.embedding <=> CAST(:embedding AS vector) AS distance
+            FROM document_chunks dc
+            JOIN documents d
+                ON dc.document_id = d.id
+            WHERE {scope_filter}
+            ORDER BY dc.embedding <=> CAST(:embedding AS vector)
+            LIMIT :db_limit
+        )
+        SELECT
+            document_id,
+            chunk_index,
+            chunk_text,
+            page_number,
+            section_title,
+            file_path,
+            original_filename,
+            filename,
+            distance,
+            ts_rank(fts, plainto_tsquery('english', :query)) AS keyword_rank,
+            distance - (0.05 * COALESCE(ts_rank(fts, plainto_tsquery('english', :query)), 0.0)) AS hybrid_score
+        FROM candidates
+        ORDER BY hybrid_score ASC
         """
     )
 

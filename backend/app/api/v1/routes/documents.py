@@ -49,7 +49,7 @@ async def generate_document_summary(text: str) -> str:
     preview = text[:8000]
     try:
         response = await client.chat.completions.create(
-            model="llama-3.1-8b-instant" if groq_active else "meta-llama/llama-3.1-8b-instruct",
+            model="openai/gpt-oss-20b" if groq_active else "meta-llama/llama-3.1-8b-instruct",
             temperature=0,
             messages=[
                 {

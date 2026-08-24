@@ -71,6 +71,7 @@ export function AppRouter() {
             </ProtectedRoute>
           } 
         />
+        <Route path="/demo" element={<WorkspacePage isDemo={true} />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

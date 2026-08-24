@@ -1,6 +1,33 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
 
+const saveDemoDocs = (docs) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('docsy-demo-documents', JSON.stringify(docs));
+  }
+};
+
+const saveDemoConvs = (convs) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('docsy-demo-conversations', JSON.stringify(convs));
+  }
+};
+
+const getUploadedFileText = (file) => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    
+    if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.js') || file.name.endsWith('.css') || file.name.endsWith('.html') || file.name.endsWith('.json')) {
+      reader.onload = (e) => {
+        resolve(e.target.result || '');
+      };
+      reader.readAsText(file);
+    } else {
+      resolve(`Docsy Demo PDF: ${file.name}\n\nThis is a client-side simulated index for your PDF file "${file.name}".\n\nIn the production version of Docsy, the PDF is processed on our Python server using Tesseract OCR (for scanned pages) or pdfplumber (for digital text). The document is then split into semantic chunks, vectorized using OpenAI embeddings, and stored in a PostgreSQL database with pgvector.\n\nSince this is the client-side demo, we have generated this mock index. You can try uploading a plain text (.txt) file to test custom keyword-matching and RAG citations using your own text content!`);
+    }
+  });
+};
+
 export const useWorkspaceStore = create((set, get) => ({
   documents: [],
   selectedDocumentIds: [], // Multiple selected PDFs for querying
@@ -146,6 +173,9 @@ export const useWorkspaceStore = create((set, get) => ({
   },
 
   fetchDocuments: async (scope = 'PERSONAL') => {
+    if (get().isDemo) {
+      return;
+    }
     set({ error: null });
     try {
       const docs = await api.get(`/api/v1/documents?scope=${scope}`);
@@ -234,13 +264,19 @@ export const useWorkspaceStore = create((set, get) => ({
       mode: mode,
     };
 
-    set((state) => ({
-      conversations: [newConv, ...state.conversations],
-      activeConversationId: newConv.id,
-      chatInput: '',
-      highlightedCitation: null,
-      selectedDocumentIds: [],
-    }));
+    set((state) => {
+      const nextConvs = [newConv, ...state.conversations];
+      if (state.isDemo) {
+        saveDemoConvs(nextConvs);
+      }
+      return {
+        conversations: nextConvs,
+        activeConversationId: newConv.id,
+        chatInput: '',
+        highlightedCitation: null,
+        selectedDocumentIds: [],
+      };
+    });
   },
 
   deleteConversation: (convId) => {
@@ -258,6 +294,10 @@ export const useWorkspaceStore = create((set, get) => ({
         nextActiveId = remainingSameModeConvs.length > 0 ? remainingSameModeConvs[0].id : null;
       }
 
+      if (state.isDemo) {
+        saveDemoConvs(nextConvs);
+      }
+
       return {
         conversations: nextConvs,
         activeConversationId: nextActiveId,
@@ -267,6 +307,27 @@ export const useWorkspaceStore = create((set, get) => ({
   },
 
   deleteDocument: async (docId) => {
+    if (get().isDemo) {
+      set((state) => {
+        const nextDocs = state.documents.filter(d => d.id !== docId);
+        const nextSelected = state.selectedDocumentIds.filter(id => id !== docId);
+        
+        let nextActiveId = state.activeDocumentId;
+        if (state.activeDocumentId === docId) {
+          nextActiveId = nextDocs.length > 0 ? nextDocs[0].id : null;
+        }
+
+        saveDemoDocs(nextDocs);
+
+        return {
+          documents: nextDocs,
+          selectedDocumentIds: nextSelected,
+          activeDocumentId: nextActiveId,
+          highlightedCitation: null,
+        };
+      });
+      return;
+    }
     try {
       await api.delete(`/api/v1/documents/${docId}`);
       
@@ -294,6 +355,64 @@ export const useWorkspaceStore = create((set, get) => ({
   uploadDocuments: async (files, scope = 'PERSONAL') => {
     if (!files || files.length === 0) return;
     const normalizedScope = scope === 'KNOWLEDGE_BASE' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
+
+    if (get().isDemo) {
+      set({ 
+        isUploading: true, 
+        uploadProgress: 0, 
+        uploadStatus: 'Preparing files for upload...', 
+        uploadScope: normalizedScope, 
+        error: null 
+      });
+      
+      // Simulate progress
+      for (let p = 10; p <= 100; p += 20) {
+        await new Promise(r => setTimeout(r, 200));
+        set({ 
+          uploadProgress: p,
+          uploadStatus: p === 100 ? 'Running OCR & Indexing...' : `Uploading ${files[0].name}: ${p}%`
+        });
+      }
+      await new Promise(r => setTimeout(r, 500));
+      
+      const file = files[0];
+      const fileText = await getUploadedFileText(file);
+      
+      const newDocId = `doc-${Date.now()}`;
+      const newDoc = {
+        id: newDocId,
+        name: file.name,
+        filename: file.name,
+        size: file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Unknown',
+        uploadedAt: new Date().toLocaleDateString(),
+        processing_status: 'completed',
+        extracted_text: fileText,
+        previewText: {
+          heading: file.name.toUpperCase(),
+          subheading: 'Demo Uploaded Document',
+          sections: [
+            {
+              title: 'DEMO DOCUMENT CONTENT PREVIEW',
+              content: fileText.slice(0, 1500) + (fileText.length > 1500 ? '...' : '')
+            }
+          ]
+        }
+      };
+      
+      set((state) => {
+        const nextDocs = [...state.documents, newDoc];
+        saveDemoDocs(nextDocs);
+        return {
+          documents: nextDocs,
+          selectedDocumentIds: [...state.selectedDocumentIds, newDocId],
+          activeDocumentId: newDocId,
+          isUploading: false,
+          uploadProgress: 0,
+          uploadStatus: ''
+        };
+      });
+      return;
+    }
     
     set({ 
       isUploading: true, 
@@ -430,7 +549,7 @@ export const useWorkspaceStore = create((set, get) => ({
         role: m.sender === 'user' ? 'user' : 'assistant',
         content: m.text,
       }))
-      .slice(-6); // Only send last ~6 messages (excluding current query)
+      .slice(-6);
 
     const userMessage = {
       id: `msg-${Date.now()}-user`,
@@ -453,6 +572,115 @@ export const useWorkspaceStore = create((set, get) => ({
         isTyping: true,
       };
     });
+
+    if (get().isDemo) {
+      // Simulate typing delay
+      await new Promise(r => setTimeout(r, 1000));
+      
+      const query = input.toLowerCase();
+      const selectedDocs = get().documents.filter(d => get().selectedDocumentIds.includes(d.id));
+      
+      let answer = '';
+      let citations = [];
+      let title = 'Demo Thread';
+      
+      if (selectedDocs.length === 0) {
+        answer = "I'm Docsy.\n\nYou don't have any documents selected. Please upload a file (e.g., a `.txt` file) or select one from the sidebar to ask questions about its content!";
+        title = 'Select a Document';
+      } else {
+        // Collect all paragraph chunks from selected documents
+        const chunks = [];
+        selectedDocs.forEach(doc => {
+          const docChunks = doc.extracted_text.split(/\n\n+/);
+          docChunks.forEach((text, chunkIdx) => {
+            if (text.trim().length > 10) {
+              chunks.push({
+                text: text.trim(),
+                filename: doc.name,
+                docId: doc.id,
+                chunkIdx
+              });
+            }
+          });
+        });
+        
+        // Find best match by keyword overlap
+        const words = query.split(/\W+/).filter(w => w.length > 2);
+        let bestChunk = null;
+        let maxScore = 0;
+        
+        chunks.forEach(chunk => {
+          let score = 0;
+          const chunkTextLower = chunk.text.toLowerCase();
+          words.forEach(word => {
+            if (chunkTextLower.includes(word)) {
+              score += 1;
+            }
+          });
+          if (score > maxScore) {
+            maxScore = score;
+            bestChunk = chunk;
+          }
+        });
+        
+        if (maxScore > 0) {
+          answer = `Based on your selected document **${bestChunk.filename}**:\n\n${bestChunk.text}`;
+          citations = [
+            {
+              filename: bestChunk.filename,
+              page_number: 1,
+              section_title: 'Document Segment',
+              chunk_text: bestChunk.text,
+              distance: 0.05
+            }
+          ];
+          
+          // Generate a title based on matching keywords or chunk snippet
+          const snippet = bestChunk.text.split(/[.!?]/)[0];
+          title = snippet.length > 25 ? snippet.slice(0, 25) + '...' : snippet;
+        } else {
+          // Extract a few unique keywords from the document to help guide the user
+          const docWords = selectedDocs[0].extracted_text
+            .toLowerCase()
+            .split(/\W+/)
+            .filter(w => w.length > 4 && !['about', 'their', 'there', 'which', 'document', 'content'].includes(w))
+            .slice(0, 5);
+          
+          const uniqueDocWords = Array.from(new Set(docWords));
+          const suggestions = uniqueDocWords.length > 0
+            ? ` Try asking about terms like **${uniqueDocWords.join(', ')}**!`
+            : '';
+            
+          answer = `I scanned your selected document **${selectedDocs[0].name}** but couldn't find a strong match for "${input}".${suggestions}`;
+          title = 'No direct match';
+        }
+      }
+      
+      const botMessage = {
+        id: `msg-${Date.now()}-assistant`,
+        sender: 'assistant',
+        text: answer,
+        citations: citations,
+      };
+
+      set((state) => {
+        const updatedConvs = state.conversations.map((c) => {
+          if (c.id === activeConvId) {
+            const nextTitle = (c.title === 'New Chat' || c.messages.length <= 2) ? title : c.title;
+            return { ...c, title: nextTitle, messages: [...c.messages, botMessage] };
+          }
+          return c;
+        });
+
+        saveDemoConvs(updatedConvs);
+
+        return {
+          conversations: updatedConvs,
+          isTyping: false,
+        };
+      });
+      return;
+    }
 
     try {
       const response = await api.post('/api/v1/chat/ask', {

@@ -22,7 +22,7 @@ def strip_fences(raw: str) -> str:
 
 async def call_llm(messages: list, temperature: float = 0.3) -> str:
     response = await client.chat.completions.create(
-        model="llama-3.1-8b-instant" if groq_active else "meta-llama/llama-3.1-8b-instruct",
+        model="openai/gpt-oss-20b" if groq_active else "meta-llama/llama-3.1-8b-instruct",
         temperature=temperature,
         max_tokens=2000,
         messages=messages
