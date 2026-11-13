@@ -13,6 +13,8 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { RefreshCw, Download, Share2, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '../../lib/api';
+import { useWorkspaceStore } from '../../stores/workspaceStore';
+import { buildDemoMindMap } from '../../lib/demo';
 
 const flattenTree = (node, parentId, nodes, edges) => {
   if (!node) return { nodes, edges };
@@ -74,8 +76,18 @@ function Graph({ documentId }) {
     setLoading(true);
     setError(null);
     try {
-      const res = await api.post(`/api/v1/documents/${documentId}/mindmap`);
-      const data = res.data || res;
+      let data;
+      const { isDemo, documents } = useWorkspaceStore.getState();
+      if (isDemo) {
+        // Demo: build the mind map in the browser from the document text.
+        const doc = documents.find(d => d.id === documentId);
+        if (!doc) throw new Error('Document not found');
+        await new Promise(r => setTimeout(r, 300));
+        data = buildDemoMindMap(doc);
+      } else {
+        const res = await api.post(`/api/v1/documents/${documentId}/mindmap`);
+        data = res.data || res;
+      }
       setRawTree(data);
       const { nodes: newNodes, edges: newEdges } = flattenTree(data, null, [], []);
       setNodes(newNodes);
@@ -92,7 +104,9 @@ function Graph({ documentId }) {
     setLoading(true);
     setError(null);
     try {
-      await api.delete(`/api/v1/documents/${documentId}/mindmap`);
+      if (!useWorkspaceStore.getState().isDemo) {
+        await api.delete(`/api/v1/documents/${documentId}/mindmap`);
+      }
       await fetchMindMap();
     } catch (err) {
       console.error(err);

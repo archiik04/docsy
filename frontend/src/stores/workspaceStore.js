@@ -1,34 +1,10 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
 
-const saveDemoDocs = (docs) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('docsy-demo-documents', JSON.stringify(docs));
-  }
-};
-
-const saveDemoConvs = (convs) => {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem('docsy-demo-conversations', JSON.stringify(convs));
-  }
-};
-
-const getUploadedFileText = (file) => {
-  return new Promise((resolve) => {
-    const reader = new FileReader();
-    
-    if (file.name.endsWith('.txt') || file.name.endsWith('.md') || file.name.endsWith('.js') || file.name.endsWith('.css') || file.name.endsWith('.html') || file.name.endsWith('.json')) {
-      reader.onload = (e) => {
-        resolve(e.target.result || '');
-      };
-      reader.readAsText(file);
-    } else {
-      resolve(`Docsy Demo PDF: ${file.name}\n\nThis is a client-side simulated index for your PDF file "${file.name}".\n\nIn the production version of Docsy, the PDF is processed on our Python server using Tesseract OCR (for scanned pages) or pdfplumber (for digital text). The document is then split into semantic chunks, vectorized using OpenAI embeddings, and stored in a PostgreSQL database with pgvector.\n\nSince this is the client-side demo, we have generated this mock index. You can try uploading a plain text (.txt) file to test custom keyword-matching and RAG citations using your own text content!`);
-    }
-  });
-};
+import { saveDemoDocs, saveDemoConvs, extractFileText, answerFromDocuments } from '../lib/demo';
 
 export const useWorkspaceStore = create((set, get) => ({
+  isDemo: false,
   documents: [],
   selectedDocumentIds: [], // Multiple selected PDFs for querying
   activeDocumentId: null, // Single active PDF for visual previewing
@@ -308,6 +284,8 @@ export const useWorkspaceStore = create((set, get) => ({
 
   deleteDocument: async (docId) => {
     if (get().isDemo) {
+      const removed = get().documents.find(d => d.id === docId);
+      if (removed?.fileUrl) URL.revokeObjectURL(removed.fileUrl);
       set((state) => {
         const nextDocs = state.documents.filter(d => d.id !== docId);
         const nextSelected = state.selectedDocumentIds.filter(id => id !== docId);
@@ -357,58 +335,60 @@ export const useWorkspaceStore = create((set, get) => ({
     const normalizedScope = scope === 'KNOWLEDGE_BASE' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
 
     if (get().isDemo) {
-      set({ 
-        isUploading: true, 
-        uploadProgress: 0, 
-        uploadStatus: 'Preparing files for upload...', 
-        uploadScope: normalizedScope, 
-        error: null 
+      const fileList = Array.from(files);
+      set({
+        isUploading: true,
+        uploadProgress: 0,
+        uploadStatus: 'Reading files in your browser...',
+        uploadScope: normalizedScope,
+        error: null
       });
-      
-      // Simulate progress
-      for (let p = 10; p <= 100; p += 20) {
-        await new Promise(r => setTimeout(r, 200));
-        set({ 
-          uploadProgress: p,
-          uploadStatus: p === 100 ? 'Running OCR & Indexing...' : `Uploading ${files[0].name}: ${p}%`
+
+      const newDocs = [];
+      for (let i = 0; i < fileList.length; i++) {
+        const file = fileList[i];
+        set({
+          uploadProgress: Math.round((i / fileList.length) * 100),
+          uploadStatus: `Extracting & indexing ${file.name} (${i + 1}/${fileList.length})...`
+        });
+        const { text, pages } = await extractFileText(file);
+        const id = `doc-${Date.now()}-${i}`;
+        newDocs.push({
+          id,
+          name: file.name,
+          filename: file.name,
+          size: file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Unknown',
+          uploadedAt: new Date().toLocaleDateString(),
+          processing_status: 'completed',
+          extracted_text: text,
+          pages: pages || undefined,
+          // Session-only preview of the original file (not persisted across reloads).
+          fileUrl: URL.createObjectURL(file),
+          previewText: {
+            heading: file.name.toUpperCase(),
+            subheading: 'Demo Uploaded Document',
+            sections: [
+              {
+                title: 'DEMO DOCUMENT CONTENT PREVIEW',
+                content: text.slice(0, 1500) + (text.length > 1500 ? '...' : '')
+              }
+            ]
+          }
         });
       }
-      await new Promise(r => setTimeout(r, 500));
-      
-      const file = files[0];
-      const fileText = await getUploadedFileText(file);
-      
-      const newDocId = `doc-${Date.now()}`;
-      const newDoc = {
-        id: newDocId,
-        name: file.name,
-        filename: file.name,
-        size: file.size ? `${(file.size / 1024).toFixed(1)} KB` : 'Unknown',
-        uploadedAt: new Date().toLocaleDateString(),
-        processing_status: 'completed',
-        extracted_text: fileText,
-        previewText: {
-          heading: file.name.toUpperCase(),
-          subheading: 'Demo Uploaded Document',
-          sections: [
-            {
-              title: 'DEMO DOCUMENT CONTENT PREVIEW',
-              content: fileText.slice(0, 1500) + (fileText.length > 1500 ? '...' : '')
-            }
-          ]
-        }
-      };
-      
+
       set((state) => {
-        const nextDocs = [...state.documents, newDoc];
+        const nextDocs = [...state.documents, ...newDocs];
         saveDemoDocs(nextDocs);
+        const newIds = newDocs.map((d) => d.id);
         return {
           documents: nextDocs,
-          selectedDocumentIds: [...state.selectedDocumentIds, newDocId],
-          activeDocumentId: newDocId,
+          selectedDocumentIds: Array.from(new Set([...state.selectedDocumentIds, ...newIds])),
+          activeDocumentId: newIds[newIds.length - 1],
           isUploading: false,
           uploadProgress: 0,
-          uploadStatus: ''
+          uploadStatus: '',
+          uploadScope: null
         };
       });
       return;
@@ -574,88 +554,15 @@ export const useWorkspaceStore = create((set, get) => ({
     });
 
     if (get().isDemo) {
-      // Simulate typing delay
-      await new Promise(r => setTimeout(r, 1000));
-      
-      const query = input.toLowerCase();
-      const selectedDocs = get().documents.filter(d => get().selectedDocumentIds.includes(d.id));
-      
-      let answer = '';
-      let citations = [];
-      let title = 'Demo Thread';
-      
-      if (selectedDocs.length === 0) {
-        answer = "I'm Docsy.\n\nYou don't have any documents selected. Please upload a file (e.g., a `.txt` file) or select one from the sidebar to ask questions about its content!";
-        title = 'Select a Document';
-      } else {
-        // Collect all paragraph chunks from selected documents
-        const chunks = [];
-        selectedDocs.forEach(doc => {
-          const docChunks = doc.extracted_text.split(/\n\n+/);
-          docChunks.forEach((text, chunkIdx) => {
-            if (text.trim().length > 10) {
-              chunks.push({
-                text: text.trim(),
-                filename: doc.name,
-                docId: doc.id,
-                chunkIdx
-              });
-            }
-          });
-        });
-        
-        // Find best match by keyword overlap
-        const words = query.split(/\W+/).filter(w => w.length > 2);
-        let bestChunk = null;
-        let maxScore = 0;
-        
-        chunks.forEach(chunk => {
-          let score = 0;
-          const chunkTextLower = chunk.text.toLowerCase();
-          words.forEach(word => {
-            if (chunkTextLower.includes(word)) {
-              score += 1;
-            }
-          });
-          if (score > maxScore) {
-            maxScore = score;
-            bestChunk = chunk;
-          }
-        });
-        
-        if (maxScore > 0) {
-          answer = `Based on your selected document **${bestChunk.filename}**:\n\n${bestChunk.text}`;
-          citations = [
-            {
-              filename: bestChunk.filename,
-              page_number: 1,
-              section_title: 'Document Segment',
-              chunk_text: bestChunk.text,
-              distance: 0.05
-            }
-          ];
-          
-          // Generate a title based on matching keywords or chunk snippet
-          const snippet = bestChunk.text.split(/[.!?]/)[0];
-          title = snippet.length > 25 ? snippet.slice(0, 25) + '...' : snippet;
-        } else {
-          // Extract a few unique keywords from the document to help guide the user
-          const docWords = selectedDocs[0].extracted_text
-            .toLowerCase()
-            .split(/\W+/)
-            .filter(w => w.length > 4 && !['about', 'their', 'there', 'which', 'document', 'content'].includes(w))
-            .slice(0, 5);
-          
-          const uniqueDocWords = Array.from(new Set(docWords));
-          const suggestions = uniqueDocWords.length > 0
-            ? ` Try asking about terms like **${uniqueDocWords.join(', ')}**!`
-            : '';
-            
-          answer = `I scanned your selected document **${selectedDocs[0].name}** but couldn't find a strong match for "${input}".${suggestions}`;
-          title = 'No direct match';
-        }
-      }
-      
+      // Small delay so the "analyzing" indicator is visible.
+      await new Promise(r => setTimeout(r, 600));
+
+      const allDocs = get().documents;
+      const selected = allDocs.filter(d => get().selectedDocumentIds.includes(d.id));
+      // If nothing is attached to this thread, search the whole demo workspace.
+      const searchDocs = selected.length > 0 ? selected : allDocs;
+      const { answer, citations, title } = answerFromDocuments(input, searchDocs);
+
       const botMessage = {
         id: `msg-${Date.now()}-assistant`,
         sender: 'assistant',

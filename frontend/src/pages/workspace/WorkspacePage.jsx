@@ -22,7 +22,8 @@ import { useWorkspaceStore } from '../../stores/workspaceStore';
 import { useAuthStore } from '../../stores/authStore';
 import { AmbientBackground } from '../../components/ui/AmbientBackground';
 import { Logo } from '../../components/ui/Logo';
-import { API_BASE_URL } from '../../constants/api';
+import { API_BASE_URL, LOCAL_STORAGE_KEYS } from '../../constants/api';
+import { loadDemoState } from '../../lib/demo';
 import MindMap from './MindMap';
 import Whiteboard from './Whiteboard';
 
@@ -94,21 +95,32 @@ export function WorkspacePage({ isDemo = false }) {
       });
 
       // 2. Set isDemo to true and load local storage documents/conversations in workspace store
-      const storedDocs = localStorage.getItem('docsy-demo-documents');
-      const storedConvs = localStorage.getItem('docsy-demo-conversations');
-      
-      const demoDocs = storedDocs ? JSON.parse(storedDocs) : [];
-      const demoConvs = storedConvs ? JSON.parse(storedConvs) : [];
+      //    (seeds sample documents + a welcome thread on first visit)
+      const { docs: demoDocs, convs: demoConvs } = loadDemoState();
 
       useWorkspaceStore.setState({
         isDemo: true,
         documents: demoDocs,
-        selectedDocumentIds: demoDocs.length > 0 ? [demoDocs[0].id] : [],
+        selectedDocumentIds: demoDocs.map(d => d.id),
         activeDocumentId: demoDocs.length > 0 ? demoDocs[0].id : null,
         conversations: demoConvs,
         activeConversationId: demoConvs.length > 0 ? demoConvs[0].id : null,
-        showPreview: demoDocs.length > 0
+        highlightedCitation: null,
+        showPreview: false,
+        error: null
       });
+
+      // Leaving the demo must not leak the fake session into the real workspace.
+      return () => {
+        useWorkspaceStore.getState().resetStore();
+        useWorkspaceStore.setState({ isDemo: false });
+        useAuthStore.setState({
+          user: null,
+          token: localStorage.getItem(LOCAL_STORAGE_KEYS.TOKEN) || null,
+          isAuthenticated: false,
+          loading: false
+        });
+      };
     } else {
       useWorkspaceStore.setState({ isDemo: false });
       const scope = mode === 'knowledge_base' ? 'KNOWLEDGE_BASE' : 'PERSONAL';
@@ -125,6 +137,11 @@ export function WorkspacePage({ isDemo = false }) {
   }, [messages, isTyping]);
 
   const handleLogout = () => {
+    if (isDemo) {
+      // Demo has no real session; just leave (the cleanup effect restores auth state).
+      navigate('/');
+      return;
+    }
     logout();
     resetStore();
     navigate('/');
@@ -171,10 +188,8 @@ export function WorkspacePage({ isDemo = false }) {
   };
 
   const handleSuggestedPrompt = (promptText) => {
-    setChatInput(promptText);
-    setTimeout(() => {
-      handleSend();
-    }, 50);
+    // Send directly: going through handleSend would read a stale (empty) chatInput.
+    sendMessage(promptText, mode);
   };
 
   const cleanFilename = (filename) => {
@@ -218,6 +233,16 @@ export function WorkspacePage({ isDemo = false }) {
 
   const attachedDocs = documents.filter(d => selectedDocumentIds.includes(d.id));
   const activeDoc = documents.find((doc) => doc.id === activeDocumentId) || null;
+
+  // Document shown in the preview modal and the URL of its original file.
+  // The demo never touches the backend: uploads use session blob URLs, and sample /
+  // reloaded docs fall back to a rendered text view.
+  const previewDoc = isDemo
+    ? (documents.find(d => highlightedCitation && (d.id === highlightedCitation.document_id || d.name === highlightedCitation.filename)) || activeDoc)
+    : activeDoc;
+  const previewFileUrl = isDemo
+    ? (previewDoc?.fileUrl || '')
+    : (highlightedCitation?.pdf_url || (activeDoc?.filename ? `${API_BASE_URL}/uploads/${activeDoc.filename}` : ''));
 
   // Basic custom markdown renderer to format text, code blocks, lists, and headers
   const renderMessageContent = (text) => {
@@ -447,7 +472,7 @@ export function WorkspacePage({ isDemo = false }) {
             type="button"
             className="logout-btn-premium" 
             onClick={handleLogout} 
-            title="Sign Out"
+            title={isDemo ? "Exit demo" : "Sign Out"}
             style={{ 
               padding: '6px', 
               borderRadius: '6px', 
@@ -733,7 +758,9 @@ export function WorkspacePage({ isDemo = false }) {
                                 onClick={() => {
                                   setHighlightedCitation({
                                     ...cite,
-                                    pdf_url: `${API_BASE_URL}/uploads/${cite.filename}`
+                                    pdf_url: isDemo
+                                      ? (documents.find(d => d.id === cite.document_id || d.name === cite.filename)?.fileUrl || null)
+                                      : `${API_BASE_URL}/uploads/${cite.filename}`
                                   });
                                   useWorkspaceStore.setState({ showPreview: true });
                                 }}
@@ -913,7 +940,12 @@ export function WorkspacePage({ isDemo = false }) {
               {attachedDocs.map((doc) => (
                 <div key={doc.id} className="attached-file-chip">
                   <FileText size={11} style={{ color: '#2d8fa0' }} />
-                  <span className="chip-name" style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span
+                    className="chip-name"
+                    onClick={() => useWorkspaceStore.setState({ activeDocumentId: doc.id })}
+                    title={`Open ${cleanFilename(doc.name)}`}
+                    style={{ maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: 'pointer', fontWeight: doc.id === activeDocumentId ? 650 : undefined }}
+                  >
                     {cleanFilename(doc.name)}
                   </span>
                   <button 
@@ -1226,14 +1258,18 @@ export function WorkspacePage({ isDemo = false }) {
                     <div style={{ fontWeight: 600, color: '#0a101c', marginBottom: '8px', fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       Full Extracted Document Text:
                     </div>
-                    {activeDoc?.extracted_text || highlightedCitation?.extracted_text || (activeDoc?.processing_status === 'processing' ? "Document is currently being processed by Tesseract OCR and indexed. Please wait..." : "No text extracted from this document or it is currently being processed.")}
+                    {(isDemo ? previewDoc?.extracted_text : null) || activeDoc?.extracted_text || highlightedCitation?.extracted_text || (activeDoc?.processing_status === 'processing' ? "Document is currently being processed by Tesseract OCR and indexed. Please wait..." : "No text extracted from this document or it is currently being processed.")}
                   </div>
                 ) : (
-                  (highlightedCitation?.pdf_url || activeDoc?.filename) ? (
+                  (isDemo && !previewFileUrl && previewDoc) ? (
+                    <DemoTextDocument doc={previewDoc} highlight={highlightedCitation?.chunk_text} />
+                  ) : previewFileUrl ? (
                     (() => {
-                      const fileUrl = highlightedCitation?.pdf_url || (activeDoc?.filename ? `${API_BASE_URL}/uploads/${activeDoc.filename}` : '');
-                      const isImage = fileUrl.match(/\.(png|jpg|jpeg|gif|webp)$/i);
-                      const isDocx = fileUrl.match(/\.docx$/i);
+                      const fileUrl = previewFileUrl;
+                      // Blob URLs have no extension, so detect type from the doc name in demo.
+                      const typeHint = isDemo ? (previewDoc?.name || '') : fileUrl;
+                      const isImage = typeHint.match(/\.(png|jpg|jpeg|gif|webp)$/i);
+                      const isDocx = typeHint.match(/\.docx$/i);
                       
                       if (isImage) {
                         return (
@@ -1335,6 +1371,81 @@ export function WorkspacePage({ isDemo = false }) {
           </div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Reading view used in the demo when the original file isn't available
+// (sample documents, or uploads after a page reload).
+function DemoTextDocument({ doc, highlight }) {
+  const highlightRef = useRef(null);
+  const norm = (t) => (t || '').replace(/\s+/g, ' ').trim();
+  const target = norm(highlight);
+
+  useEffect(() => {
+    highlightRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [target, doc?.id]);
+
+  const blocks = (doc.extracted_text || '').split(/\n\s*\n+/).filter(b => b.trim()).map(block => {
+    const lines = block.split('\n');
+    return {
+      headings: lines.filter(l => /^#{1,6}\s/.test(l.trim())),
+      body: norm(lines.filter(l => !/^#{1,6}\s/.test(l.trim())).join(' '))
+    };
+  });
+  const hitIndex = target
+    ? blocks.findIndex(({ body }) => body && (target.includes(body.slice(0, 80)) || body.includes(target.slice(0, 80))))
+    : -1;
+
+  return (
+    <div className="custom-scroll" style={{
+      flex: 1,
+      overflowY: 'auto',
+      background: '#ffffff',
+      borderRadius: '14px',
+      border: '1px solid rgba(10,16,28,0.08)',
+      padding: '40px 48px',
+      color: '#0a101c',
+      textAlign: 'left'
+    }}>
+      <div style={{ maxWidth: '680px', margin: '0 auto' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 600, margin: '0 0 4px 0', letterSpacing: '-0.02em', color: '#0a101c', WebkitTextFillColor: '#0a101c', background: 'none' }}>
+          {(doc.name || '').replace(/\.[^.]+$/, '')}
+        </h1>
+        <p style={{ fontSize: '11px', color: 'rgba(10,16,28,0.45)', margin: '0 0 28px 0' }}>
+          {doc.isSample
+            ? 'Sample document'
+            : 'Extracted text. The original file is only kept for the browser session it was uploaded in.'}
+        </p>
+        {blocks.map(({ headings, body }, i) => {
+          const isHit = i === hitIndex;
+          return (
+            <div key={i}>
+              {headings.map((h, j) => (
+                <h2 key={j} style={{ fontSize: '15px', fontWeight: 650, margin: '24px 0 8px 0', color: '#0a101c', WebkitTextFillColor: '#0a101c', background: 'none' }}>
+                  {h.trim().replace(/^#{1,6}\s+/, '')}
+                </h2>
+              ))}
+              {body && (
+                <p
+                  ref={isHit ? highlightRef : undefined}
+                  style={{
+                    fontSize: '13.5px',
+                    lineHeight: 1.75,
+                    margin: '0 0 12px 0',
+                    padding: isHit ? '8px 12px' : 0,
+                    borderRadius: '8px',
+                    background: isHit ? 'rgba(100, 210, 225, 0.18)' : 'transparent',
+                    borderLeft: isHit ? '3px solid #2d8fa0' : 'none'
+                  }}
+                >
+                  {body}
+                </p>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

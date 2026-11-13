@@ -139,3 +139,21 @@ app.include_router(
 @app.get("/")
 def root() -> dict[str, str]:
     return {"message": "DOCSY API RUNNING"}
+
+
+@app.api_route("/health", methods=["GET", "HEAD"])
+async def health() -> dict[str, str]:
+    """Lightweight liveness probe used by the keep-alive cron and frontend warm-up.
+
+    Also runs a trivial query so a serverless Postgres that auto-suspends gets woken too.
+    """
+    db_status = "ok"
+    try:
+        from app.core.database import AsyncSessionLocal
+        from sqlalchemy import text
+        async with AsyncSessionLocal() as db_session:
+            await db_session.execute(text("SELECT 1"))
+    except Exception as e:
+        logger.warning(f"Health check DB ping failed: {e}")
+        db_status = "error"
+    return {"status": "ok", "db": db_status}

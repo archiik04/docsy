@@ -4,6 +4,8 @@ import { Excalidraw, exportToBlob, serializeAsJSON } from '@excalidraw/excalidra
 import '@excalidraw/excalidraw/index.css';
 import { Save, Download, Trash2, Loader2 } from 'lucide-react';
 import api from '../../api';
+import { useWorkspaceStore } from '../../stores/workspaceStore';
+import { loadDemoWhiteboard, saveDemoWhiteboard } from '../../lib/demo';
 
 export default function Whiteboard({ documentId }) {
   const excalidrawAPI = useRef(null);
@@ -17,7 +19,10 @@ export default function Whiteboard({ documentId }) {
   // Load canvas on mount
   useEffect(() => {
     setLoading(true);
-    api.get(`/api/v1/documents/${documentId}/whiteboard`)
+    const loadCanvas = useWorkspaceStore.getState().isDemo
+      ? Promise.resolve({ canvas_data: loadDemoWhiteboard(documentId) })
+      : api.get(`/api/v1/documents/${documentId}/whiteboard`);
+    loadCanvas
       .then(res => {
         const canvas = res.canvas_data || (res.data ? res.data.canvas_data : null);
         if (canvas) {
@@ -63,9 +68,15 @@ export default function Whiteboard({ documentId }) {
       const files = excalidrawAPI.current.getFiles();
       const serialized = serializeAsJSON(elements, appState, files, 'local');
 
-      await api.post(`/api/v1/documents/${documentId}/whiteboard`, {
-        canvas_data: JSON.parse(serialized)
-      });
+      if (useWorkspaceStore.getState().isDemo) {
+        if (!saveDemoWhiteboard(documentId, JSON.parse(serialized))) {
+          throw new Error('Browser storage is full');
+        }
+      } else {
+        await api.post(`/api/v1/documents/${documentId}/whiteboard`, {
+          canvas_data: JSON.parse(serialized)
+        });
+      }
 
       setLastSaved(new Date());
     } catch (err) {

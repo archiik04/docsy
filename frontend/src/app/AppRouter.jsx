@@ -5,6 +5,7 @@ import { LandingPage } from '../pages/landing/LandingPage';
 import { LoginPage } from '../pages/auth/LoginPage';
 import { SignupPage } from '../pages/auth/SignupPage';
 import { WorkspacePage } from '../pages/workspace/WorkspacePage';
+import { API_BASE_URL } from '../constants/api';
 
 function ProtectedRoute({ children }) {
   const { isAuthenticated, token, checkAuth, loading } = useAuthStore();
@@ -57,6 +58,12 @@ function ProtectedRoute({ children }) {
 }
 
 export function AppRouter() {
+  // Fire-and-forget warm-up so a sleeping backend starts booting while the user
+  // is still on the landing / login page, instead of on their first real request.
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/health`, { method: 'GET', mode: 'cors' }).catch(() => {});
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
