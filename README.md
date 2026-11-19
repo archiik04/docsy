@@ -1,22 +1,25 @@
-# Docsy - Advanced RAG & OCR Document Workspace
+# Docsy - Hybrid RAG & OCR Document Workspace
 
-Docsy is a high-performance, layout-aware Retrieval-Augmented Generation (RAG) platform. It allows users to upload documents (PDF, DOCX, TXT) and images (PNG, JPG, JPEG), extract their contents locally using **Tesseract OCR**, generate dense vector representations, and run grounded, context-aware semantic search and chatbot queries.
+Docsy is a Retrieval-Augmented Generation (RAG) workspace. Users upload documents (PDF, DOCX, TXT) and images (PNG, JPG, JPEG). Docsy extracts their text (running multilingual **Tesseract OCR** on scanned pages and images), chunks and embeds it into **PostgreSQL + pgvector**, and answers questions grounded in those documents with citations. Each document also gets an AI-generated mind map and a whiteboard, and a `/demo` route runs the whole workspace in the browser without an account.
 
 
 ## Table of Contents
 1. [System Architecture](#system-architecture)
-2. [Project Technology Stack](#project-technology-stack)
+2. [Technology Stack](#technology-stack)
 3. [Directory Layout](#directory-layout)
 4. [Ingestion & OCR Pipeline](#ingestion--ocr-pipeline)
 5. [Retrieval & Query Pipeline](#retrieval--query-pipeline)
 6. [Database Schema](#database-schema)
-7. [Installation & Setup](#installation--setup)
-8. [API Reference](#api-reference)
+7. [Security](#security)
+8. [Installation & Setup](#installation--setup)
+9. [Deployment](#deployment)
+10. [API Reference](#api-reference)
+11. [Roadmap](#roadmap)
 
 
 ## System Architecture
 
-Docsy uses a dual-pipeline design for ingesting documents and answering user queries.
+Docsy has two pipelines that share one database: an ingestion pipeline that runs in the background after upload, and a query pipeline that runs on every question.
 
 ### 1. Ingestion & Indexing Pipeline
 ```mermaid
@@ -26,277 +29,342 @@ graph TD
     B -->|DOCX| D[python-docx Parser]
     B -->|PDF| E{Has Selectable Text?}
     B -->|Image| F[Tesseract OCR]
-    E -->|Yes| G[Extract PDF Text]
-    E -->|No| H[Render Pages to PNG -> Tesseract OCR]
+    E -->|Yes| G[PyMuPDF Text Extraction]
+    E -->|No| H[Render Pages at 300 DPI -> Tesseract OCR]
     C & D & G & H & F --> I[Text Cleaning]
-    I --> J[Recursive Text Chunking]
-    J --> K[Generate Embeddings via MiniLM-L6]
-    K --> L[(PostgreSQL + pgvector)]
+    I --> J[Recursive Chunking 800 / 200 overlap]
+    J --> K[Prepend LLM-Generated Summary Chunk]
+    K --> L[Embed with multilingual-e5-small]
+    L --> M[(PostgreSQL + pgvector)]
 ```
 
 ### 2. Retrieval & Query Pipeline
 ```mermaid
 graph TD
-    A[User Question] --> B[Generate Text Embeddings]
-    B --> C[Hybrid Retrieval: Vector Distance + FTS Keyword Rank]
-    C --> D[Top Candidate Chunks]
-    D --> E[Rerank via Cross-Encoder ms-marco-MiniLM]
-    E --> F{Rerank Score > -15.0?}
-    F -->|No| G[Return 'No relevant info found']
-    F -->|Yes| H[Construct Grounded System Prompt]
-    H --> I[LLM: meta-llama-3-8b-instruct]
-    I --> J[Context-Grounded Answer]
+    A[User Question] --> B{Selected docs still processing?}
+    B -->|Yes| W[Ask user to wait]
+    B -->|No| C{Redis cache hit?}
+    C -->|No| D[Embed query]
+    D --> E[50 nearest chunks by cosine distance]
+    E --> F[Hybrid score: distance - 0.05 x ts_rank]
+    F --> G[Dedupe, keep top 10]
+    G --> H[Cross-encoder rerank of top 5]
+    H --> I[Add neighbouring chunks]
+    C -->|Yes| J
+    I --> J{Top rerank score >= -15?}
+    J -->|No| K[Return 'No relevant information found']
+    J -->|Yes| L[Top 2 chunks + last 6 messages -> LLM]
+    L --> M[Sanitized answer with citations]
 ```
 
-## Project Technology Stack
+
+## Technology Stack
 
 ### Backend
-* **Web Framework**: FastAPI (Asynchronous endpoints, native BackgroundTasks)
-* **ORM & Database Connection**: SQLAlchemy + asyncpg
-* **OCR Engine**: pytesseract (Local Tesseract OCR integration)
-* **PDF Processing**: PyMuPDF (`fitz`) for native text extraction and high-DPI page rendering
-* **Word Processing**: `python-docx`
-* **Embeddings**: SentenceTransformers (`sentence-transformers/all-MiniLM-L6-v2`, 384 dimensions)
-* **Reranker**: HuggingFace Cross-Encoder (`cross-encoder/ms-marco-MiniLM-L-6-v2`)
-* **LLM Orchestration**: OpenRouter API (`meta-llama/llama-3-8b-instruct`)
+* **Web framework**: FastAPI (async endpoints, `BackgroundTasks` for ingestion)
+* **ORM & migrations**: SQLAlchemy 2 (async, asyncpg) + Alembic
+* **OCR**: pytesseract with 11 language packs (English, Hindi, Odia, Bengali, Tamil, Telugu, Kannada, Malayalam, Marathi, Gujarati, Punjabi)
+* **PDF processing**: PyMuPDF (`fitz`) for native text extraction and page rendering
+* **Word processing**: `python-docx`
+* **Embeddings**: SentenceTransformers `intfloat/multilingual-e5-small` (384 dimensions, `query:` / `passage:` prefixes)
+* **Reranker**: Cross-Encoder `cross-encoder/ms-marco-MiniLM-L-6-v2`
+* **LLM**: any OpenAI-compatible API through the `openai` SDK. Uses Groq (`openai/gpt-oss-20b`) when `GROQ_API_KEY` is set, otherwise OpenRouter (`meta-llama/llama-3.1-8b-instruct`)
+* **Caching**: Redis for retrieval results (optional; the app runs without it), in-process LRU cache for query embeddings
+* **Rate limiting**: slowapi
+* **Tracing**: optional LangSmith tracing of retrieval and LLM calls
 
 ### Frontend
-* **Build Tool**: Vite + React
-* **Styling & Icons**: Lucide React, Framer Motion
-* **State Management**: Zustand
-* **Router**: React Router DOM
+* **Build tool**: Vite + React 19
+* **State management**: Zustand
+* **Routing**: React Router
+* **Document viewing**: react-pdf / pdf.js
+* **Mind maps**: React Flow with a d3-force layout
+* **Whiteboard**: Excalidraw
+* **UI**: Framer Motion, Lucide icons
 
 ### Database
-* **Engine**: PostgreSQL 16
-* **Vector Extensions**: `pgvector` for Cosine similarity vector search
-* **Indices**: GIN index on a `fts` generated column (STORED, derived from `chunk_text`) for Full-Text Search; IVFFLAT index (cosine ops, `lists` sized to `sqrt(row_count)`) on `embedding` for approximate nearest-neighbor vector search
+* **Engine**: PostgreSQL 16 with the `pgvector` extension
+* **Vector search**: cosine distance (`<=>`) on a `vector(384)` column
+* **Keyword search**: `fts` tsvector column, generated by Postgres from `chunk_text`, ranked with `ts_rank`
 
 
 ## Directory Layout
 
 ```
 docsy/
+├── .github/workflows/
+│   └── keep-alive.yml              # Pings the hosted backend every 30 minutes
+├── alembic/                        # Database migrations (run from the repo root)
+├── alembic.ini
 ├── backend/
-│   ├── alembic/                    # Database migration versioning scripts
-│   ├── app/
-│   │   ├── api/
-│   │   │   ├── deps.py             # Route dependencies (e.g. auth check)
-│   │   │   └── v1/
-│   │   │       └── routes/
-│   │   │           ├── auth.py     # Authentication, Login, Register
-│   │   │           ├── chat.py     # Grounded Q&A Chat operations
-│   │   │           └── documents.py# Document Upload, Ingestion, Deletion
-│   │   ├── core/
-│   │   │   ├── config.py           # Configuration Settings validation (Pydantic)
-│   │   │   ├── database.py         # DB connection pool initialization
-│   │   │   └── security.py         # JWT Token signing and hashing
-│   │   ├── models/
-│   │   │   ├── document.py         # Document Metadata Table model
-│   │   │   ├── document_chunk.py   # Text Chunk & Vector Table model
-│   │   │   └── user.py             # User Identity Table model
-│   │   ├── schemas/
-│   │   │   ├── auth.py             # User authentication Pydantic models
-│   │   │   └── chat.py             # Chat ask request/response Pydantic models
-│   │   └── services/
-│   │       ├── chat_service.py     # Context building & Chat generation
-│   │       ├── document_extractors.py# Format handlers (.pdf, .docx, .txt)
-│   │       ├── embedding_service.py# Embedding generator (MiniLM-L6)
-│   │       ├── ocr_service.py      # Tesseract OCR local pipeline
-│   │       ├── reranker_service.py # Cross-Encoder reranking operations
-│   │       ├── retrieval_service.py# Hybrid pgvector retrieval matching
-│   │       ├── text_chunker.py     # Recursive layout-aware chunking
-│   │       └── text_cleaner.py     # Text cleaning & standardization
-│   ├── requirements.txt            # Python dependencies (local environment)
-│   └── test_ocr.py                 # Self-contained local OCR tester
+│   ├── Dockerfile                  # Image for the Hugging Face Space (Tesseract + language packs)
+│   ├── requirements.txt
+│   ├── reprocess_docs.py           # Re-chunks and re-embeds every stored document
+│   └── app/
+│       ├── main.py                 # App setup, CORS, security headers, /health, startup model warm-up
+│       ├── api/
+│       │   ├── deps.py             # get_current_user, require_admin
+│       │   └── v1/routes/
+│       │       ├── auth.py         # Register, login, /me
+│       │       ├── chat.py         # Grounded Q&A
+│       │       └── documents.py    # Upload, background ingestion, list, delete, mind map, whiteboard
+│       ├── core/
+│       │   ├── config.py           # Settings loaded from .env (Pydantic)
+│       │   ├── database.py         # Async engine and session factory
+│       │   ├── security.py         # bcrypt hashing, JWT signing
+│       │   ├── limiter.py          # slowapi rate limiter
+│       │   └── audit.py            # Audit-log writer
+│       ├── models/                 # users, documents, document_chunks, audit_logs
+│       ├── schemas/                # Pydantic request/response models
+│       └── services/
+│           ├── document_extractors.py  # PDF / DOCX / TXT / image handlers
+│           ├── ocr_service.py          # Tesseract OCR pipeline
+│           ├── text_cleaner.py         # Text normalization
+│           ├── text_chunker.py         # Recursive chunking with overlap
+│           ├── embedding_service.py    # multilingual-e5-small embeddings
+│           ├── retrieval_service.py    # Hybrid vector + keyword retrieval
+│           ├── reranker_service.py     # Cross-encoder reranking
+│           ├── cache_service.py        # Redis retrieval cache
+│           ├── chat_service.py         # Prompt building and LLM calls
+│           └── mindmap_service.py      # LLM-generated mind maps
 ├── frontend/
-│   ├── src/
-│   │   ├── components/             # Reusable UI component modules
-│   │   ├── pages/
-│   │   │   ├── auth/               # Sign In / Register UI
-│   │   │   ├── workspace/          # Main doc workspace, viewers, chat panel
-│   │   │   └── settings/           # User configuration pages
-│   │   ├── stores/
-│   │   │   └── workspaceStore.js   # Zustand global state (polling, uploads)
-│   │   ├── App.jsx                 # Layout entry & routing
-│   │   └── main.jsx                # DOM mounting
-│   ├── package.json                # NPM configuration & packages
-│   └── vite.config.js              # Vite bundler parameters
-├── docker-compose.yml              # Local PostgreSQL + pgvector service launcher
-└── README.md                       # Project system architecture guide
+│   └── src/
+│       ├── app/AppRouter.jsx       # Routes and protected-route guard
+│       ├── pages/                  # Landing, auth, workspace (chat, mind map, whiteboard)
+│       ├── components/             # Chat, sidebar, document preview, PDF viewer, mind-map nodes
+│       ├── stores/                 # Zustand stores (auth, workspace)
+│       ├── lib/api.js              # Fetch wrapper with JWT handling and upload progress
+│       └── lib/demo.js             # Client-side engine for the /demo workspace
+├── docker-compose.yml              # Local PostgreSQL + pgvector and Redis
+└── README.md
 ```
 
 
 ## Ingestion & OCR Pipeline
 
-The ingestion pipeline is designed to parse documents asynchronously so that the user receives an immediate response upon uploading a file.
+Uploads are processed in the background so the user gets a response immediately.
 
-1. **Upload Endpoint (`/upload`)**: Saves the raw uploaded file into `backend/uploads/` and commits a document record in PostgreSQL with status `"processing"`.
-2. **Background Task Queue**: Dispatches a worker task to run the text extraction.
-3. **Local Text Extraction**:
-   * **Plain Text (`.txt`)**: Read directly as UTF-8.
-   * **Word Documents (`.docx`)**: Text is extracted paragraph-by-paragraph.
-   * **Images (`.png`, `.jpg`, `.jpeg`)**: Preprocessed into grayscale (`PIL.Image.convert('L')`) and parsed via local Tesseract OCR.
-   * **PDF Documents (`.pdf`)**: First attempts native text extraction using PyMuPDF. If no text is detected (scanned PDF), pages are dynamically rendered as 150-DPI PNG pixmaps, converted to grayscale, and OCR'd page-by-page.
-4. **Chunking & Embeddings**: The text is cleaned and recursively chunked. Chunks are converted into 384-dimensional dense vectors using the HuggingFace embedding engine and loaded into the database.
-5. **Status Update**: The database record status changes to `"completed"` or `"failed"`.
+1. **Upload (`POST /api/v1/documents/upload`)**: Validates the file type and enforces a 100 MB limit (checked against `Content-Length` and again while reading the stream). Only admins can upload to the shared `KNOWLEDGE_BASE` scope. The file is saved as `uploads/<uuid>.<ext>` and a `documents` row is created with status `processing`.
+2. **Background task**: The endpoint returns right away. The frontend polls the document list every 3 seconds until processing finishes.
+3. **Text extraction**:
+   * **TXT**: read as UTF-8.
+   * **DOCX**: paragraphs joined by newlines.
+   * **Images**: converted to grayscale, thresholded to black and white, and run through Tesseract (`--oem 3 --psm 6`).
+   * **PDF**: PyMuPDF extracts the text layer. If there is none (a scanned PDF), every page is rendered at 300 DPI, thresholded the same way and OCR'd.
+4. **Cleaning**: whitespace is collapsed and bullet glyphs are removed.
+5. **Chunking**: a recursive splitter produces chunks of up to 800 characters with up to 200 characters of overlap, preferring headings, paragraphs, line breaks and sentence boundaries, in that order.
+6. **Summary chunk**: the LLM writes a 2–3 paragraph summary of the first 8,000 characters. It is stored as chunk 0, so broad questions ("what is this document about?") have a strong match.
+7. **Embeddings**: all chunks are embedded in one batch with the `passage: ` prefix and saved to `document_chunks`. Postgres fills the `fts` column automatically.
+8. **Status**: the document is marked `completed`, or `failed` if any step raised an error.
 
----
 
 ## Retrieval & Query Pipeline
 
-When a user submits a query to chat, Docsy follows these steps to retrieve grounded, relevant answers:
-
-1. **Candidate Retrieval (Hybrid Search)**:
-   * **Semantic Search**: Generates query embeddings and queries PostgreSQL using Cosine distance operator (`<=>`).
-   * **Keyword Search**: Uses PostgreSQL Full-Text Search GIN index `ts_rank` to score keyword matches.
-   * Combined score is calculated over up to `limit * 5` candidate chunks (100 at the default `limit=20`).
-2. **Cross-Encoder Reranking**:
-   * Chunks are scored via Cross-Encoder relevance matching (`cross-encoder/ms-marco-MiniLM-L-6-v2`).
-   * Results with a reranking logit score lower than **`-15.0`** are filtered out.
-3. **Context Construction & Grounded Chat**:
-   * The top 4 ranked chunks are injected into a strict system prompt.
-   * The LLM receives instructions to only answer based on the provided context, paying attention to semi-structured formats (e.g. key-value pairs like `Name: Cutie`).
+1. **Processing guard**: if any selected document is still processing, Docsy asks the user to wait instead of answering from partial data.
+2. **Cache lookup**: retrieval results are cached in Redis for 1 hour, keyed by an MD5 hash of the user, mode, question and selected documents.
+3. **Hybrid retrieval**:
+   * The question is embedded with the `query: ` prefix (repeated questions hit an in-process LRU cache).
+   * A CTE selects the 50 chunks nearest by cosine distance (`ORDER BY embedding <=> :q LIMIT 50`), restricted to the user's own documents and, if any are selected, to those documents. Using `ORDER BY ... LIMIT` rather than a distance threshold in `WHERE` keeps the query in the form an approximate-nearest-neighbour index can serve.
+   * The outer query adds a keyword score, `ts_rank(fts, plainto_tsquery(:q))`, and sorts by `distance - 0.05 * keyword_rank`.
+   * Duplicate chunk texts are removed and the top 10 are kept.
+4. **Reranking**: the top 5 are rescored by the cross-encoder, which reads the question and chunk together.
+5. **Context expansion**: the chunks immediately before and after each result are fetched in a single query and attached to it.
+6. **Confidence filter**: if the best rerank score is below **-15.0**, Docsy replies "No relevant information found." without calling the LLM.
+7. **Grounded generation**: the top 2 chunks (each labelled with filename, page and section) and the last 6 conversation messages go into a prompt that tells the model to answer only from the context. The model runs at temperature 0. On the first message of a conversation, a short title is generated in parallel.
+8. **Response**: script tags, inline event handlers and `javascript:` links are stripped from the answer. The response includes citations (chunk text, filename, page, section, distance, keyword rank, rerank score) and `debug` timing (`retrieval_ms`, `cache_hit`). Setting `skip_llm: true` runs everything except the LLM call, which is useful for load-testing retrieval.
 
 
 ## Database Schema
 
+The SQLAlchemy models (`backend/app/models/`) are the source of truth. The equivalent SQL:
+
 ```sql
--- Users Table
+CREATE TYPE doc_scope AS ENUM ('PERSONAL', 'KNOWLEDGE_BASE');
+
 CREATE TABLE users (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id UUID PRIMARY KEY,
     email VARCHAR UNIQUE NOT NULL,
-    role VARCHAR DEFAULT 'user',
-    full_name VARCHAR,
-    hashed_password VARCHAR NOT NULL
+    full_name VARCHAR NOT NULL,
+    hashed_password VARCHAR NOT NULL,
+    role VARCHAR DEFAULT 'user'          -- 'user' | 'admin'
 );
 
--- Documents Table
 CREATE TABLE documents (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    filename VARCHAR NOT NULL,
+    id UUID PRIMARY KEY,
+    filename VARCHAR NOT NULL,           -- stored name: <uuid>.<ext>
     original_filename VARCHAR NOT NULL,
     file_path VARCHAR NOT NULL,
     content_type VARCHAR NOT NULL,
     file_size INTEGER NOT NULL,
-    processing_status VARCHAR DEFAULT 'uploaded',
-    scope VARCHAR DEFAULT 'PERSONAL',
-    owner_id UUID REFERENCES users(id),
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc', now()),
-    extracted_text VARCHAR
+    processing_status VARCHAR NOT NULL,  -- 'processing' | 'completed' | 'failed'
+    scope doc_scope NOT NULL,
+    owner_id UUID NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP NOT NULL,
+    extracted_text VARCHAR,
+    mindmap_data JSON,                   -- cached mind map
+    whiteboard_data JSON                 -- Excalidraw scene
 );
 
--- Document Chunks Table (with Vector Support)
 CREATE TABLE document_chunks (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
-    chunk_index INTEGER NOT NULL,
+    id UUID PRIMARY KEY,
+    document_id UUID NOT NULL REFERENCES documents(id),
+    chunk_index INTEGER NOT NULL,        -- 0 is the summary chunk
     chunk_text VARCHAR NOT NULL,
-    embedding VECTOR(384) NOT NULL, -- pgvector 384 dimensions
+    embedding VECTOR(384) NOT NULL,
     fts TSVECTOR GENERATED ALWAYS AS (to_tsvector('english', chunk_text)) STORED,
-    created_at TIMESTAMP WITHOUT TIME ZONE DEFAULT timezone('utc', now()),
-    page_number INTEGER NOT NULL,
-    section_title VARCHAR NOT NULL
+    created_at TIMESTAMP NOT NULL,
+    page_number INTEGER,
+    section_title VARCHAR                -- 'Summary' or 'General'
 );
 
--- Indices
-CREATE INDEX ix_document_chunks_fts
-    ON document_chunks USING GIN (fts);
-
-CREATE INDEX ix_document_chunks_embedding_ivfflat
-    ON document_chunks USING ivfflat (embedding vector_cosine_ops)
-    WITH (lists = <sqrt(row_count), min 10>); -- computed dynamically in the migration
+-- Created at app startup if missing
+CREATE TABLE audit_logs (
+    id UUID PRIMARY KEY,
+    user_id UUID,
+    action VARCHAR(255) NOT NULL,        -- e.g. UPLOAD_DOCUMENT, DELETE_DOCUMENT, CHAT_ASK
+    resource VARCHAR(255) NOT NULL,
+    resource_id VARCHAR(255),
+    status VARCHAR(50) NOT NULL,         -- SUCCESS | FAILURE
+    ip_address VARCHAR(50),
+    details JSONB,
+    created_at TIMESTAMP DEFAULT NOW()
+);
 ```
+
+Deleting a document removes its chunks, its row and its file in the API handler.
+
+> **Note:** the Alembic migrations create `fts` as a plain nullable column and do not create search indexes. Run the SQL in [step 6 of the setup](#2-backend) once after migrating.
+
+
+## Security
+
+* **Passwords** are hashed with bcrypt. Login returns the same error for an unknown email and a wrong password.
+* **Authentication** uses HS256 JWT access tokens (15-minute lifetime) sent as `Authorization: Bearer`.
+* **Authorization**: every document endpoint filters by `owner_id`, and uploads to `KNOWLEDGE_BASE` require the `admin` role.
+* **Input validation**: Pydantic limits question length (5,000 characters), the number of document IDs (100, each must be a UUID) and conversation history size and roles. All SQL uses bound parameters.
+* **Output sanitizing**: script tags and inline JavaScript are stripped from LLM answers.
+* **Rate limiting**: register 3/minute and login 5/minute per IP.
+* **Headers**: HSTS, `X-Content-Type-Options`, `X-Frame-Options`, CSP `frame-ancestors`, `Referrer-Policy`.
+* **Audit log**: uploads, deletions and chat requests are recorded with user, IP, status and details.
 
 
 ## Installation & Setup
 
-### 1. Tesseract OCR System Installation
-Tesseract is a local system package that must be installed on your machine.
+### 1. Tesseract OCR
+Tesseract is a system package and must be installed separately.
 
 #### Windows
-Install via PowerShell (Admin):
 ```powershell
 winget install UB-Mannheim.TesseractOCR --accept-package-agreements --accept-source-agreements
 ```
-Or download manually from the [UB-Mannheim wiki](https://github.com/UB-Mannheim/tesseract/wiki) and add `C:\Program Files\Tesseract-OCR` to your System PATH variables. Alternatively, you can configure it directly inside your `.env` file:
-```env
-TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
-```
+Or download it from the [UB-Mannheim wiki](https://github.com/UB-Mannheim/tesseract/wiki). Docsy finds it in the usual install folders, or you can set `TESSERACT_CMD` in `.env`. Install the extra language data files (Hindi, Odia, Bengali, Tamil, Telugu, Kannada, Malayalam, Marathi, Gujarati, Punjabi) during setup, because OCR requests all 11 languages.
 
 #### macOS
 ```bash
-brew install tesseract
+brew install tesseract tesseract-lang
 ```
 
 #### Linux (Ubuntu/Debian)
 ```bash
 sudo apt-get update
-sudo apt-get install -y tesseract-ocr libtesseract-dev
+sudo apt-get install -y tesseract-ocr tesseract-ocr-eng tesseract-ocr-hin tesseract-ocr-ori \
+  tesseract-ocr-ben tesseract-ocr-tam tesseract-ocr-tel tesseract-ocr-kan tesseract-ocr-mal \
+  tesseract-ocr-mar tesseract-ocr-guj tesseract-ocr-pan
 ```
 
-### 2. Backend Installation
-1. Navigate to the backend directory:
+### 2. Backend
+1. Start PostgreSQL (with pgvector) and Redis from the repo root. `docker-compose.yml` reads the database password from `DB_PASSWORD`:
+   ```bash
+   DB_PASSWORD=docsy123 docker compose up -d
+   ```
+2. Create a `.env` file in the **repo root**:
+   ```env
+   DATABASE_URL=postgresql+asyncpg://docsy_user:docsy123@127.0.0.1:5432/docsy_db?sslmode=disable
+   SECRET_KEY=your_jwt_signing_secret
+   OPENROUTER_API_KEY=your_openrouter_api_key   # required
+   GROQ_API_KEY=                                # optional; uses Groq instead of OpenRouter when set
+   REDIS_URL=redis://localhost:6379/0           # optional
+   TESSERACT_CMD=                               # optional; path to tesseract if not on PATH
+   # Optional LangSmith tracing
+   LANGCHAIN_TRACING_V2=
+   LANGCHAIN_API_KEY=
+   ```
+   `?sslmode=disable` is needed for the local database because Alembic requires SSL unless told otherwise. The app removes the parameter from its own connection and turns SSL on automatically for remote hosts.
+3. Create and activate a virtual environment, then install dependencies:
    ```bash
    cd backend
-   ```
-2. Create and activate a virtual environment:
-   ```bash
    python -m venv venv
-   # On Windows:
-   venv\Scripts\activate
-   # On macOS/Linux:
-   source venv/bin/activate
-   ```
-3. Install dependencies:
-   ```bash
+   source venv/bin/activate      # Windows: venv\Scripts\activate
    pip install -r requirements.txt
    ```
-4. Start database services from the root of the project:
+4. Run migrations from the **repo root**:
    ```bash
-   docker-compose up -d
-   ```
-5. Configure `.env`:
-   ```env
-   DATABASE_URL=postgresql+asyncpg://docsy_user:docsy123@127.0.0.1:5432/docsy_db
-   OPENROUTER_API_KEY=your_openrouter_api_key
-   SECRET_KEY=your_jwt_signing_secret
-   TESSERACT_CMD=C:\Program Files\Tesseract-OCR\tesseract.exe
-   ```
-6. Run migrations:
-   ```bash
+   cd ..
    alembic upgrade head
    ```
-7. Run the FastAPI development server:
+5. Start the API from `backend/`:
    ```bash
+   cd backend
    python -m uvicorn app.main:app --reload
    ```
+   The first start downloads the embedding and reranker models.
+6. Make `fts` a generated column and add search indexes (once, in `psql`):
+   ```sql
+   ALTER TABLE document_chunks DROP COLUMN IF EXISTS fts;
+   ALTER TABLE document_chunks
+       ADD COLUMN fts tsvector GENERATED ALWAYS AS (to_tsvector('english', chunk_text)) STORED;
+   CREATE INDEX IF NOT EXISTS ix_document_chunks_fts
+       ON document_chunks USING GIN (fts);
+   CREATE INDEX IF NOT EXISTS ix_document_chunks_embedding
+       ON document_chunks USING hnsw (embedding vector_cosine_ops);
+   ```
 
-### 3. Frontend Installation
-1. Navigate to the frontend directory:
-   ```bash
-   cd frontend
-   ```
-2. Install npm modules:
-   ```bash
-   npm install
-   ```
-3. Start the dev server:
-   ```bash
-   npm run dev
-   ```
+### 3. Frontend
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The frontend calls `http://127.0.0.1:8000` in development. Set `VITE_API_BASE_URL` to use a different API address.
+
+
+## Deployment
+
+* **Backend**: `backend/Dockerfile` builds a Python 3.11 image with Tesseract and all language packs and serves on port 7860 for a Hugging Face Space. Models are loaded and warmed up at startup.
+* **Frontend**: built with Vite and deployed on Vercel or Netlify (`vercel.json`, `netlify.toml`), with SPA rewrites to `index.html`.
+* **Keeping the backend awake**: a GitHub Actions workflow calls `/health` every 30 minutes, and the frontend calls it when the site loads. `/health` also runs `SELECT 1`, so a serverless Postgres that auto-suspends is woken too.
+* **Demo mode**: `/demo` runs entirely in the browser (sample documents, pdf.js text extraction, keyword retrieval with citations, mind maps), so it works even while the backend is starting up.
 
 
 ## API Reference
 
+All endpoints except register, login and `/health` require `Authorization: Bearer <token>`.
+
 ### Auth
-* **POST `/api/v1/auth/register`**: Registers a new user.
-* **POST `/api/v1/auth/login`**: Authenticates user and returns JWT Bearer token.
+* **POST `/api/v1/auth/register`**: create an account.
+* **POST `/api/v1/auth/login`**: returns a JWT access token.
+* **GET `/api/v1/auth/me`**: current user's id, email, name and role.
 
 ### Documents
-* **POST `/api/v1/documents/upload`**: Ingests new PDF, DOCX, TXT, or Image. Starts asynchronous background parsing task.
-* **GET `/api/v1/documents`**: Lists all uploaded documents and their processing status (`"processing"`, `"completed"`, `"failed"`).
-* **GET `/api/v1/documents/{document_id}`**: Retrieves document metadata.
-* **DELETE `/api/v1/documents/{document_id}`**: Deletes the document file and its vector chunk database listings.
+* **POST `/api/v1/documents/upload`**: upload a PDF, DOCX, TXT or image (`file`, optional `scope`). Returns immediately and processes in the background.
+* **GET `/api/v1/documents?scope=PERSONAL|KNOWLEDGE_BASE`**: list documents with `processing_status`.
+* **GET `/api/v1/documents/{document_id}`**: one document.
+* **DELETE `/api/v1/documents/{document_id}`**: delete the document, its chunks and its file.
+* **POST `/api/v1/documents/{document_id}/mindmap`**: generate (or return the cached) mind map.
+* **DELETE `/api/v1/documents/{document_id}/mindmap`**: clear the cached mind map.
+* **GET / POST `/api/v1/documents/{document_id}/whiteboard`**: load or save the whiteboard scene.
 
 ### Chat
-* **POST `/api/v1/chat/ask`**: Submits a query. Automatically performs vector semantic query matching, reranking, and responds with grounding sources.
+* **POST `/api/v1/chat/ask`**: body `{ question, document_ids, history, mode: "WORKSPACE", skip_llm? }`. Returns `{ question, answer, citations, title, debug }`.
+
+### Health
+* **GET `/health`**: `{ "status": "ok", "db": "ok" | "error" }`.
+
+
+## Roadmap
+
+* Track page numbers per chunk so citations point to the exact page (chunks currently record page 1).
+* Search the shared `KNOWLEDGE_BASE` from chat; retrieval currently covers personal documents only.
+* Move ingestion to a persistent job queue and store files in object storage.
+* Persist chat history on the server.
+* Add refresh tokens and an evaluation set for retrieval and answer quality.
